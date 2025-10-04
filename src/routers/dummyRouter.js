@@ -6,7 +6,6 @@ const deleteTokenSessionOnMobile = require("../SQL/deleteTokenSessionOnMobile");
 const getPostgreClient = require("../SQL/getPostgreClient");
 const getTokenDetails = require("../SQL/getTokenDetails");
 const { connectDB } = require("../database/connectDB");
-const insertSeats = require("../utils/insertSeats");
 const insertSeatString = require("../utils/insertStrings");
 dummyRouter.post("/test-booking", async (req, res) => {
   let client = null;
@@ -18,6 +17,7 @@ dummyRouter.post("/test-booking", async (req, res) => {
     //await insertSeats(client);
     //insert seats
     //await insertSeatString(client);
+
     res.json({ length: 4 });
   } catch (err) {
     if (client) {
