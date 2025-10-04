@@ -20,7 +20,7 @@ const insertSeatString = async (client) => {
     let result_coach_e3 = await client.query("select *from coach_e3");
     //first insert train_number in seatondate with current date till next 2 months
     //await insertSeats(client);
-    /*for (let i = 1; i < result_coach_a1.rows.length; i++) {
+    for (let i = 1; i < result_coach_a1.rows.length; i++) {
       result_a1_string = getSeatStringA1(
         result_coach_a1.rows[i].train_number,
         result_coach_a1.rows[i].display_name_prefix,
@@ -139,7 +139,7 @@ const insertSeatString = async (client) => {
         "update seatsondate set coach_ec = $1 where train_number = $2",
         [result_ec_string, result_coach_ec.rows[i].train_number]
       );
-    }*/
+    }
     for (let i = 1; i < result_coach_fc.rows.length; i++) {
       let result_fc_string = getSeatStringFC(
         result_coach_fc.rows[i].train_number,
