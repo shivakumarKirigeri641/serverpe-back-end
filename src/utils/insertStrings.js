@@ -1,3 +1,12 @@
+const getSeatStringA1 = require("./getSeatStringA1");
+const getSeatStringA2 = require("./getSeatStringA2");
+const getSeatStringA3 = require("./getSeatStringA3");
+const getSeatStringSL = require("./getSeatStringSL");
+const getSeatStringCC = require("./getSeatStringCC");
+const getSeatStringEC = require("./getSeatStringEC");
+const getSeatStringE3 = require("./getSeatStringEC");
+const getSeatStringEA = require("./getSeatStringEC");
+const getSeatStringFA = require("./getSeatStringEC");
 const insertString = async (client) => {
   try {
     let result_coach_a1 = await client.query("select *from coach_a1");
