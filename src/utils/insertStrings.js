@@ -32,9 +32,6 @@ const insertSeatString = async (client) => {
         result_coach_a1.rows[i].seat_premium_tatkal,
         result_coach_a1.rows[i].name
       );
-      result_a1_string = result_a1_string.replace(/@@/g, "@");
-      result_a1_string = result_a1_string.slice(0, -1);
-      result_a1_string = result_a1_string + "$";
       await client.query(
         "update seatsondate set coach_1a = $1 where train_number = $2",
         [result_a1_string, result_coach_a1.rows[i].train_number]
@@ -52,9 +49,6 @@ const insertSeatString = async (client) => {
         result_coach_a2.rows[i].seat_premium_tatkal,
         result_coach_a2.rows[i].name
       );
-      result_a2_string = result_a2_string.replace(/@@/g, "@");
-      result_a2_string = result_a2_string.slice(0, -1);
-      result_a2_string = result_a2_string + "$";
       await client.query(
         "update seatsondate set coach_2a = $1 where train_number = $2",
         [result_a2_string, result_coach_a2.rows[i].train_number]
@@ -72,9 +66,6 @@ const insertSeatString = async (client) => {
         result_coach_a3.rows[i].seat_premium_tatkal,
         result_coach_a3.rows[i].name
       );
-      result_a3_string = result_a3_string.replace(/@@/g, "@");
-      result_a3_string = result_a3_string.slice(0, -1);
-      result_a3_string = result_a3_string + "$";
       await client.query(
         "update seatsondate set coach_3a = $1 where train_number = $2",
         [result_a3_string, result_coach_a3.rows[i].train_number]
@@ -92,9 +83,6 @@ const insertSeatString = async (client) => {
         result_coach_sl.rows[i].seat_premium_tatkal,
         result_coach_sl.rows[i].name
       );
-      result_sl_string = result_sl_string.replace(/@@/g, "@");
-      result_sl_string = result_sl_string.slice(0, -1);
-      result_sl_string = result_sl_string + "$";
       await client.query(
         "update seatsondate set coach_sl = $1 where train_number = $2",
         [result_sl_string, result_coach_sl.rows[i].train_number]
@@ -112,9 +100,6 @@ const insertSeatString = async (client) => {
         result_coach_cc.rows[i].seat_premium_tatkal,
         result_coach_cc.rows[i].name
       );
-      result_cc_string = result_cc_string.replace(/@@/g, "@");
-      result_cc_string = result_cc_string.slice(0, -1);
-      result_cc_string = result_cc_string + "$";
       await client.query(
         "update seatsondate set coach_cc = $1 where train_number = $2",
         [result_cc_string, result_coach_cc.rows[i].train_number]
@@ -132,9 +117,6 @@ const insertSeatString = async (client) => {
         result_coach_ec.rows[i].seat_premium_tatkal,
         result_coach_ec.rows[i].name
       );
-      result_ec_string = result_ec_string.replace(/@@/g, "@");
-      result_ec_string = result_ec_string.slice(0, -1);
-      result_ec_string = result_ec_string + "$";
       await client.query(
         "update seatsondate set coach_ec = $1 where train_number = $2",
         [result_ec_string, result_coach_ec.rows[i].train_number]
@@ -152,9 +134,6 @@ const insertSeatString = async (client) => {
         result_coach_fc.rows[i].seat_premium_tatkal,
         result_coach_fc.rows[i].name
       );
-      result_fc_string = result_fc_string.replace(/@@/g, "@");
-      result_fc_string = result_fc_string.slice(0, -1);
-      result_fc_string = result_fc_string + "$";
       await client.query(
         "update seatsondate set coach_fc = $1 where train_number = $2",
         [result_fc_string, result_coach_fc.rows[i].train_number]
@@ -172,9 +151,6 @@ const insertSeatString = async (client) => {
         result_coach_e3.rows[i].seat_premium_tatkal,
         result_coach_e3.rows[i].name
       );
-      result_e3_string = result_e3_string.replace(/@@/g, "@");
-      result_e3_string = result_e3_string.slice(0, -1);
-      result_e3_string = result_e3_string + "$";
       await client.query(
         "update seatsondate set coach_e3 = $1 where train_number = $2",
         [result_e3_string, result_coach_e3.rows[i].train_number]
@@ -192,9 +168,6 @@ const insertSeatString = async (client) => {
         result_coach_ea.rows[i].seat_premium_tatkal,
         result_coach_ea.rows[i].name
       );
-      result_ea_string = result_ea_string.replace(/@@/g, "@");
-      result_ea_string = result_ea_string.slice(0, -1);
-      result_ea_string = result_ea_string + "$";
       await client.query(
         "update seatsondate set coach_ea = $1 where train_number = $2",
         [result_ea_string, result_coach_ea.rows[i].train_number]

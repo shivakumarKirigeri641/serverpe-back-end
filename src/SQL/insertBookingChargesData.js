@@ -11,18 +11,14 @@ const insertBookingChargesData = async (
   let result = null;
   try {
     const result_srckm = await client.query(
-      "select kilometer from schedules where train_number= $1 and station_code = $2",
+      "select *from schedules where train_number= $1 and station_code = $2",
       [train_number, src.toUpperCase()]
     );
     const result_destkm = await client.query(
-      "select kilometer from schedules where train_number= $1 and station_code = $2",
+      "select *from schedules where train_number= $1 and station_code = $2",
       [train_number, dest.toUpperCase()]
     );
     const km = result_destkm.rows[0].kilometer - result_srckm.rows[0].kilometer;
-    console.log(
-      "km:",
-      result_destkm.rows[0].kilometer - result_srckm.rows[0].kilometer
-    );
     const price_info = await client.query("select *from pricelist");
     let base_fare = 0;
     switch (coach_type) {

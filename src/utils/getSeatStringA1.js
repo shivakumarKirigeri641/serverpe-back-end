@@ -52,6 +52,24 @@ const getSeatStringA1 = (
           "/RAC/AVL@";
         overallseatcount++;
       }
+      //rac (we need 2 times as 2 pass sits in rac)
+      for (let seat = 0; seat < seat_rac; seat++) {
+        seatStringForTrain =
+          seatStringForTrain +
+          "@" +
+          train_number +
+          "/" +
+          display_name_prefix +
+          bogi_index +
+          "/" +
+          overallseatcount +
+          "/" +
+          seatcount++ +
+          "/" +
+          getSeatType1A(seatcount - 1) +
+          "/RAC/AVL@";
+        overallseatcount++;
+      }
       //ttk
       for (let seat = 0; seat < seat_tatkal; seat++) {
         seatStringForTrain =

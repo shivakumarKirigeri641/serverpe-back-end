@@ -5,6 +5,7 @@ const insertSeats = require("../utils/insertSeats");
 const deleteTokenSessionOnMobile = require("../SQL/deleteTokenSessionOnMobile");
 const getPostgreClient = require("../SQL/getPostgreClient");
 const getTokenDetails = require("../SQL/getTokenDetails");
+const getBillSummary = require("../utils/getBillSummary");
 const getReservedTrains = require("../SQL/getReservedTrains");
 const { connectDB } = require("../database/connectDB");
 const insertSeatString = require("../utils/insertStrings");
@@ -22,6 +23,8 @@ dummyRouter.post("/test-booking/search-trains", async (req, res) => {
     client = await getPostgreClient(pool);
     const { src, dest, doj } = req.body;
     const result_traindetails = await getReservedTrains(client, src, dest, doj);
+    //await insertSeats(client);
+    //await insertSeatString(client);
     res.json({ result: result_traindetails.rows });
   } catch (err) {
     if (client) {
@@ -92,40 +95,13 @@ dummyRouter.post("/test-booking/proceed-booking", async (req, res) => {
       passenger_details
     );
     //send back
-    console.log(
-      result_bookingdata.rows.length,
-      result_bookingChargesdata.rows.length,
-      result_passengerdetails.rows.length
+    let charges_summary = getBillSummary(
+      result_bookingChargesdata,
+      adultcount,
+      childcount,
+      seniorcount,
+      phcount
     );
-    let charges_summary = {
-      total_base_fare:
-        result_bookingChargesdata.rows[0].base_fare_per_adult * adultcount,
-      total_child_concession:
-        result_bookingChargesdata.rows[0].base_fare_per_adult * childcount -
-        (result_bookingChargesdata.rows[0].base_fare_per_adult *
-          childcount *
-          result_bookingChargesdata.rows[0].percent_concession_child) /
-          100,
-      total_senior_concession:
-        result_bookingChargesdata.rows[0].base_fare_per_adult * seniorcount -
-        (result_bookingChargesdata.rows[0].base_fare_per_adult *
-          seniorcount *
-          result_bookingChargesdata.rows[0].percent_concession_senior) /
-          100,
-      total_physicallyhandicapped_concession:
-        result_bookingChargesdata.rows[0].base_fare_per_adult * phcount -
-        (result_bookingChargesdata.rows[0].base_fare_per_adult *
-          phcount *
-          result_bookingChargesdata.rows[0].percent_concession_senior) /
-          100,
-      GST_percent: result_bookingChargesdata.rows[0].GST,
-      convience_percent: result_bookingChargesdata.rows[0].convience_percent,
-      payment_integration_percent:
-        result_bookingChargesdata.rows[0].payment_integration_percent,
-      card_percent: result_bookingChargesdata.rows[0].card_percent,
-      upi_percent: result_bookingChargesdata.rows[0].upi_percent,
-      wallet_percent: result_bookingChargesdata.rows[0].wallet_percent,
-    };
     res.json({
       success: true,
       bookingdetails: result_bookingdata.rows[0],
