@@ -23,7 +23,14 @@ const confirmTicket = async (client, bookingid, total_fare) => {
       "select *from passengerdata where fkbookingdata=$1",
       [bookingid]
     );
-
+    //this is only to lock row
+    await client.query(
+      `SELECT *FROM seatsondate WHERE date_of_journey = $1 AND train_number = $2 for update`,
+      [
+        result_bookingdata.rows[0].date_of_journey,
+        result_bookingdata.rows[0].train_number,
+      ]
+    );
     switch (result_bookingdata.rows[0].reservation_type) {
       case "GEN":
         switch (result_bookingdata.rows[0].coach_type) {
@@ -48,14 +55,6 @@ const confirmTicket = async (client, bookingid, total_fare) => {
             //if available, update passenger details to cnf, update seatsondate with AVL->CNF
             for (let i = 0; i < result_passengerdetails.rows.length; i++) {
               try {
-                //this is only to lock row
-                await client.query(
-                  `SELECT *FROM seatsondate WHERE date_of_journey = $1 AND train_number = $2 for update`,
-                  [
-                    result_bookingdata.rows[0].date_of_journey,
-                    result_bookingdata.rows[0].train_number,
-                  ]
-                );
                 let result_sl_gen_avl = await client.query(
                   `SELECT coach_sl, regexp_count(coach_sl, 'GEN/AVL') AS gen_avl_per_coach FROM seatsondate WHERE date_of_journey = $1 AND train_number = $2`,
                   [
@@ -73,7 +72,7 @@ const confirmTicket = async (client, bookingid, total_fare) => {
                     ]
                   );
                   await client.query(
-                    `SELECT coach_sl, regexp_count(coach_sl, 'GEN/AVL') AS gen_avl_per_coach FROM seatsondate WHERE date_of_journey = $1 AND train_number = $2 for update`,
+                    `SELECT coach_sl, regexp_count(coach_sl, 'GEN/AVL') AS gen_avl_per_coach FROM seatsondate WHERE date_of_journey = $1 AND train_number = $2`,
                     [
                       result_bookingdata.rows[0].date_of_journey,
                       result_bookingdata.rows[0].train_number,
@@ -91,7 +90,7 @@ const confirmTicket = async (client, bookingid, total_fare) => {
                 } else {
                   //firc check for total count of RAC from coach_sl
                   const result_total_rac_count = await client.query(
-                    "select seat_rac from coach_sl where train_number = $1 for update",
+                    "select seat_rac from coach_sl where train_number = $1",
                     [result_bookingdata.rows[0].train_number]
                   );
                   //then check how many rac are booked in seatsondate.
@@ -119,7 +118,7 @@ const confirmTicket = async (client, bookingid, total_fare) => {
                       ]
                     );
                     await client.query(
-                      `SELECT coach_sl, regexp_count(coach_sl, 'RAC/AVL') AS RAC_avl_per_coach FROM seatsondate WHERE date_of_journey = $1 AND train_number = $2 for update`,
+                      `SELECT coach_sl, regexp_count(coach_sl, 'RAC/AVL') AS RAC_avl_per_coach FROM seatsondate WHERE date_of_journey = $1 AND train_number = $2`,
                       [
                         result_bookingdata.rows[0].date_of_journey,
                         result_bookingdata.rows[0].train_number,
