@@ -134,7 +134,7 @@ const confirmTicket = async (client, bookingid, total_fare) => {
             //now update bookingdata proceed_status to 'true'
             result_bookingdata = await client.query(
               "update bookingdata set proceed_status=$1 where id=$2",
-              [result_bookingdata.rows[0].id, true]
+              [true, result_bookingdata.rows[0].id]
             );
             //GET BACK THE CONNECTION
             break;
