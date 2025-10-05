@@ -15,6 +15,7 @@ const populateSeatsSL = require("../utils/populateSeatsSL");
 const insertBookingData = require("../SQL/insertBookingData");
 const insertBookingChargesData = require("../SQL/insertBookingChargesData");
 const insertPassengerData = require("../SQL/insertPassengerData");
+const confirmTicket = require("../SQL/confirmTicket");
 dummyRouter.post("/test-booking/search-trains", async (req, res) => {
   let client = null;
   let result = "";
@@ -75,7 +76,9 @@ dummyRouter.post("/test-booking/proceed-booking", async (req, res) => {
       boarding_at.toUpperCase(),
       doj,
       adultcount,
-      childcount
+      childcount,
+      reservation_type,
+      coach_type
     );
     //insert into bookingcharges
     const result_bookingChargesdata = await insertBookingChargesData(
@@ -114,6 +117,21 @@ dummyRouter.post("/test-booking/proceed-booking", async (req, res) => {
     }
     console.log(err.message);
     res.status(400).json(err);
+  } finally {
+    if (client) {
+      await client.release();
+    }
+  }
+});
+dummyRouter.post("/test-booking/confirm-booking", async (req, res) => {
+  let client = null;
+  let result = "";
+  try {
+    const pool = await connectDB();
+    client = await getPostgreClient(pool);
+    const { bookingid, total_fare } = req.body;
+    const ticket_details = await confirmTicket(client, bookingid, total_fare);
+    res.status(200).json(ticket_details);
   } finally {
     if (client) {
       await client.release();
