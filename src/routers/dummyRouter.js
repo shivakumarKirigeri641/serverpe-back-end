@@ -59,10 +59,11 @@ dummyRouter.post("/test-booking/proceed-booking", async (req, res) => {
       (x) => x.passenger_ischild === false
     ).length;
     let childcount = passenger_details?.filter(
-      (x) => x.passenger_ischild === true
+      (x) => x.passenger_ischild === true || x.passenger_age <= 6
     ).length;
+    console.log("childcount:", childcount);
     let seniorcount = passenger_details?.filter(
-      (x) => x.passenger_issenior === true
+      (x) => x.passenger_issenior === true || x.passenger_age >= 60
     ).length;
     let phcount = passenger_details?.filter(
       (x) => x.passenger_isphysicallyhandicapped === true

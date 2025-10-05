@@ -13,9 +13,11 @@ const insertPassengerData = async (
           passenger_details[i].passenger_name,
           passenger_details[i].passenger_age,
           passenger_details[i].passenger_gender,
-          passenger_details[i].passenger_issenior,
+          passenger_details[i].passenger_issenior ||
+            passenger_details[i].passenger_age >= 60,
           passenger_details[i].passenger_isphysicallyhandicapped,
-          passenger_details[i].passenger_ischild,
+          passenger_details[i].passenger_ischild ||
+            passenger_details[i].passenger_age <= 5,
           passenger_details[i].passenger_preferred_berth,
         ]
       );

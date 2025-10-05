@@ -6,6 +6,11 @@ const getBillSummary = (
   phcount
 ) => {
   return {
+    base_fare_per_adult: result_bookingChargesdata.rows[0].base_fare_per_adult,
+    adultcount,
+    childcount,
+    seniorcount,
+    phcount,
     total_base_fare:
       result_bookingChargesdata.rows[0].base_fare_per_adult * adultcount,
     total_child_concession:
