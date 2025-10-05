@@ -1,21 +1,12 @@
 const express = require("express");
-const jwt = require("jsonwebtoken");
 const dummyRouter = express.Router();
-const insertSeats = require("../utils/insertSeats");
-const deleteTokenSessionOnMobile = require("../SQL/deleteTokenSessionOnMobile");
 const getPostgreClient = require("../SQL/getPostgreClient");
-const getTokenDetails = require("../SQL/getTokenDetails");
 const getBillSummary = require("../utils/getBillSummary");
 const getReservedTrains = require("../SQL/getReservedTrains");
 const { connectDB } = require("../database/connectDB");
-const insertSeatString = require("../utils/insertStrings");
-const simulatBookTickets = require("../utils/simulatBookTickets");
-const getSeatTypeSL = require("../utils/getSeatTypeSL");
-const populateSeatsSL = require("../utils/populateSeatsSL");
 const insertBookingData = require("../SQL/insertBookingData");
 const insertBookingChargesData = require("../SQL/insertBookingChargesData");
 const insertPassengerData = require("../SQL/insertPassengerData");
-const confirmTicket = require("../SQL/confirmTicket");
 dummyRouter.post("/test-booking/search-trains", async (req, res) => {
   let client = null;
   let result = "";
@@ -130,7 +121,6 @@ dummyRouter.post("/test-booking/confirm-booking", async (req, res) => {
     const pool = await connectDB();
     client = await getPostgreClient(pool);
     const { bookingid, total_fare } = req.body;
-    const ticket_details = await confirmTicket(client, bookingid, total_fare);
     res.status(200).json(ticket_details);
   } finally {
     if (client) {
