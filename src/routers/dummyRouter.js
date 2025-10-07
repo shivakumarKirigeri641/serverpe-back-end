@@ -1,4 +1,6 @@
 const express = require("express");
+const getTotalSeats = require("../utils/getTotalSeats");
+const getBerth = require("../utils/getBerth");
 const dummyRouter = express.Router();
 const getPostgreClient = require("../SQL/getPostgreClient");
 const getBillSummary = require("../utils/getBillSummary");
@@ -128,5 +130,69 @@ dummyRouter.post("/test-booking/confirm-booking", async (req, res) => {
     }
   }
 });
+dummyRouter.post("/test", async (req, res) => {
+  let client = null;
+  let result = "";
+  try {
+    const pool = await connectDB();
+    client = await getPostgreClient(pool);
+    const daysToLoop = 60; // approx 2 months
 
+    let currentDate = new Date();
+    // Loop through next 60 days
+    const coaches = ["1A", "2A", "3A", "CC", "EC", "E3", "EA", "FC", "SL"];
+    //const coaches = ["1A"];
+
+    for (let a = 0; a < coaches.length; a++) {
+      const cccc = coaches[a];
+      const result_trains = await client.query(
+        `select *from coach_${coaches[a].toLowerCase()}`
+      );
+      for (let i = 0; i < result_trains.rows.length; i++) {
+        console.log(
+          "processing coach(" + coaches[a] + "): ",
+          i + 1,
+          "/",
+          result_trains.rows.length
+        );
+        for (let j = 0; j < daysToLoop; j++) {
+          const date = new Date(currentDate);
+          date.setDate(currentDate.getDate() + j);
+          const formatted = date.toISOString().split("T")[0];
+          let seqno = 1;
+          const toatlseats = getTotalSeats(cccc);
+          for (let k = 0; k < result_trains.rows[i].bogi_count; k++) {
+            for (let l = 1; l <= toatlseats; l++) {
+              let { berth, coachDisplayName, totalSeats } = getBerth(
+                coaches[a],
+                seqno
+              );
+              await client.query(
+                `insert into seats_${coaches[
+                  a
+                ].toLowerCase()} (train_number, date_of_journey, seat_sequence, coach_code, seat_no, berth, display_name ) values ($1,$2,$3,$4,$5,$6,$7)`,
+                [
+                  result_trains.rows[i].train_number,
+                  formatted,
+                  seqno,
+                  k + 1,
+                  l,
+                  berth,
+                  coachDisplayName,
+                ]
+              );
+              seqno++;
+            }
+          }
+        }
+      }
+    }
+
+    res.status(200).json({ status: "ok" });
+  } finally {
+    if (client) {
+      await client.release();
+    }
+  }
+});
 module.exports = dummyRouter;
