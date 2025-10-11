@@ -5,8 +5,9 @@ const cancelTicket = async (client, pnr, passengerids) => {
   let result_bookingdata = null;
   let result_passengerdata = null;
   let cancelled_details = null;
+  let result_ticketdata = null;
   try {
-    const result_ticketdata = await client.query(
+    result_ticketdata = await client.query(
       `select *from ticketdata where pnr_number = $1`,
       [pnr]
     );
@@ -24,7 +25,6 @@ const cancelTicket = async (client, pnr, passengerids) => {
         `select *from passengerdata where id = $1 and seat_status <> $2`,
         [passengerid, "CAN"]
       );
-      console.log(result_passengerdata.rows[0]);
       if (0 === result_passengerdata.rows.length) {
         throw {
           status: 400,
@@ -47,9 +47,11 @@ const cancelTicket = async (client, pnr, passengerids) => {
           );
           //update in bookingdata of cancellation charges;
           result_bookingdata = await client.query(
+            //test this?????????????????????????
             "update bookingdata set updated_amount =$1 where id=$2 returning *",
             [
-              temp.cancelled_details.cancellation_charges,
+              result_bookingdata.rows[0].amount_paid -
+                temp.cancelled_details.cancellation_charges,
               result_bookingdata.rows[0].id,
             ]
           );
@@ -85,7 +87,24 @@ const cancelTicket = async (client, pnr, passengerids) => {
           };
       }
     }
+    //first fetch seats_status
+    let result_can_count = await client.query(
+      "select count(*) as can_count from passengerdata where fkbookingdata = $1 and seat_status=$2",
+      [result_bookingdata.rows[0].id, "CAN"]
+    );
     //if all tickets(passengers) cancelled, then pnr_status='can' for ticketdata
+    if (
+      Number(result_bookingdata.rows[0].adult_count) ===
+      Number(result_can_count.rows[0].can_count)
+    ) {
+      //not coming inside if???
+      console.log("testtttt");
+      result_ticketdata = await client.query(
+        "update ticketdata set pnr_status=$1 where pnr_number=$2 returning *",
+        ["CAN", pnr]
+      );
+      console.log(result_ticketdata.rows[0]);
+    }
     updated_ticket_data = {
       booking_details: result_bookingdata.rows[0],
       passenger_details: passenger_data,
