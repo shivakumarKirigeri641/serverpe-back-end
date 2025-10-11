@@ -39,7 +39,7 @@ const cancelTicket = async (client, pnr, passengerids) => {
       switch (result_bookingdata.rows[0].coach_type) {
         case "SL":
           let temp = await cancel_sl(client, result_passengerdata.rows[i]);
-          result_passengerdata[i] = temp;
+          passenger_data.push(temp);
           break;
         case "1A":
           break;
@@ -70,7 +70,7 @@ const cancelTicket = async (client, pnr, passengerids) => {
     }
     updated_ticket_data = {
       booking_details: result_bookingdata.rows[0],
-      passenger_details: result_passengerdata.rows,
+      passenger_details: passenger_data.rows,
       ticket_details: result_ticketdata.rows[0],
     };
     return updated_ticket_data;
