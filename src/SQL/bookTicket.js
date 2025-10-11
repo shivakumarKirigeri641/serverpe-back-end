@@ -63,6 +63,13 @@ const bookTicket = async (client, bookingid) => {
         break;
       case "FC":
         break;
+      default:
+        throw {
+          status: 400,
+          success: false,
+          message: `Booking not available for coach ${result_bookingdata.rows[0].coach_type} and reservation: ${result_bookingdata.rows[0].reservation_type}`,
+          data: {},
+        };
     }
     //6. proceed=true,
     result_bookingdata = await client.query(

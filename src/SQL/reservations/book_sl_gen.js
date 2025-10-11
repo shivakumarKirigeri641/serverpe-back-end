@@ -21,7 +21,7 @@ const book_sl_gen = async (
       if (0 < result_seatsondate.rows[0].seat_count_sl_gen) {
         let seat_details = getCoachSeatAndBerth(gen_count, "SL");
         const temp = await client.query(
-          `update passengerdata set seat_id=$1, seat_status=$2, message=$3, fkseatsondate=$4, current_seat_status=$5, updated_seat_status=$6 where id=$7 returning *`,
+          `update passengerdata set seat_id=$1, seat_status=$2, message=$3, fkseatsondate=$4, current_seat_status=$5, updated_seat_status=$6, initial_seat_allocated=$7 where id=$8 returning *`,
           [
             gen_count,
             seat_details.coach +
@@ -33,6 +33,11 @@ const book_sl_gen = async (
             result_seatsondate.rows[0].id,
             result_seatsondate.rows[0].id.pnr_status,
             result_seatsondate.rows[0].id.pnr_status,
+            seat_details.coach +
+              "/" +
+              seat_details.seatPosition +
+              "/" +
+              seat_details.berthType,
             result_passengerdata.rows[i].id,
           ]
         );
@@ -61,12 +66,13 @@ const book_sl_gen = async (
         //reduce rac count from seatsondate
         let rac_count = Number(result_rac_count_check.rows[0].rac_count) + 1;
         const temp = await client.query(
-          `update passengerdata set seat_status=$1, message=$2, current_seat_status=$3, updated_seat_status=$4 where id=$5 returning *`,
+          `update passengerdata set seat_status=$1, message=$2, current_seat_status=$3, updated_seat_status=$4, initial_seat_allocated=$5 where id=$6 returning *`,
           [
             pnr_status,
             "Final seat status will be available after chart preparation",
             rac_count,
             rac_count,
+            pnr_status,
             result_passengerdata.rows[i].id,
           ]
         );
@@ -96,12 +102,13 @@ const book_sl_gen = async (
         //reduce rac count from seatsondate
         let wtl_count = Number(result_wtl_count_check.rows[0].wtl_count) + 1;
         const temp = await client.query(
-          `update passengerdata set seat_status=$1, message=$2, current_seat_status=$3, updated_seat_status=$4 where id=$5 returning *`,
+          `update passengerdata set seat_status=$1, message=$2, current_seat_status=$3, updated_seat_status=$4, initial_seat_allocated=$5 where id=$6 returning *`,
           [
             pnr_status,
             "Final seat status will be available after chart preparation",
             wtl_count,
             wtl_count,
+            pnr_status,
             result_passengerdata.rows[i].id,
           ]
         );

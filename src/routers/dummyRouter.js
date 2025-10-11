@@ -13,6 +13,7 @@ const insertBookingChargesData = require("../SQL/insertBookingChargesData");
 const insertPassengerData = require("../SQL/insertPassengerData");
 const calculatefare = require("../SQL/calculatefare");
 const bookTicket = require("../SQL/bookTicket");
+const cancelTicket = require("../SQL/cancelTicket");
 dummyRouter.post("/test-booking/search-trains", async (req, res) => {
   let client = null;
   let result = "";
@@ -1182,6 +1183,40 @@ dummyRouter.post("/confirm-ticket", async (req, res) => {
     const pool = await connectDB();
     client = await getPostgreClient(pool);
     const booking_details = await bookTicket(client, bookingid);
+    res.status(200).json({
+      success: true,
+      booking_details,
+    });
+  } catch (err) {
+    if (!err.success) {
+      res.status(200).json({
+        success: false,
+        message: err.message,
+        data: err.data,
+      });
+    } else {
+      res.status(501).json({
+        success: false,
+        message: err.message,
+        data: err.data,
+      });
+    }
+  } finally {
+    if (client) {
+      await client.release();
+    }
+  }
+});
+
+//cancel-ticket
+dummyRouter.post("/cancel-ticket", async (req, res) => {
+  let client = null;
+  let result = "";
+  try {
+    const { pnr, passengerids } = req.body;
+    const pool = await connectDB();
+    client = await getPostgreClient(pool);
+    const booking_details = await cancelTicket(client, pnr, passengerids);
     res.status(200).json({
       success: true,
       booking_details,
