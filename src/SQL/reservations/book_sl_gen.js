@@ -17,8 +17,6 @@ const book_sl_gen = async (
     let seatsondate_raccount = result_seatsondate.rows[0].seat_count_sl_rac;
     for (let i = 0; i < result_passengerdata.rows.length; i++) {
       let gen_count = result_seatsondate.rows[0].seat_count_sl_gen;
-      let rac_count = result_seatsondate.rows[0].seat_count_sl_rac;
-
       //BOOK GENERAL TICKET IF AVAILABLE
       if (0 < result_seatsondate.rows[0].seat_count_sl_gen) {
         let seat_details = getCoachSeatAndBerth(gen_count, "SL");
@@ -44,7 +42,6 @@ const book_sl_gen = async (
           `update seatsondate set seat_count_sl_gen=$1 where id=$2 returning *`,
           [gen_count, result_seatsondate.rows[0].id]
         );
-        //gen
       }
       //BOOK RAC
       else if (0 < result_seatsondate.rows[0].seat_count_sl_rac) {
@@ -80,7 +77,9 @@ const book_sl_gen = async (
           [seatsondate_raccount, result_seatsondate.rows[0].id]
         );
         //rac
-      } else {
+      }
+      //WAITING LIST
+      else {
         //waiting list
         pnr_status = "WTL";
         const result_wtl_count_check = await client.query(
