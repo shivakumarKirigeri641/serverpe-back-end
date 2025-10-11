@@ -18,8 +18,8 @@ const cancelTicket = async (client, pnr, passengerids) => {
     for (let i = 0; i < passengerids.length; i++) {
       let passengerid = passengerids[i];
       const result_passengerdata = await client.query(
-        `select *from passengerdata where id = $1`,
-        [passengerid]
+        `select *from passengerdata where id = $1 && seat_status <> $2`,
+        [passengerid, "CAN"]
       );
       if (0 === result_passengerdata.rows.length) {
         throw {
