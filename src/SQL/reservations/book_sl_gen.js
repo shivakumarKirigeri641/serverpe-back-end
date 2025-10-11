@@ -83,32 +83,30 @@ const book_sl_gen = async (
       } else {
         //waiting list
         pnr_status = "WTL";
-        const result_rac_count_check = await client.query(
-          `select COUNT(p.updated_seat_status) as rac_count from passengerdata p join bookingdata b on p.fkbookingdata = b.id where b.train_number = $1 
-          and b.coach_type =$2 and b.reservation_type=$3 and b.date_of_journey = $4 and p.updated_seat_status ilike $5`,
+        const result_wtl_count_check = await client.query(
+          `select COUNT(p.updated_seat_status) as wtl_count from passengerdata p join bookingdata b on p.fkbookingdata = b.id where b.train_number = $1 
+          and b.coach_type =$2 and b.reservation_type=$3 and b.date_of_journey = $4 and p.seat_status = $5`,
           [
             result_bookingdata.rows[0].train_number,
             result_bookingdata.rows[0].coach_type,
             result_bookingdata.rows[0].reservation_type,
             result_bookingdata.rows[0].date_of_journey,
-            "%WTL%",
+            "WTL",
           ]
         );
-        let wtl_count = Number(result_rac_count_check.rows[0].rac_count) + 1;
-
+        //reduce rac count from seatsondate
+        let wtl_count = Number(result_wtl_count_check.rows[0].wtl_count) + 1;
         const temp = await client.query(
-          `update passengerdata set seat_id=$1, seat_status=$2, message=$3, fkseatsondate=$4, updated_seat_status=$5 where id=$6 returning *`,
+          `update passengerdata set seat_status=$1, message=$2, current_seat_status=$3, updated_seat_status=$4 where id=$5 returning *`,
           [
-            wtl_count,
-            pnr_status + wtl_count,
+            pnr_status,
             "Final seat status will be available after chart preparation",
-            result_seatsondate.rows[0].id,
-            pnr_status + wtl_count,
+            wtl_count,
+            wtl_count,
             result_passengerdata.rows[i].id,
           ]
         );
         passenger_details.push(temp.rows[0]);
-        wtl_count++;
       }
     }
     return { passenger_details, pnr_status };
