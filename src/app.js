@@ -8,6 +8,7 @@ const verifyOtpRouter = require("./routers/verifyOtpRouter");
 const stationsRouter = require("./routers/stationsRouter");
 const logoutRouter = require("./routers/logoutRouter");
 const dummyRouter = require("./routers/dummyRouter");
+const createRequestLogger = require("./middleware/requestLogger");
 require("dotenv").config();
 app.use(cookieParser());
 app.use(express.json());

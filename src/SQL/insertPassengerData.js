@@ -6,8 +6,8 @@ const insertPassengerData = async (
   try {
     for (let i = 0; i < passenger_details.length; i++) {
       await client.query(
-        `insert into passengerdata (fkbookingdata, p_name, p_age, p_gender, is_senior, is_physicallyhandicapped, is_child, preferred_berth) values
-        ($1,$2,$3,$4,$5,$6,$7,$8) returning *`,
+        `insert into passengerdata (fkbookingdata, p_name, p_age, p_gender, p_is_senior, p_is_child, berth_preference) values
+        ($1,$2,$3,$4,$5,$6,$7) returning *`,
         [
           bookingdataid,
           passenger_details[i].passenger_name,
@@ -15,7 +15,6 @@ const insertPassengerData = async (
           passenger_details[i].passenger_gender,
           passenger_details[i].passenger_issenior ||
             passenger_details[i].passenger_age >= 60,
-          passenger_details[i].passenger_isphysicallyhandicapped,
           passenger_details[i].passenger_ischild ||
             passenger_details[i].passenger_age <= 5,
           passenger_details[i].passenger_preferred_berth,

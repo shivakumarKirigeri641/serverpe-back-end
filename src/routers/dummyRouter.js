@@ -11,6 +11,8 @@ const { connectDB } = require("../database/connectDB");
 const insertBookingData = require("../SQL/insertBookingData");
 const insertBookingChargesData = require("../SQL/insertBookingChargesData");
 const insertPassengerData = require("../SQL/insertPassengerData");
+const calculatefare = require("../SQL/calculatefare");
+const bookTicket = require("../SQL/bookTicket");
 dummyRouter.post("/test-booking/search-trains", async (req, res) => {
   let client = null;
   let result = "";
@@ -28,104 +30,6 @@ dummyRouter.post("/test-booking/search-trains", async (req, res) => {
     }
     console.log(err.message);
     res.status(400).json(err);
-  } finally {
-    if (client) {
-      await client.release();
-    }
-  }
-});
-dummyRouter.post("/test-booking/proceed-booking", async (req, res) => {
-  let client = null;
-  let result = "";
-  try {
-    const pool = await connectDB();
-    client = await getPostgreClient(pool);
-    let {
-      train_number,
-      src,
-      boarding_at,
-      dest,
-      doj,
-      reservation_type,
-      coach_type,
-      passenger_details,
-    } = req.body;
-    //first insertinto booking data
-    let adultcount = passenger_details?.filter(
-      (x) => x.passenger_ischild === false
-    ).length;
-    let childcount = passenger_details?.filter(
-      (x) => x.passenger_ischild === true || x.passenger_age <= 6
-    ).length;
-    let seniorcount = passenger_details?.filter(
-      (x) => x.passenger_issenior === true || x.passenger_age >= 60
-    ).length;
-    let phcount = passenger_details?.filter(
-      (x) => x.passenger_isphysicallyhandicapped === true
-    ).length;
-    const result_bookingdata = await insertBookingData(
-      client,
-      train_number,
-      src.toUpperCase(),
-      dest.toUpperCase(),
-      boarding_at.toUpperCase(),
-      doj,
-      adultcount,
-      childcount,
-      reservation_type,
-      coach_type
-    );
-    //insert into bookingcharges
-    const result_bookingChargesdata = await insertBookingChargesData(
-      client,
-      result_bookingdata.rows[0].id,
-      train_number,
-      src.toUpperCase(),
-      dest.toUpperCase(),
-      reservation_type,
-      coach_type,
-      passenger_details
-    );
-    //insertinto passenger data
-    const result_passengerdetails = await insertPassengerData(
-      client,
-      result_bookingdata.rows[0].id,
-      passenger_details
-    );
-    //send back
-    let charges_summary = getBillSummary(
-      result_bookingChargesdata,
-      adultcount,
-      childcount,
-      seniorcount,
-      phcount
-    );
-    res.json({
-      success: true,
-      bookingdetails: result_bookingdata.rows[0],
-      passenger_details: result_passengerdetails.rows[0],
-      bill: charges_summary,
-    });
-  } catch (err) {
-    if (client) {
-      await client.query("ROLLBACK");
-    }
-    console.log(err.message);
-    res.status(400).json(err);
-  } finally {
-    if (client) {
-      await client.release();
-    }
-  }
-});
-dummyRouter.post("/test-booking/confirm-booking", async (req, res) => {
-  let client = null;
-  let result = "";
-  try {
-    const pool = await connectDB();
-    client = await getPostgreClient(pool);
-    const { bookingid, total_fare } = req.body;
-    res.status(200).json(ticket_details);
   } finally {
     if (client) {
       await client.release();
@@ -1154,16 +1058,148 @@ $67
     }
   }
 });
-dummyRouter.post("/testfc", async (req, res) => {
+//search-trains
+dummyRouter.post(
+  "/fakeapi/train/reserved-tickets/user/search-trains",
+  //checkApiKey,
+  async (req, res) => {
+    let client = null;
+    try {
+      const { src, dest, date_of_journey } = req.body;
+      const pool = await connectDB();
+      client = await getPostgreClient(pool);
+      const result = await getReservedTrains(
+        client,
+        src,
+        dest,
+        date_of_journey
+      );
+      //do the jsonobject converstion later
+      if (0 < result.rows.length) {
+        res.status(200).json({
+          success: true,
+          message: "No trains found!",
+          data: result.rows,
+        });
+      } else {
+        res.status(200).json({
+          success: true,
+          message: "No trains found!",
+          data: {},
+        });
+      }
+    } catch (err) {
+      if (client) {
+        await client.query("ROLLBACK");
+      }
+      res.status(501).json({
+        success: false,
+        message: "Something went wrong!",
+        data: { technical_message: err.message },
+      });
+    } finally {
+      if (client) {
+        await client.release();
+      }
+    }
+  }
+);
+//proceed-booking
+dummyRouter.post("/proceed-booking", async (req, res) => {
   let client = null;
   let result = "";
   try {
+    const {
+      train_number,
+      src,
+      dest,
+      doj,
+      boarding_at,
+      mobile_number,
+      reservation_type,
+      coach_type,
+      passenger_details,
+    } = req.body;
     const pool = await connectDB();
     client = await getPostgreClient(pool);
+    const adults = passenger_details.filter(
+      (x) => x.passenger_ischild == false
+    );
+    const children = passenger_details.filter(
+      (x) => x.passenger_ischild == true
+    );
 
+    //booking details
+    const result_bookingdata = await insertBookingData(
+      client,
+      train_number,
+      src.toUpperCase(),
+      dest.toUpperCase(),
+      boarding_at.toUpperCase(),
+      doj,
+      adults.length,
+      children.length,
+      reservation_type.toUpperCase(),
+      coach_type.toUpperCase(),
+      mobile_number,
+      passenger_details
+    );
+    //passenger details
+    const result_passengerdata = await insertPassengerData(
+      client,
+      result_bookingdata.rows[0].id,
+      passenger_details
+    );
+    //calculate-fare details
+    const fare_details = await calculatefare(
+      client,
+      result_bookingdata.rows[0],
+      result_passengerdata.rows,
+      adults.length,
+      children.length
+    );
     res.status(200).json({
+      sucess: true,
       status: "ok",
+      bookingdetails: result_bookingdata.rows[0],
+      passenger_details: result_passengerdata.rows,
+      fare_details: fare_details,
     });
+  } catch (err) {
+    console.log(err);
+  } finally {
+    if (client) {
+      await client.release();
+    }
+  }
+});
+//confirm-ticket
+dummyRouter.post("/confirm-ticket", async (req, res) => {
+  let client = null;
+  let result = "";
+  try {
+    const { bookingid } = req.body;
+    const pool = await connectDB();
+    client = await getPostgreClient(pool);
+    const booking_details = await bookTicket(client, bookingid);
+    res.status(200).json({
+      success: true,
+      booking_details,
+    });
+  } catch (err) {
+    if (!err.success) {
+      res.status(200).json({
+        success: false,
+        message: err.message,
+        data: err.data,
+      });
+    } else {
+      res.status(501).json({
+        success: false,
+        message: err.message,
+        data: err.data,
+      });
+    }
   } finally {
     if (client) {
       await client.release();
