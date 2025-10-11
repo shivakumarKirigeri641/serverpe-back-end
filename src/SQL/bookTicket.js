@@ -32,17 +32,20 @@ const bookTicket = async (client, bookingid) => {
       result_bookingdata.rows[0].child_count
     );
     let total_fare =
-      fare_details.total_base_fare +
-      (fare_details.total_base_fare * fare_details.convience_fee_percent) /
-        100 +
-      (fare_details.total_base_fare * fare_details.GST) / 100 +
-      (fare_details.total_base_fare * fare_details.card_charges_percent) / 100;
+      (fare_details.total_base_fare +
+        (fare_details.total_base_fare * fare_details.convience_fee_percent) /
+          100 +
+        (fare_details.total_base_fare * fare_details.GST) / 100 +
+        (fare_details.total_base_fare * fare_details.card_charges_percent) /
+          100) *
+      result_bookingdata.rows[0].adult_count;
     switch (result_bookingdata.rows[0].coach_type) {
       case "SL":
         booked_details = await book_sl_gen(
           client,
           result_bookingdata,
-          result_passengerdata
+          result_passengerdata,
+          fare_details
         );
         break;
       case "1A":
@@ -73,11 +76,12 @@ const bookTicket = async (client, bookingid) => {
     }
     //6. proceed=true,
     result_bookingdata = await client.query(
-      `update bookingdata set proceed_status=$1, booking_status = $2, payment_type=$3, amount_paid=$4 where id=$5 returning *`,
+      `update bookingdata set proceed_status=$1, booking_status = $2, payment_type=$3, amount_paid=$4, updated_amount=$5 where id=$6 returning *`,
       [
         true,
         booked_details.pnr_status,
         "card",
+        total_fare,
         total_fare,
         result_bookingdata.rows[0].id,
       ]

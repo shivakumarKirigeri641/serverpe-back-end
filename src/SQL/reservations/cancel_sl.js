@@ -1,8 +1,14 @@
-const cancel_sl = async (client, passengerdata) => {
+const cancel_sl = async (client, passengerdata, bookingdata) => {
   let updated_passenger_data = null;
   try {
     //booking data
     let updated_passengerdata = null;
+    let cancelled_details = null;
+    //get hours differnece from departure
+    const result_diff_hours = await client.query(
+      `SELECT EXTRACT(EPOCH FROM ((CURRENT_DATE + departure) - (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata'))) / 3600 AS hours_difference FROM schedules  where train_number = $1 and station_code=$2`,
+      [bookingdata.train_number, bookingdata.source_code]
+    );
     switch (passengerdata.seat_status) {
       case "RAC":
         //you are cancelling a rac ticket
@@ -23,7 +29,7 @@ const cancel_sl = async (client, passengerdata) => {
         );
         //update confirmed ticket to cancelled
         updated_passenger_data = await client.query(
-          `update passengerdata set seat_status=$1 where id=$2`,
+          `update passengerdata set seat_status=$1 where id=$2 returning *`,
           ["CAN", passengerdata.id]
         );
         if (0 < resutl_rac_tickets.rows.length) {
@@ -61,7 +67,29 @@ const cancel_sl = async (client, passengerdata) => {
         }
         break;
     }
-    return updated_passenger_data;
+    //insert into cancel deatils
+    const result_cancellation_policy = await client.query(
+      `select *from cancellationpolicy`
+    );
+    let cancellation_charges =
+      passengerdata.individual_base_fare *
+      (result_diff_hours.rows[0].hours_difference < 4
+        ? 1
+        : result_diff_hours.rows[0].hours_difference > 4 &&
+          result_diff_hours.rows[0].hours_difference < 8
+        ? 0.8
+        : result_diff_hours.rows[0].hours_difference > 8 &&
+          result_diff_hours.rows[0].hours_difference < 12
+        ? 0.6
+        : 0.4);
+    cancelled_details = await client.query(
+      `insert into cancellationdata (fkpassengerdata, cancellation_charges) values ($1,$2) returning *`,
+      [passengerdata.id, cancellation_charges]
+    );
+    return {
+      updated_passenger_data: updated_passenger_data.rows[0],
+      cancelled_details: cancelled_details.rows[0],
+    };
   } catch (err) {
     throw err;
   }

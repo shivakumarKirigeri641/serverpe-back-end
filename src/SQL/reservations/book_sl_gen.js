@@ -2,7 +2,8 @@ const getCoachSeatAndBerth = require("../../utils/getCoachSeatAndBerth");
 const book_sl_gen = async (
   client,
   result_bookingdata,
-  result_passengerdata
+  result_passengerdata,
+  fare_details
 ) => {
   let pnr_status = "CNF";
   let passenger_details = [];
@@ -21,7 +22,7 @@ const book_sl_gen = async (
       if (0 < result_seatsondate.rows[0].seat_count_sl_gen) {
         let seat_details = getCoachSeatAndBerth(gen_count, "SL");
         const temp = await client.query(
-          `update passengerdata set seat_id=$1, seat_status=$2, message=$3, fkseatsondate=$4, current_seat_status=$5, updated_seat_status=$6, initial_seat_allocated=$7 where id=$8 returning *`,
+          `update passengerdata set seat_id=$1, seat_status=$2, message=$3, fkseatsondate=$4, current_seat_status=$5, updated_seat_status=$6, initial_seat_allocated=$7, individual_base_fare=$8 where id=$9 returning *`,
           [
             gen_count,
             seat_details.coach +
@@ -38,6 +39,7 @@ const book_sl_gen = async (
               seat_details.seatPosition +
               "/" +
               seat_details.berthType,
+            fare_details.total_base_fare,
             result_passengerdata.rows[i].id,
           ]
         );
@@ -66,13 +68,14 @@ const book_sl_gen = async (
         //reduce rac count from seatsondate
         let rac_count = Number(result_rac_count_check.rows[0].rac_count) + 1;
         const temp = await client.query(
-          `update passengerdata set seat_status=$1, message=$2, current_seat_status=$3, updated_seat_status=$4, initial_seat_allocated=$5 where id=$6 returning *`,
+          `update passengerdata set seat_status=$1, message=$2, current_seat_status=$3, updated_seat_status=$4, initial_seat_allocated=$5, individual_base_fare=$6 where id=$7 returning *`,
           [
             pnr_status,
             "Final seat status will be available after chart preparation",
             rac_count,
             rac_count,
             pnr_status,
+            fare_details.total_base_fare,
             result_passengerdata.rows[i].id,
           ]
         );
@@ -102,13 +105,14 @@ const book_sl_gen = async (
         //reduce rac count from seatsondate
         let wtl_count = Number(result_wtl_count_check.rows[0].wtl_count) + 1;
         const temp = await client.query(
-          `update passengerdata set seat_status=$1, message=$2, current_seat_status=$3, updated_seat_status=$4, initial_seat_allocated=$5 where id=$6 returning *`,
+          `update passengerdata set seat_status=$1, message=$2, current_seat_status=$3, updated_seat_status=$4, initial_seat_allocated=$5, individual_base_fare=$6 where id=$7 returning *`,
           [
             pnr_status,
             "Final seat status will be available after chart preparation",
             wtl_count,
             wtl_count,
             pnr_status,
+            fare_details.total_base_fare,
             result_passengerdata.rows[i].id,
           ]
         );
