@@ -1,4 +1,5 @@
 const express = require("express");
+const getSchedules = require("../SQL/fetches/getSchedules");
 const getBerthTypeEC = require("../utils/getSeatTypeEC");
 const getTotalSeats = require("../utils/getTotalSeats");
 const getBerth = require("../utils/getBerth");
@@ -1220,6 +1221,45 @@ dummyRouter.post("/cancel-ticket", async (req, res) => {
     res.status(200).json({
       success: true,
       booking_details,
+    });
+  } catch (err) {
+    if (200 === err.status) {
+      res.status(200).json({
+        success: false,
+        message: err.message,
+        data: err.data,
+      });
+    } else {
+      res.status(501).json({
+        success: false,
+        message: err.message,
+        data: err.data,
+      });
+    }
+  } finally {
+    if (client) {
+      await client.release();
+    }
+  }
+});
+
+//train_schedules
+dummyRouter.post("/train-schedule", async (req, res) => {
+  let client = null;
+  let result = "";
+  try {
+    const { train_number, source_code, destination_code } = req.body;
+    const pool = await connectDB();
+    client = await getPostgreClient(pool);
+    let reusult_train_schedule = await getSchedules(
+      client,
+      train_number,
+      source_code,
+      destination_code
+    );
+    res.status(200).json({
+      success: true,
+      reusult_train_schedule,
     });
   } catch (err) {
     if (200 === err.status) {
