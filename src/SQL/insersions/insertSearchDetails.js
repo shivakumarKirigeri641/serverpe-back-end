@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const convert_timeStamp_without_timezoneToIndian = require("../utils/convert_timeStamp_without_timezoneToIndian");
+const convert_timeStamp_without_timezoneToIndian = require("../../utils/convert_timeStamp_without_timezoneToIndian");
 const insertSearchDetails = async (
   client,
   req,

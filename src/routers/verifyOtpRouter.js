@@ -11,9 +11,9 @@ const {
   insertOtpSessions,
   verifyEnteredOtp,
 } = require("../utils/dependencies");
-const insertToken = require("../SQL/insertToken");
+const insertToken = require("../SQL/insersions/insertToken");
 const checkAndinsertLogin = require("../SQL/checkAndinsertLogin");
-const insertLoginTracking = require("../SQL/insertLoginTracking");
+const insertLoginTracking = require("../SQL/insersions/insertLoginTracking");
 const encryptApiKey = require("../utils/encryptApiKey");
 const deleteTokenSessionOnMobile = require("../SQL/deleteTokenSessionOnMobile");
 verifyOtpRouter.post(

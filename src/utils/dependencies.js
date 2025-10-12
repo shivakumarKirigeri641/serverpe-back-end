@@ -7,7 +7,7 @@ const getRandomOtp = require("../utils/getRandomOtp");
 const sendOTPSMS = require("../utils/sendOTPSMS");
 const sendOtpRouter = express.Router();
 require("dotenv").config();
-const insertOtpSessions = require("../SQL/insertOtpSessions");
+const insertOtpSessions = require("../SQL/insersions/insertOtpSessions");
 const { connectDB } = require("../database/connectDB");
 module.exports = {
   express,

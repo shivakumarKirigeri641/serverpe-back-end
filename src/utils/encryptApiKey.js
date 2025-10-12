@@ -15,7 +15,6 @@ const encryptApiKey = (mobile_number) => {
 
   // Hash the decrypted API key to store for validation
   const apiKeyHash = crypto.createHash("sha256").update(apiKey).digest("hex");
-  console.log(apiKeyHash);
   return { encryptedApiKey, apiKeyHash }; // apiKey is optional, return for demo
 };
 module.exports = encryptApiKey;
