@@ -1,6 +1,13 @@
 const book_sl_gen = require("./reservations/book_sl_gen");
+const book_sl_ttl = require("./reservations/book_sl_ttl");
+const book_sl_ptl = require("./reservations/book_sl_ptl");
+const book_sl_ladies = require("./reservations/book_sl_ladies");
+const book_sl_senior = require("./reservations/book_sl_senior");
+const book_sl_duty = require("./reservations/book_sl_duty");
+const book_sl_pwd = require("./reservations/book_sl_pwd");
 const generatePNR = require("../utils/generatePNR");
 const calculatefare = require("../SQL/calculatefare");
+const book_sl_seniors = require("./reservations/book_sl_senior");
 const bookTicket = async (client, bookingid) => {
   let booked_details = null;
   let result_bookingdata = await client.query(
@@ -41,12 +48,64 @@ const bookTicket = async (client, bookingid) => {
       result_bookingdata.rows[0].adult_count;
     switch (result_bookingdata.rows[0].coach_type) {
       case "SL":
-        booked_details = await book_sl_gen(
-          client,
-          result_bookingdata,
-          result_passengerdata,
-          fare_details
-        );
+        switch (result_bookingdata.rows[0].reservation_type) {
+          case "GEN":
+            booked_details = await book_sl_gen(
+              client,
+              result_bookingdata,
+              result_passengerdata,
+              fare_details
+            );
+            break;
+          case "TTL":
+            booked_details = await book_sl_ttl(
+              client,
+              result_bookingdata,
+              result_passengerdata,
+              fare_details
+            );
+            break;
+          case "PTL":
+            booked_details = await book_sl_ptl(
+              client,
+              result_bookingdata,
+              result_passengerdata,
+              fare_details
+            );
+            break;
+          case "LADIES":
+            booked_details = await book_sl_ladies(
+              client,
+              result_bookingdata,
+              result_passengerdata,
+              fare_details
+            );
+            break;
+          case "DUTY":
+            booked_details = await book_sl_duty(
+              client,
+              result_bookingdata,
+              result_passengerdata,
+              fare_details
+            );
+            break;
+          case "PWD":
+            booked_details = await book_sl_pwd(
+              client,
+              result_bookingdata,
+              result_passengerdata,
+              fare_details
+            );
+            break;
+          case "SENIOR":
+            booked_details = await book_sl_seniors(
+              client,
+              result_bookingdata,
+              result_passengerdata,
+              fare_details
+            );
+            break;
+        }
         break;
       case "1A":
         break;

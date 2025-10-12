@@ -35,8 +35,18 @@ s2.station_code = $3`,
             sum = Math.ceil(sum);
             break;
           case "TTL":
+            sum =
+              adultcount *
+              result_seatsondate.rows[0].seat_price_sl_ttl *
+              result_schedule.rows[0].distance;
+            sum = Math.ceil(sum);
             break;
           case "PTL":
+            sum =
+              adultcount *
+              result_seatsondate.rows[0].seat_price_sl_ptl *
+              result_schedule.rows[0].distance;
+            sum = Math.ceil(sum);
             break;
           case "LADIES":
             break;

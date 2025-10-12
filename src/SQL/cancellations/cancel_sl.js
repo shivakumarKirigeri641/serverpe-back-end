@@ -1,5 +1,6 @@
 const cancel_sl = async (client, passengerdata, bookingdata) => {
   let updated_passenger_data = null;
+  let resutl_wtl_tickets = null;
   try {
     //booking data
     let updated_passengerdata = null;
@@ -13,7 +14,7 @@ const cancel_sl = async (client, passengerdata, bookingdata) => {
       case "RAC":
         //you are cancelling a rac ticket
         //firsrt fetch 1st wtl ticket
-        let resutl_wtl_tickets = await client.query(
+        resutl_wtl_tickets = await client.query(
           "select *from passengerdata where seat_status=$1 order by updated_seat_status asc",
           ["WTL"]
         );
@@ -117,8 +118,12 @@ const cancel_sl = async (client, passengerdata, bookingdata) => {
     const result_cancellation_policy = await client.query(
       `select *from cancellationpolicy`
     );
+    console.log(bookingdata);
     let cancellation_charges =
-      passengerdata.seat_status.toString() === "WTL"
+      bookingdata.reservation_type.toString() === "TTL" ||
+      bookingdata.reservation_type.toString() === "PTL"
+        ? passengerdata.individual_base_fare
+        : passengerdata.seat_status.toString() === "WTL"
         ? 0
         : passengerdata.individual_base_fare -
           passengerdata.individual_base_fare *
