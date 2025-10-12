@@ -1,13 +1,13 @@
-const book_sl_gen = require("./reservations/book_sl_gen");
-const book_sl_ttl = require("./reservations/book_sl_ttl");
-const book_sl_ptl = require("./reservations/book_sl_ptl");
-const book_sl_ladies = require("./reservations/book_sl_ladies");
-const book_sl_senior = require("./reservations/book_sl_senior");
-const book_sl_duty = require("./reservations/book_sl_duty");
-const book_sl_pwd = require("./reservations/book_sl_pwd");
+const book_sl_gen = require("./reservations/SL/book_sl_gen");
+const book_sl_ttl = require("./reservations/SL/book_sl_ttl");
+const book_sl_ptl = require("./reservations/SL/book_sl_ptl");
+const book_sl_ladies = require("./reservations/SL/book_sl_ladies");
+const book_sl_senior = require("./reservations/SL/book_sl_senior");
+const book_sl_duty = require("./reservations/SL/book_sl_duty");
+const book_sl_pwd = require("./reservations/SL/book_sl_pwd");
 const generatePNR = require("../utils/generatePNR");
 const calculatefare = require("../SQL/calculatefare");
-const book_sl_seniors = require("./reservations/book_sl_senior");
+const book_sl_seniors = require("./reservations/SL/book_sl_senior");
 const bookTicket = async (client, bookingid) => {
   let booked_details = null;
   let result_bookingdata = await client.query(

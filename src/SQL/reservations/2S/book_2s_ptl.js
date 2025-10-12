@@ -1,5 +1,5 @@
-const getCoachSeatAndBerth = require("../../utils/getCoachSeatAndBerth");
-const book_sl_ptl = async (
+const getCoachSeatAndBerth = require("../../../utils/getCoachSeatAndBerth");
+const book_2s_ptl = async (
   client,
   result_bookingdata,
   result_passengerdata,
@@ -15,12 +15,12 @@ const book_sl_ptl = async (
         result_bookingdata.rows[0].date_of_journey,
       ]
     );
-    let seatsondate_raccount = result_seatsondate.rows[0].seat_count_sl_rac;
+    let seatsondate_ra2sount = result_seatsondate.rows[0].seat_count_2s_rac;
     for (let i = 0; i < result_passengerdata.rows.length; i++) {
-      let gen_count = result_seatsondate.rows[0].seat_count_sl_ptl;
+      let gen_count = result_seatsondate.rows[0].seat_count_2s_ptl;
       //BOOK GENERAL TICKET IF AVAILABLE
-      if (0 < result_seatsondate.rows[0].seat_count_sl_ptl) {
-        let seat_details = getCoachSeatAndBerth(gen_count, "SL");
+      if (0 < result_seatsondate.rows[0].seat_count_2s_ptl) {
+        let seat_details = getCoachSeatAndBerth(gen_count, "2s");
         const temp = await client.query(
           `update passengerdata set seat_id=$1, seat_status=$2, message=$3, fkseatsondate=$4, current_seat_status=$5, updated_seat_status=$6, initial_seat_allocated=$7, individual_base_fare=$8 where id=$9 returning *`,
           [
@@ -46,12 +46,12 @@ const book_sl_ptl = async (
         passenger_details.push(temp.rows[0]);
         gen_count--;
         result_seatsondate = await client.query(
-          `update seatsondate set seat_count_sl_ptl=$1 where id=$2 returning *`,
+          `update seatsondate set seat_count_2s_ptl=$1 where id=$2 returning *`,
           [gen_count, result_seatsondate.rows[0].id]
         );
       }
       //BOOK RAC
-      else if (0 < result_seatsondate.rows[0].seat_count_sl_rac) {
+      else if (0 < result_seatsondate.rows[0].seat_count_2s_rac) {
         pnr_status = "RAC";
         //first take how many RAC are present in passenger_data for selected train, date, coach_type, reservation_type
         const result_rac_count_check = await client.query(
@@ -80,10 +80,10 @@ const book_sl_ptl = async (
           ]
         );
         passenger_details.push(temp.rows[0]);
-        seatsondate_raccount--;
+        seatsondate_ra2sount--;
         result_seatsondate = await client.query(
-          `update seatsondate set seat_count_sl_rac=$1 where id=$2 returning *`,
-          [seatsondate_raccount, result_seatsondate.rows[0].id]
+          `update seatsondate set seat_count_2s_rac=$1 where id=$2 returning *`,
+          [seatsondate_ra2sount, result_seatsondate.rows[0].id]
         );
         //rac
       }
@@ -124,4 +124,4 @@ const book_sl_ptl = async (
     throw err;
   }
 };
-module.exports = book_sl_ptl;
+module.exports = book_2s_ptl;

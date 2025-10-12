@@ -1,6 +1,7 @@
 const get1ASeatDetails = require("./get1ASeatDetails");
 const getFCSeatDetails = require("./getFCSeatDetails");
 const getCoachSeatAndBerth = (seatid, coach_type) => {
+  coach_type = coach_type.toUpperCase();
   const coachDetails = {
     // Sleeper
     SL: {

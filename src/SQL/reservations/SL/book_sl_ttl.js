@@ -1,5 +1,5 @@
-const getCoachSeatAndBerth = require("../../utils/getCoachSeatAndBerth");
-const book_sl_duty = async (
+const getCoachSeatAndBerth = require("../../../utils/getCoachSeatAndBerth");
+const book_sl_ttl = async (
   client,
   result_bookingdata,
   result_passengerdata,
@@ -17,9 +17,9 @@ const book_sl_duty = async (
     );
     let seatsondate_raccount = result_seatsondate.rows[0].seat_count_sl_rac;
     for (let i = 0; i < result_passengerdata.rows.length; i++) {
-      let gen_count = result_seatsondate.rows[0].seat_count_sl_duty;
+      let gen_count = result_seatsondate.rows[0].seat_count_sl_ttl;
       //BOOK GENERAL TICKET IF AVAILABLE
-      if (0 < result_seatsondate.rows[0].seat_count_sl_duty) {
+      if (0 < result_seatsondate.rows[0].seat_count_sl_ttl) {
         let seat_details = getCoachSeatAndBerth(gen_count, "SL");
         const temp = await client.query(
           `update passengerdata set seat_id=$1, seat_status=$2, message=$3, fkseatsondate=$4, current_seat_status=$5, updated_seat_status=$6, initial_seat_allocated=$7, individual_base_fare=$8 where id=$9 returning *`,
@@ -46,7 +46,7 @@ const book_sl_duty = async (
         passenger_details.push(temp.rows[0]);
         gen_count--;
         result_seatsondate = await client.query(
-          `update seatsondate set seat_count_sl_duty=$1 where id=$2 returning *`,
+          `update seatsondate set seat_count_sl_ttl=$1 where id=$2 returning *`,
           [gen_count, result_seatsondate.rows[0].id]
         );
       }
@@ -124,4 +124,4 @@ const book_sl_duty = async (
     throw err;
   }
 };
-module.exports = book_sl_duty;
+module.exports = book_sl_ttl;
