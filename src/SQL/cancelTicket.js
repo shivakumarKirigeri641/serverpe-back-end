@@ -1,4 +1,4 @@
-const cancel_sl = require("./reservations/cancel_sl");
+const cancel_sl = require("./cancellations/cancel_sl");
 const cancelTicket = async (client, pnr, passengerids) => {
   let updated_ticket_data = null;
   let passenger_data = [];

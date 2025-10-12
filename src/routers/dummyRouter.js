@@ -765,7 +765,7 @@ dummyRouter.post("/teste3", async (req, res) => {
         : null;
       if (total_seats_sl) {
         seats_count_sl_gen = Math.floor((total_seats_sl * 60) / 100);
-        seats_count_sl_rac = Math.floor((total_seats_sl * 10) / 100);
+        seats_count_sl_rac = Math.floor((total_seats_sl * 10) / 100) * 2;
         seats_count_sl_ladies = Math.floor((total_seats_sl * 2) / 100);
         seats_count_sl_pwd = Math.floor((total_seats_sl * 2) / 100);
         seats_count_sl_senior = Math.floor((total_seats_sl * 2) / 100);
@@ -788,7 +788,7 @@ dummyRouter.post("/teste3", async (req, res) => {
         : null;
       if (total_seats_2a) {
         seats_count_2a_gen = Math.floor((total_seats_2a * 70) / 100);
-        seats_count_2a_rac = Math.floor((total_seats_2a * 10) / 100);
+        seats_count_2a_rac = Math.floor((total_seats_2a * 10) / 100) * 2;
         seats_count_2a_ttl = Math.floor((total_seats_2a * 10) / 100);
         seats_count_2a_ptl = Math.floor((total_seats_2a * 10) / 100);
         seats_price_2a_gen = 1.12;
@@ -800,7 +800,7 @@ dummyRouter.post("/teste3", async (req, res) => {
         : null;
       if (total_seats_3a) {
         seats_count_3a_gen = Math.floor((total_seats_3a * 60) / 100);
-        seats_count_3a_rac = Math.floor((total_seats_3a * 10) / 100);
+        seats_count_3a_rac = Math.floor((total_seats_3a * 10) / 100) * 2;
         seats_count_3a_ladies = Math.floor((total_seats_3a * 2) / 100);
         seats_count_3a_pwd = Math.floor((total_seats_3a * 2) / 100);
         seats_count_3a_senior = Math.floor((total_seats_3a * 2) / 100);
