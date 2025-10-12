@@ -47,10 +47,9 @@ const cancelTicket = async (client, pnr, passengerids) => {
           );
           //update in bookingdata of cancellation charges;
           result_bookingdata = await client.query(
-            //test this?????????????????????????
             "update bookingdata set updated_amount =$1 where id=$2 returning *",
             [
-              result_bookingdata.rows[0].amount_paid -
+              result_bookingdata.rows[0].updated_amount -
                 temp.cancelled_details.cancellation_charges,
               result_bookingdata.rows[0].id,
             ]
@@ -97,13 +96,14 @@ const cancelTicket = async (client, pnr, passengerids) => {
       Number(result_bookingdata.rows[0].adult_count) ===
       Number(result_can_count.rows[0].can_count)
     ) {
-      //not coming inside if???
-      console.log("testtttt");
       result_ticketdata = await client.query(
         "update ticketdata set pnr_status=$1 where pnr_number=$2 returning *",
         ["CAN", pnr]
       );
-      console.log(result_ticketdata.rows[0]);
+      result_bookingdata = await client.query(
+        "update bookingdata set booking_status=$1 where id=$2 returning *",
+        ["CAN", result_bookingdata.rows[0].id]
+      );
     }
     updated_ticket_data = {
       booking_details: result_bookingdata.rows[0],

@@ -72,16 +72,17 @@ const cancel_sl = async (client, passengerdata, bookingdata) => {
       `select *from cancellationpolicy`
     );
     let cancellation_charges =
+      passengerdata.individual_base_fare -
       passengerdata.individual_base_fare *
-      (result_diff_hours.rows[0].hours_difference < 4
-        ? 1
-        : result_diff_hours.rows[0].hours_difference > 4 &&
-          result_diff_hours.rows[0].hours_difference < 8
-        ? 0.8
-        : result_diff_hours.rows[0].hours_difference > 8 &&
-          result_diff_hours.rows[0].hours_difference < 12
-        ? 0.6
-        : 0.4);
+        (result_diff_hours.rows[0].hours_difference < 4
+          ? result_cancellation_policy.rows[0].cancel_4 / 100
+          : result_diff_hours.rows[0].hours_difference > 4 &&
+            result_diff_hours.rows[0].hours_difference < 8
+          ? result_cancellation_policy.rows[0].cancel_4_8 / 100
+          : result_diff_hours.rows[0].hours_difference > 8 &&
+            result_diff_hours.rows[0].hours_difference < 12
+          ? result_cancellation_policy.rows[0].cancel_8_12 / 100
+          : result_cancellation_policy.rows[0].cancel_12 / 100);
     cancelled_details = await client.query(
       `insert into cancellationdata (fkpassengerdata, cancellation_charges) values ($1,$2) returning *`,
       [passengerdata.id, cancellation_charges]
