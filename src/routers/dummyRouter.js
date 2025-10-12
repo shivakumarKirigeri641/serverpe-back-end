@@ -1222,7 +1222,7 @@ dummyRouter.post("/cancel-ticket", async (req, res) => {
       booking_details,
     });
   } catch (err) {
-    if (!err.success) {
+    if (200 === err.status) {
       res.status(200).json({
         success: false,
         message: err.message,
