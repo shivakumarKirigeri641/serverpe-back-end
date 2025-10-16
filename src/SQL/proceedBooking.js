@@ -1,14 +1,11 @@
 const insertbookingdata_sl = require("./insertion/insertbookingdata_sl");
 const proceedBooking = async (client, booking_details) => {
-  let search_train_details = null;
+  let booking_summary = null;
   try {
     await client.query("BEGIN");
     switch (booking_details.coach_type) {
       case "SL":
-        search_train_details = await insertbookingdata_sl(
-          client,
-          booking_details
-        );
+        booking_summary = await insertbookingdata_sl(client, booking_details);
         break;
       case "1A":
         break;
@@ -37,7 +34,7 @@ const proceedBooking = async (client, booking_details) => {
         };
     }
     await client.query("COMMIT");
-    return search_train_details;
+    return booking_summary;
   } catch (err) {
     if (client) {
       await client.query("ROLLBACK");

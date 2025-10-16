@@ -21,7 +21,7 @@ dummyRouter.post("/search-trains", async (req, res) => {
     );
     res
       .status(200)
-      .json({ status: 200, success: true, data: search_train_details });
+      .json({ status: 200, success: true, data: search_train_details.rows });
   } catch (err) {
     res
       .status(err.status)
@@ -32,16 +32,14 @@ dummyRouter.post("/search-trains", async (req, res) => {
 dummyRouter.post("/proceed-booking", async (req, res) => {
   const pool = await connectDB();
   client = await getPostgreClient(pool);
-
+  let booking_summary = null;
   try {
     //validation later
-    const search_train_details = await proceedBooking(client, req.body);
-    res
-      .status(200)
-      .json({ status: 200, success: true, data: search_train_details });
+    booking_summary = await proceedBooking(client, req.body);
+    res.status(200).json({ status: 200, success: true, data: booking_summary });
   } catch (err) {
     res
-      .status(err.status)
+      .status(401)
       .json({ status: err.status, success: false, data: err.message });
   }
 });

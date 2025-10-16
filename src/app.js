@@ -17,7 +17,7 @@ app.use("/", dummyRouter);
 connectDB()
   .then(() => {
     console.log("Database connected successfully.");
-    app.listen(8888, () => {
+    app.listen(8888, "0.0.0.0", () => {
       console.log("Server is listening now.");
     });
   })
