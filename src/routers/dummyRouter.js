@@ -19,9 +19,21 @@ dummyRouter.post("/search-trains", async (req, res) => {
       destination_code.toUpperCase(),
       doj
     );
-    res
-      .status(200)
-      .json({ status: 200, success: true, data: search_train_details.rows });
+    if (search_train_details.rows.length === 0) {
+      res.status(200).json({
+        status: 200,
+        success: true,
+        message: "No trains found!",
+        data: {},
+      });
+    } else {
+      res.status(200).json({
+        status: 200,
+        success: true,
+        message: "Trains fetch successfull",
+        data: search_train_details.rows,
+      });
+    }
   } catch (err) {
     res
       .status(err.status)

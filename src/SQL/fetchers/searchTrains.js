@@ -1,8 +1,17 @@
+const checkForValidDate = require("../../utils/checkForValidDate");
 const convertSearchTrainsToJson = require("../../utils/convertSearchTrainsToJson");
 
 const searchTrains = async (client, source_code, destination_code, doj) => {
   let search_train_details = null;
   try {
+    //check date
+    if (!checkForValidDate(doj)) {
+      throw {
+        status: 400,
+        message: `Invalid date selected!`,
+        data: {},
+      };
+    }
     //src exists
     const result_src = await client.query(
       `select id from stations where code = $1`,
@@ -11,7 +20,7 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
     if (0 === result_src.rows.length) {
       throw {
         status: 400,
-        message: `Source ${search_details.source_code} not found!`,
+        message: `Source ${source_code} not found!`,
         data: {},
       };
     }
@@ -23,7 +32,7 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
     if (0 === result_dest.rows.length) {
       throw {
         status: 400,
-        message: `Source ${search_details.destination_code} not found!`,
+        message: `Destination ${destination_code} not found!`,
         data: {},
       };
     }
