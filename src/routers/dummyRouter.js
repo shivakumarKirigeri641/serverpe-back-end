@@ -61,4 +61,12 @@ dummyRouter.post("/confirm-ticket", async (req, res) => {
   client = await getPostgreClient(pool);
   res.send("test");
 });
+
+//test
+dummyRouter.post("/test", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+
+  res.send("test");
+});
 module.exports = dummyRouter;

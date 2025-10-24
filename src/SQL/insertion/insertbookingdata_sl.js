@@ -1,6 +1,7 @@
 const insertbookingdata_sl = async (client, booking_details) => {
   let booked_details = null;
   let passenger_details = [];
+  let search_details = {};
   try {
     //check train
     const result_train_number = await client.query(
@@ -53,12 +54,12 @@ const insertbookingdata_sl = async (client, booking_details) => {
     //dest exists
     const result_dest = await client.query(
       `select id from stations where code = $1`,
-      [booking_details.destination_code]
+      [booking_details.destination_code.toUpperCase()]
     );
     if (0 === result_dest.rows.length) {
       throw {
         status: 400,
-        message: `Desination ${search_details.destination_code} not found!`,
+        message: `Destination ${booking_details.destination_code} not found!`,
         data: {},
       };
     }
@@ -70,7 +71,7 @@ const insertbookingdata_sl = async (client, booking_details) => {
     if (0 === result_brdingat.rows.length) {
       throw {
         status: 400,
-        message: `Boarding point ${search_details.boarding_at} not found!`,
+        message: `Boarding point ${booking_details.boarding_at} not found!`,
         data: {},
       };
     }

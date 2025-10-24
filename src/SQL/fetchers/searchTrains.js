@@ -7,7 +7,8 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
     //check date
     if (!checkForValidDate(doj)) {
       throw {
-        status: 400,
+        status: 200,
+        success: false,
         message: `Invalid date selected!`,
         data: {},
       };
@@ -19,7 +20,8 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
     );
     if (0 === result_src.rows.length) {
       throw {
-        status: 400,
+        status: 200,
+        success: false,
         message: `Source ${source_code} not found!`,
         data: {},
       };
@@ -31,7 +33,8 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
     );
     if (0 === result_dest.rows.length) {
       throw {
-        status: 400,
+        status: 200,
+        success: false,
         message: `Destination ${destination_code} not found!`,
         data: {},
       };
@@ -39,151 +42,348 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
     search_train_details = await client.query(
       `WITH params AS (
     SELECT 
-        $3::date AS journey_date,       -- user-selected date
-        $1::text AS source_code,              -- source station
-        $2::text AS destination_code,         -- destination station
+        $3::date AS journey_date,
+        $1::text AS source_code,
+        $2::text AS destination_code,
+        NULL::text AS coach_type,         -- NULL = all coaches, else specify 'SL', '3A', etc.
+        NULL::text AS reservation_type,   -- NULL = default 'gen', else specify 'gen', 'ttl', 'ptl', etc.
         CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' AS now_ist
+),
+trains_filtered AS (
+    SELECT t.*
+    FROM trains t
+    JOIN schedules s1 ON s1.train_number = t.train_number AND s1.station_code = (SELECT source_code FROM params)
+	JOIN coaches c on c.train_number = t.train_number
+    JOIN schedules s2 ON s2.train_number = t.train_number AND s2.station_code = (SELECT destination_code FROM params)
+    WHERE s1.station_sequence < s2.station_sequence
+      AND (
+          (EXTRACT(DOW FROM (SELECT journey_date FROM params)) = 0 AND t.train_runs_on_sun = 'Y') OR
+          (EXTRACT(DOW FROM (SELECT journey_date FROM params)) = 1 AND t.train_runs_on_mon = 'Y') OR
+          (EXTRACT(DOW FROM (SELECT journey_date FROM params)) = 2 AND t.train_runs_on_tue = 'Y') OR
+          (EXTRACT(DOW FROM (SELECT journey_date FROM params)) = 3 AND t.train_runs_on_wed = 'Y') OR
+          (EXTRACT(DOW FROM (SELECT journey_date FROM params)) = 4 AND t.train_runs_on_thu = 'Y') OR
+          (EXTRACT(DOW FROM (SELECT journey_date FROM params)) = 5 AND t.train_runs_on_fri = 'Y') OR
+          (EXTRACT(DOW FROM (SELECT journey_date FROM params)) = 6 AND t.train_runs_on_sat = 'Y')
+      )
+      AND (
+          (SELECT journey_date FROM params) > CURRENT_DATE OR
+          ((SELECT journey_date FROM params) = CURRENT_DATE AND ((SELECT now_ist FROM params) + INTERVAL '4 hour') < (s1.departure + (SELECT journey_date FROM params)::timestamp))
+      )
+      AND NOT (
+          c.a_1 = 'N' AND c.a_2 = 'N' AND c.a_3 = 'N' AND c.sl = 'N' AND c.fc = 'N' AND c._2s = 'N' AND
+          c.cc = 'N' AND c.ec = 'N' AND c.e_3 = 'N' AND c.ea = 'N' AND c.gen = 'Y'
+      )
+),
+seat_summary AS (
+    SELECT t.train_number,
+        -- SL
+        sl.gen_count  AS seat_count_gen_sl,
+        sl.rac_count  AS seat_count_rac_sl,
+        sl.rac_share_count AS seat_count_rac_share_sl,
+        sl.ttl_count AS seat_count_ttl_sl,
+        sl.ptl_count AS seat_count_ptl_sl,
+        sl.ladies_count AS seat_count_ladies_sl,
+        sl.pwd_count AS seat_count_pwd_sl,
+        sl.duty_count AS seat_count_duty_sl,
+        sl.senior_count AS seat_count_senior_sl,
+
+        -- 3A
+        a3.gen_count  AS seat_count_gen_3a,
+        a3.rac_count  AS seat_count_rac_3a,
+        a3.rac_share_count AS seat_count_rac_share_3a,
+        a3.ttl_count AS seat_count_ttl_3a,
+        a3.ptl_count AS seat_count_ptl_3a,
+        a3.ladies_count AS seat_count_ladies_3a,
+        a3.pwd_count AS seat_count_pwd_3a,
+        a3.duty_count AS seat_count_duty_3a,
+        a3.senior_count AS seat_count_senior_3a,
+
+        -- 2A
+        a2.gen_count AS seat_count_gen_2a,
+        a2.rac_count AS seat_count_rac_2a,
+        a2.ttl_count AS seat_count_ttl_2a,
+        a2.ptl_count AS seat_count_ptl_2a,
+		null as seat_count_ladies_2a,
+		null as seat_count_pwd_2a,
+		null as seat_count_senior_2a,
+
+        -- 1A
+        a1.gen_count AS seat_count_gen_1a,
+		null  AS seat_count_rac_1a,
+        null  AS seat_count_rac_share_1a,
+        null  AS seat_count_ttl_1a,
+        null  AS seat_count_ptl_1a,
+        null  AS seat_count_ladies_1a,
+        null  AS seat_count_pwd_1a,
+        null  AS seat_count_duty_1a,
+        null  AS seat_count_senior_1a,
+
+        -- CC
+        cc.gen_count AS seat_count_gen_cc,
+        cc.ttl_count AS seat_count_ttl_cc,
+        cc.ptl_count AS seat_count_ptl_cc,
+		null AS seat_count_rac_cc,
+		null AS seat_count_rac_shared_cc,
+		null as seat_count_ladies_cc,		
+        null AS seat_count_pwd_cc,
+        null AS seat_count_duty_cc,
+        null seat_count_senior_cc,
+
+        -- EC
+        ec.gen_count AS seat_count_gen_ec,
+        ec.ttl_count AS seat_count_ttl_ec,
+        ec.ptl_count AS seat_count_ptl_ec,
+		null AS seat_count_rac_ec,
+		null AS seat_count_rac_shared_ec,		
+		null AS seat_count_ladies_ec,
+		null AS seat_count_pwd_ec,
+		null AS seat_count_senior_ec,
+
+        -- EA
+        ea.gen_count AS seat_count_gen_ea,
+        ea.ttl_count AS seat_count_ttl_ea,
+        ea.ptl_count AS seat_count_ptl_ea,
+		null AS seat_count_ladies_ea,
+		null AS seat_count_pwd_ea,
+		null AS seat_count_senior_ea,
+
+        -- E3
+        e3.gen_count AS seat_count_gen_e3,
+        e3.ttl_count AS seat_count_ttl_e3,
+        e3.ptl_count AS seat_count_ptl_e3,
+		null as seat_count_ladies_e3,
+		null as seat_count_pwd_e3,
+		null as seat_count_senior_e3,
+
+        -- FC
+        fc.gen_count AS seat_count_gen_fc,
+		null as seat_count_ttl_fc,
+		null as seat_count_ptl_fc,
+		null as seat_count_ladies_fc,
+		null as seat_count_pwd_fc,
+		null as seat_count_senior_fc,
+		null as seat_count_duty_fc,
+
+        -- 2S
+        s2.gen_count AS seat_count_gen_2s,
+        s2.ttl_count AS seat_count_ttl_2s,
+        s2.ptl_count AS seat_count_ptl_2s,
+		null as seat_count_ladies_2s,
+		null as seat_count_pwd_2s,
+		null as seat_count_senior_2s
+
+    FROM trains_filtered t
+    LEFT JOIN (
+        SELECT train_number,
+               SUM(gen_count) AS gen_count,
+               SUM(rac_count) AS rac_count,
+               SUM(rac_share_count) AS rac_share_count,
+               SUM(ttl_count) AS ttl_count,
+               SUM(ptl_count) AS ptl_count,
+               SUM(ladies_count) AS ladies_count,
+               SUM(pwd_count) AS pwd_count,
+               SUM(duty_count) AS duty_count,
+               SUM(senior_count) AS senior_count
+        FROM seatsondate_sl
+        WHERE date_of_journey = (SELECT journey_date FROM params)
+        GROUP BY train_number
+    ) sl ON sl.train_number = t.train_number
+    LEFT JOIN (
+        SELECT train_number,
+               SUM(gen_count) AS gen_count,
+               SUM(rac_count) AS rac_count,
+               SUM(rac_share_count) AS rac_share_count,
+               SUM(ttl_count) AS ttl_count,
+               SUM(ptl_count) AS ptl_count,
+               SUM(ladies_count) AS ladies_count,
+               SUM(pwd_count) AS pwd_count,
+               SUM(duty_count) AS duty_count,
+               SUM(senior_count) AS senior_count
+        FROM seatsondate_3a
+        WHERE date_of_journey = (SELECT journey_date FROM params)
+        GROUP BY train_number
+    ) a3 ON a3.train_number = t.train_number
+    LEFT JOIN (
+        SELECT train_number,
+               SUM(gen_count) AS gen_count,
+               SUM(rac_count) AS rac_count,
+               SUM(ttl_count) AS ttl_count,
+               SUM(ptl_count) AS ptl_count
+        FROM seatsondate_2a
+        WHERE date_of_journey = (SELECT journey_date FROM params)
+        GROUP BY train_number
+    ) a2 ON a2.train_number = t.train_number
+    LEFT JOIN (
+        SELECT train_number,
+               SUM(gen_count) AS gen_count
+        FROM seatsondate_1a
+        WHERE date_of_journey = (SELECT journey_date FROM params)
+        GROUP BY train_number
+    ) a1 ON a1.train_number = t.train_number
+    LEFT JOIN (
+        SELECT train_number,
+               SUM(gen_count) AS gen_count,
+               SUM(ttl_count) AS ttl_count,
+               SUM(ptl_count) AS ptl_count
+        FROM seatsondate_cc
+        WHERE date_of_journey = (SELECT journey_date FROM params)
+        GROUP BY train_number
+    ) cc ON cc.train_number = t.train_number
+    LEFT JOIN (
+        SELECT train_number,
+               SUM(gen_count) AS gen_count,
+               SUM(ttl_count) AS ttl_count,
+               SUM(ptl_count) AS ptl_count
+        FROM seatsondate_ec
+        WHERE date_of_journey = (SELECT journey_date FROM params)
+        GROUP BY train_number
+    ) ec ON ec.train_number = t.train_number
+    LEFT JOIN (
+        SELECT train_number,
+               SUM(gen_count) AS gen_count,
+               SUM(ttl_count) AS ttl_count,
+               SUM(ptl_count) AS ptl_count
+        FROM seatsondate_ea
+        WHERE date_of_journey = (SELECT journey_date FROM params)
+        GROUP BY train_number
+    ) ea ON ea.train_number = t.train_number
+    LEFT JOIN (
+        SELECT train_number,
+               SUM(gen_count) AS gen_count,
+               SUM(ttl_count) AS ttl_count,
+               SUM(ptl_count) AS ptl_count
+        FROM seatsondate_e3
+        WHERE date_of_journey = (SELECT journey_date FROM params)
+        GROUP BY train_number
+    ) e3 ON e3.train_number = t.train_number
+    LEFT JOIN (
+        SELECT train_number,
+               SUM(gen_count) AS gen_count
+        FROM seatsondate_fc
+        WHERE date_of_journey = (SELECT journey_date FROM params)
+        GROUP BY train_number
+    ) fc ON fc.train_number = t.train_number
+    LEFT JOIN (
+        SELECT train_number,
+               SUM(gen_count) AS gen_count,
+               SUM(ttl_count) AS ttl_count,
+               SUM(ptl_count) AS ptl_count
+        FROM seatsondate_2s
+        WHERE date_of_journey = (SELECT journey_date FROM params)
+        GROUP BY train_number
+    ) s2 ON s2.train_number = t.train_number
 )
-SELECT 
-    t.train_number,
-    t.train_name,
-    t.train_type,
-    t.station_from AS train_origin,
-    t.station_to AS train_destination,
+SELECT distinct
+    tf.train_number,
+    tf.train_name,
+    tf.train_type,
+    tf.station_from,
+    tf.station_to,
     s1.departure AS scheduled_departure,
-    s2.arrival AS estimated_destination_arrival,
+    s2.arrival AS estimated_arrival,
     (s2.kilometer - s1.kilometer) AS distance,
 
+    ss.*,
+
+    -- Fare calculations per coach
     -- SL
-    MAX(CASE WHEN ss_sl.fk_reservation_type = 1 THEN ss_sl.available_seats END) AS sl_gen,
-    MAX(CASE WHEN ss_sl.fk_reservation_type = 3 THEN ss_sl.available_seats END) AS sl_ttl,
-    MAX(CASE WHEN ss_sl.fk_reservation_type = 4 THEN ss_sl.available_seats END) AS sl_ptl,
-    MAX(CASE WHEN ss_sl.fk_reservation_type = 5 THEN ss_sl.available_seats END) AS sl_ladies,
-    MAX(CASE WHEN ss_sl.fk_reservation_type = 6 THEN ss_sl.available_seats END) AS sl_pwd,
-    MAX(CASE WHEN ss_sl.fk_reservation_type = 7 THEN ss_sl.available_seats END) AS sl_rac,
-    MAX(CASE WHEN ss_sl.fk_reservation_type = 8 THEN ss_sl.available_seats END) AS sl_duty,
-    MAX(CASE WHEN ss_sl.fk_reservation_type = 9 THEN ss_sl.available_seats END) AS sl_senior,
-    MAX(wl_sl.waiting_count) AS sl_waiting,
-    COALESCE((s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier, NULL) AS sl_fare,
+CASE WHEN ss.seat_count_gen_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier ELSE NULL END AS fare_gen_sl,
+CASE WHEN ss.seat_count_ttl_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier + ct_sl.tatkal_charge_adder ELSE NULL END AS fare_ttl_sl,
+CASE WHEN ss.seat_count_ptl_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier + ct_sl.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_sl,
+CASE WHEN ss.seat_count_ladies_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier * ct_sl.concession_ladies ELSE NULL END AS fare_ladies_sl,
+CASE WHEN ss.seat_count_pwd_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier * ct_sl.concession_pwd ELSE NULL END AS fare_pwd_sl,
+CASE WHEN ss.seat_count_senior_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier * ct_sl.concession_senior ELSE NULL END AS fare_senior_sl,
 
-    -- 3A
-    MAX(CASE WHEN ss_a3.fk_reservation_type = 1 THEN ss_a3.available_seats END) AS a3_gen,
-    MAX(CASE WHEN ss_a3.fk_reservation_type = 3 THEN ss_a3.available_seats END) AS a3_ttl,
-    MAX(CASE WHEN ss_a3.fk_reservation_type = 4 THEN ss_a3.available_seats END) AS a3_ptl,
-    MAX(CASE WHEN ss_a3.fk_reservation_type = 5 THEN ss_a3.available_seats END) AS a3_ladies,
-    MAX(CASE WHEN ss_a3.fk_reservation_type = 6 THEN ss_a3.available_seats END) AS a3_pwd,
-    MAX(CASE WHEN ss_a3.fk_reservation_type = 7 THEN ss_a3.available_seats END) AS a3_rac,
-    MAX(CASE WHEN ss_a3.fk_reservation_type = 8 THEN ss_a3.available_seats END) AS a3_duty,
-    MAX(CASE WHEN ss_a3.fk_reservation_type = 9 THEN ss_a3.available_seats END) AS a3_senior,
-    MAX(wl_a3.waiting_count) AS a3_waiting,
-    COALESCE((s2.kilometer - s1.kilometer) * ct_a3.fare_multiplier, NULL) AS a3_fare,
+-- 3A
+CASE WHEN ss.seat_count_gen_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier ELSE NULL END AS fare_gen_3a,
+CASE WHEN ss.seat_count_ttl_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier + ct_3a.tatkal_charge_adder ELSE NULL END AS fare_ttl_3a,
+CASE WHEN ss.seat_count_ptl_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier + ct_3a.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_3a,
+CASE WHEN ss.seat_count_ladies_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier * ct_3a.concession_ladies ELSE NULL END AS fare_ladies_3a,
+CASE WHEN ss.seat_count_pwd_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier * ct_3a.concession_pwd ELSE NULL END AS fare_pwd_3a,
+CASE WHEN ss.seat_count_senior_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier * ct_3a.concession_senior ELSE NULL END AS fare_senior_3a,
 
-    -- 2A
-    MAX(CASE WHEN ss_2a.fk_reservation_type = 1 THEN ss_2a.available_seats END) AS a2_gen,
-    MAX(CASE WHEN ss_2a.fk_reservation_type = 3 THEN ss_2a.available_seats END) AS a2_ttl,
-    MAX(CASE WHEN ss_2a.fk_reservation_type = 4 THEN ss_2a.available_seats END) AS a2_ptl,
-    MAX(CASE WHEN ss_2a.fk_reservation_type = 5 THEN ss_2a.available_seats END) AS a2_ladies,
-    MAX(CASE WHEN ss_2a.fk_reservation_type = 6 THEN ss_2a.available_seats END) AS a2_pwd,
-    MAX(CASE WHEN ss_2a.fk_reservation_type = 7 THEN ss_2a.available_seats END) AS a2_rac,
-    MAX(CASE WHEN ss_2a.fk_reservation_type = 8 THEN ss_2a.available_seats END) AS a2_duty,
-    MAX(CASE WHEN ss_2a.fk_reservation_type = 9 THEN ss_2a.available_seats END) AS a2_senior,
-    MAX(wl_2a.waiting_count) AS a2_waiting,
-    COALESCE((s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier, NULL) AS a2_fare,
+-- 2A
+CASE WHEN ss.seat_count_gen_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier ELSE NULL END AS fare_gen_2a,
+CASE WHEN ss.seat_count_ttl_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier + ct_2a.tatkal_charge_adder ELSE NULL END AS fare_ttl_2a,
+CASE WHEN ss.seat_count_ptl_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier + ct_2a.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_2a,
+CASE WHEN ss.seat_count_ladies_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier * ct_2a.concession_ladies ELSE NULL END AS fare_ladies_2a,
+CASE WHEN ss.seat_count_pwd_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier * ct_2a.concession_pwd ELSE NULL END AS fare_pwd_2a,
+CASE WHEN ss.seat_count_senior_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier * ct_2a.concession_senior ELSE NULL END AS fare_senior_2a,
 
-    -- 1A
-    MAX(CASE WHEN ss_1a.fk_reservation_type = 1 THEN ss_1a.available_seats END) AS a1_gen,    
-    COALESCE((s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier, NULL) AS a1_fare,
+-- 1A
+CASE WHEN ss.seat_count_gen_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier ELSE NULL END AS fare_gen_1a,
+CASE WHEN ss.seat_count_ttl_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier + ct_1a.tatkal_charge_adder ELSE NULL END AS fare_ttl_1a,
+CASE WHEN ss.seat_count_ptl_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier + ct_1a.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_1a,
+CASE WHEN ss.seat_count_ladies_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier * ct_1a.concession_ladies ELSE NULL END AS fare_ladies_1a,
+CASE WHEN ss.seat_count_pwd_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier * ct_1a.concession_pwd ELSE NULL END AS fare_pwd_1a,
+CASE WHEN ss.seat_count_senior_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier * ct_1a.concession_senior ELSE NULL END AS fare_senior_1a,
 
-    -- CC
-    MAX(CASE WHEN ss_cc.fk_reservation_type = 1 THEN ss_cc.available_seats END) AS cc_gen,
-    MAX(CASE WHEN ss_cc.fk_reservation_type = 3 THEN ss_cc.available_seats END) AS cc_ttl,
-    MAX(CASE WHEN ss_cc.fk_reservation_type = 4 THEN ss_cc.available_seats END) AS cc_ptl,
-    MAX(CASE WHEN ss_cc.fk_reservation_type = 5 THEN ss_cc.available_seats END) AS cc_ladies,
-    MAX(CASE WHEN ss_cc.fk_reservation_type = 6 THEN ss_cc.available_seats END) AS cc_pwd,
-    MAX(CASE WHEN ss_cc.fk_reservation_type = 7 THEN ss_cc.available_seats END) AS cc_rac,
-    MAX(CASE WHEN ss_cc.fk_reservation_type = 8 THEN ss_cc.available_seats END) AS cc_duty,
-    MAX(CASE WHEN ss_cc.fk_reservation_type = 9 THEN ss_cc.available_seats END) AS cc_senior,
-    MAX(wl_cc.waiting_count) AS cc_waiting,
-    COALESCE((s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier, NULL) AS cc_fare,
+-- CC
+CASE WHEN ss.seat_count_gen_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier ELSE NULL END AS fare_gen_cc,
+CASE WHEN ss.seat_count_ttl_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier + ct_cc.tatkal_charge_adder ELSE NULL END AS fare_ttl_cc,
+CASE WHEN ss.seat_count_ptl_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier + ct_cc.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_cc,
+CASE WHEN ss.seat_count_ladies_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier * ct_cc.concession_ladies ELSE NULL END AS fare_ladies_cc,
+CASE WHEN ss.seat_count_pwd_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier * ct_cc.concession_pwd ELSE NULL END AS fare_pwd_cc,
+CASE WHEN ss.seat_count_senior_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier * ct_cc.concession_senior ELSE NULL END AS fare_senior_cc,
 
-    -- EC
-    MAX(CASE WHEN ss_ec.fk_reservation_type = 1 THEN ss_ec.available_seats END) AS ec_gen,
-    MAX(wl_ec.waiting_count) AS ec_waiting,
-    COALESCE((s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier, NULL) AS ec_fare,
+-- EC
+CASE WHEN ss.seat_count_gen_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier ELSE NULL END AS fare_gen_ec,
+CASE WHEN ss.seat_count_ttl_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier + ct_ec.tatkal_charge_adder ELSE NULL END AS fare_ttl_ec,
+CASE WHEN ss.seat_count_ptl_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier + ct_ec.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_ec,
+CASE WHEN ss.seat_count_ladies_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier * ct_ec.concession_ladies ELSE NULL END AS fare_ladies_ec,
+CASE WHEN ss.seat_count_pwd_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier * ct_ec.concession_pwd ELSE NULL END AS fare_pwd_ec,
+CASE WHEN ss.seat_count_senior_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier * ct_ec.concession_senior ELSE NULL END AS fare_senior_ec,
 
-    -- EA
-    MAX(CASE WHEN ss_ea.fk_reservation_type = 1 THEN ss_ea.available_seats END) AS ea_gen,
-    MAX(wl_ea.waiting_count) AS ea_waiting,
-    COALESCE((s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier, NULL) AS ea_fare,
+-- EA
+CASE WHEN ss.seat_count_gen_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier ELSE NULL END AS fare_gen_ea,
+CASE WHEN ss.seat_count_ttl_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier + ct_ea.tatkal_charge_adder ELSE NULL END AS fare_ttl_ea,
+CASE WHEN ss.seat_count_ptl_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier + ct_ea.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_ea,
+CASE WHEN ss.seat_count_ladies_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier * ct_ea.concession_ladies ELSE NULL END AS fare_ladies_ea,
+CASE WHEN ss.seat_count_pwd_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier * ct_ea.concession_pwd ELSE NULL END AS fare_pwd_ea,
+CASE WHEN ss.seat_count_senior_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier * ct_ea.concession_senior ELSE NULL END AS fare_senior_ea,
 
-    -- E3
-    MAX(CASE WHEN ss_e3.fk_reservation_type = 1 THEN ss_e3.available_seats END) AS e3_gen,
-    MAX(wl_e3.waiting_count) AS e3_waiting,
-    COALESCE((s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier, NULL) AS e3_fare,
+-- E3
+CASE WHEN ss.seat_count_gen_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier ELSE NULL END AS fare_gen_e3,
+CASE WHEN ss.seat_count_ttl_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier + ct_e3.tatkal_charge_adder ELSE NULL END AS fare_ttl_e3,
+CASE WHEN ss.seat_count_ptl_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier + ct_e3.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_e3,
+CASE WHEN ss.seat_count_ladies_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier * ct_e3.concession_ladies ELSE NULL END AS fare_ladies_e3,
+CASE WHEN ss.seat_count_pwd_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier * ct_e3.concession_pwd ELSE NULL END AS fare_pwd_e3,
+CASE WHEN ss.seat_count_senior_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier * ct_e3.concession_senior ELSE NULL END AS fare_senior_e3,
 
-    -- FC
-    MAX(CASE WHEN ss_fc.fk_reservation_type = 1 THEN ss_fc.available_seats END) AS fc_gen,    
-    COALESCE((s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier, NULL) AS fc_fare
+-- FC
+CASE WHEN ss.seat_count_gen_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier ELSE NULL END AS fare_gen_fc,
+CASE WHEN ss.seat_count_ttl_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier + ct_fc.tatkal_charge_adder ELSE NULL END AS fare_ttl_fc,
+CASE WHEN ss.seat_count_ptl_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier + ct_fc.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_fc,
+CASE WHEN ss.seat_count_ladies_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier * ct_fc.concession_ladies ELSE NULL END AS fare_ladies_fc,
+CASE WHEN ss.seat_count_pwd_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier * ct_fc.concession_pwd ELSE NULL END AS fare_pwd_fc,
+CASE WHEN ss.seat_count_senior_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier * ct_fc.concession_senior ELSE NULL END AS fare_senior_fc,
 
-FROM trains t
-JOIN coaches c
-    ON c.train_number = t.train_number
-    AND (c.sl='Y' OR c.a_3='Y' OR c.a_1='Y' OR c.a_2='Y' OR c._2S='Y' 
-         OR c.cc='Y' OR c.ec='Y' OR c.ea='Y' OR c.e_3='Y' OR c.fc='Y')
-CROSS JOIN params p
-JOIN schedules s1 ON s1.train_number = t.train_number AND s1.station_code = p.source_code
-JOIN schedules s2 ON s2.train_number = t.train_number AND s2.station_code = p.destination_code
+-- 2S
+CASE WHEN ss.seat_count_gen_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier ELSE NULL END AS fare_gen_2s,
+CASE WHEN ss.seat_count_ttl_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier + ct_2s.tatkal_charge_adder ELSE NULL END AS fare_ttl_2s,
+CASE WHEN ss.seat_count_ptl_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier + ct_2s.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_2s,
+CASE WHEN ss.seat_count_ladies_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier * ct_2s.concession_ladies ELSE NULL END AS fare_ladies_2s,
+CASE WHEN ss.seat_count_pwd_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier * ct_2s.concession_pwd ELSE NULL END AS fare_pwd_2s,
+CASE WHEN ss.seat_count_senior_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier * ct_2s.concession_senior ELSE NULL END AS fare_senior_2s
 
--- Seat summaries
-LEFT JOIN seatsondate_sl_summary ss_sl ON ss_sl.train_number = t.train_number AND ss_sl.date_of_journey = p.journey_date
-LEFT JOIN seatsondate_3a_summary ss_a3 ON ss_a3.train_number = t.train_number AND ss_a3.date_of_journey = p.journey_date
-LEFT JOIN seatsondate_2a_summary ss_2a ON ss_2a.train_number = t.train_number AND ss_2a.date_of_journey = p.journey_date
-LEFT JOIN seatsondate_1a_summary ss_1a ON ss_1a.train_number = t.train_number AND ss_1a.date_of_journey = p.journey_date
-LEFT JOIN seatsondate_cc_summary ss_cc ON ss_cc.train_number = t.train_number AND ss_cc.date_of_journey = p.journey_date
-LEFT JOIN seatsondate_ec_summary ss_ec ON ss_ec.train_number = t.train_number AND ss_ec.date_of_journey = p.journey_date
-LEFT JOIN seatsondate_ea_summary ss_ea ON ss_ea.train_number = t.train_number AND ss_ea.date_of_journey = p.journey_date
-LEFT JOIN seatsondate_e3_summary ss_e3 ON ss_e3.train_number = t.train_number AND ss_e3.date_of_journey = p.journey_date
-LEFT JOIN seatsondate_fc_summary ss_fc ON ss_fc.train_number = t.train_number AND ss_fc.date_of_journey = p.journey_date
+FROM trains_filtered tf
+LEFT JOIN schedules s1 ON s1.train_number = tf.train_number AND s1.station_code = (SELECT source_code FROM params)
+LEFT JOIN schedules s2 ON s2.train_number = tf.train_number AND s2.station_code = (SELECT destination_code FROM params)
+LEFT JOIN seat_summary ss ON ss.train_number = tf.train_number
 
--- Waiting lists
-LEFT JOIN waitinglist_sl_summary wl_sl ON wl_sl.train_number = t.train_number AND wl_sl.date_of_journey = p.journey_date
-LEFT JOIN waitinglist_a3_summary wl_a3 ON wl_a3.train_number = t.train_number AND wl_a3.date_of_journey = p.journey_date
-LEFT JOIN waitinglist_2a_summary wl_2a ON wl_2a.train_number = t.train_number AND wl_2a.date_of_journey = p.journey_date
-LEFT JOIN waitinglist_cc_summary wl_cc ON wl_cc.train_number = t.train_number AND wl_cc.date_of_journey = p.journey_date
-LEFT JOIN waitinglist_ec_summary wl_ec ON wl_ec.train_number = t.train_number AND wl_ec.date_of_journey = p.journey_date
-LEFT JOIN waitinglist_ea_summary wl_ea ON wl_ea.train_number = t.train_number AND wl_ea.date_of_journey = p.journey_date
-LEFT JOIN waitinglist_e3_summary wl_e3 ON wl_e3.train_number = t.train_number AND wl_e3.date_of_journey = p.journey_date
+-- Coachtype joins for fares
+LEFT JOIN coachtype ct_sl ON ct_sl.coach_code = 'SL'
+LEFT JOIN coachtype ct_3a ON ct_3a.coach_code = '3A'
+LEFT JOIN coachtype ct_2a ON ct_2a.coach_code = '2A'
+LEFT JOIN coachtype ct_1a ON ct_1a.coach_code = '1A'
+LEFT JOIN coachtype ct_cc ON ct_cc.coach_code = 'CC'
+LEFT JOIN coachtype ct_ec ON ct_ec.coach_code = 'EC'
+LEFT JOIN coachtype ct_ea ON ct_ea.coach_code = 'EA'
+LEFT JOIN coachtype ct_e3 ON ct_e3.coach_code = 'E3'
+LEFT JOIN coachtype ct_fc ON ct_fc.coach_code = 'FC'
+LEFT JOIN coachtype ct_2s ON ct_2s.coach_code = '2S'
 
--- Coach fares
-LEFT JOIN coachtype ct_sl ON ct_sl.coach_code='SL'
-LEFT JOIN coachtype ct_a3 ON ct_a3.coach_code='3A'
-LEFT JOIN coachtype ct_2a ON ct_2a.coach_code='2A'
-LEFT JOIN coachtype ct_1a ON ct_1a.coach_code='1A'
-LEFT JOIN coachtype ct_cc ON ct_cc.coach_code='CC'
-LEFT JOIN coachtype ct_ec ON ct_ec.coach_code='EC'
-LEFT JOIN coachtype ct_ea ON ct_ea.coach_code='EA'
-LEFT JOIN coachtype ct_e3 ON ct_e3.coach_code='E3'
-LEFT JOIN coachtype ct_fc ON ct_fc.coach_code='FC'
-
-WHERE s1.station_sequence < s2.station_sequence
-  AND (p.journey_date > CURRENT_DATE 
-       OR (p.journey_date = CURRENT_DATE AND (p.now_ist + INTERVAL '4 hour') < (s1.departure + p.journey_date::timestamp)))
-  AND (
-        (EXTRACT(DOW FROM p.journey_date) = 0 AND t.train_runs_on_sun = 'Y') OR
-        (EXTRACT(DOW FROM p.journey_date) = 1 AND t.train_runs_on_mon = 'Y') OR
-        (EXTRACT(DOW FROM p.journey_date) = 2 AND t.train_runs_on_tue = 'Y') OR
-        (EXTRACT(DOW FROM p.journey_date) = 3 AND t.train_runs_on_wed = 'Y') OR
-        (EXTRACT(DOW FROM p.journey_date) = 4 AND t.train_runs_on_thu = 'Y') OR
-        (EXTRACT(DOW FROM p.journey_date) = 5 AND t.train_runs_on_fri = 'Y') OR
-        (EXTRACT(DOW FROM p.journey_date) = 6 AND t.train_runs_on_sat = 'Y')
-      )
-
-GROUP BY t.train_number, t.train_name, t.train_type, t.station_from, t.station_to,
-         s1.departure, s2.arrival, s2.kilometer, s1.kilometer,
-         ct_sl.fare_multiplier, ct_a3.fare_multiplier, ct_2a.fare_multiplier, ct_1a.fare_multiplier,
-         ct_cc.fare_multiplier, ct_ec.fare_multiplier, ct_ea.fare_multiplier, ct_e3.fare_multiplier, ct_fc.fare_multiplier
-
-ORDER BY t.train_number, s1.departure;
+ORDER BY s1.departure, tf.train_number;
 `,
       [source_code, destination_code, doj]
     );
