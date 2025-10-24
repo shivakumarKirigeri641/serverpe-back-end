@@ -1,8 +1,9 @@
-const { Pool } = require("pg");
+const { Pool, types } = require("pg");
 require("dotenv").config();
 let pool = null;
 const connectDB = async () => {
   if (!pool) {
+    //types.setTypeParser(1082, (val) => val); // keeps '2025-11-01' as a plain string
     pool = new Pool({
       host: process.env.PGHOST,
       database: process.env.PGDATABASE,

@@ -3,12 +3,7 @@ const { connectDB } = require("./database/connectDB");
 const app = new express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const sendOtpRouter = require("./routers/sendOtpRouter");
-const verifyOtpRouter = require("./routers/verifyOtpRouter");
-const stationsRouter = require("./routers/stationsRouter");
-const logoutRouter = require("./routers/logoutRouter");
 const dummyRouter = require("./routers/dummyRouter");
-const createRequestLogger = require("./middleware/requestLogger");
 require("dotenv").config();
 app.use(cookieParser());
 app.use(express.json());
@@ -18,16 +13,11 @@ app.use(
     credentials: true,
   })
 );
-
-app.use("/", sendOtpRouter);
-app.use("/", verifyOtpRouter);
-app.use("/", stationsRouter);
-app.use("/", logoutRouter);
 app.use("/", dummyRouter);
 connectDB()
   .then(() => {
     console.log("Database connected successfully.");
-    app.listen(8888, () => {
+    app.listen(8888, "0.0.0.0", () => {
       console.log("Server is listening now.");
     });
   })
