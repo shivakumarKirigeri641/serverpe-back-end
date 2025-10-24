@@ -1,36 +1,30 @@
-const insertbookingdata_sl = require("./insertion/insertbookingdata_sl");
-const proceedBooking = async (client, booking_details) => {
+const insertticketdata_sl = require("./insertion/insertticketdata_sl");
+const confirmBooking = async (client, booking_id) => {
   let booking_summary = null;
   try {
     await client.query("BEGIN");
     //overall valiations
-    //overall valiations
-    if (
-      booking_details.reservation_type == "LADIES" &&
-      2 < booking_details.passenger_details.length
-    ) {
+    const booking_details = await client.query(
+      `select b.id, c.train_number, sr.code, dest.code, ct.coach_code, r.type_code, b.date_of_journey from bookingdata b join
+reservationtype r on r.id=b.fkreservation_type
+join stations sr on sr.id = b.fksource_code
+join stations brding on brding.id = b.fkboarding_at
+join stations dest on dest.id = b.fkdestination_code
+join coaches c on c.id = b.fktrain_number
+join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 for update`,
+      [booking_id]
+    );
+    if (0 === booking_details.rows.length) {
       throw {
         status: 200,
         success: false,
-        message:
-          "Ladies quota must be female passengers and maximum 2 female passengers!",
-      };
-    }
-    if (
-      booking_details.reservation_type == "PWD" &&
-      1 != booking_details.passenger_details.length
-    ) {
-      throw {
-        status: 200,
-        success: false,
-        message: "PWD booking can be done only for 1 person!",
+        message: "Booking details not found!",
       };
     }
     //overall valiations
-    await client.query("BEGIN");
-    switch (booking_details.coach_type) {
+    switch (booking_details.rows[0].coach_code) {
       case "SL":
-        booking_summary = await insertbookingdata_sl(client, booking_details);
+        booking_summary = await insertticketdata_sl(client, booking_id);
         break;
       case "1A":
         break;
@@ -71,4 +65,4 @@ const proceedBooking = async (client, booking_details) => {
     }
   }
 };
-module.exports = proceedBooking;
+module.exports = confirmBooking;

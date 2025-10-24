@@ -3,6 +3,8 @@ const convertSearchTrainsToJson = require("../../utils/convertSearchTrainsToJson
 
 const searchTrains = async (client, source_code, destination_code, doj) => {
   let search_train_details = null;
+  let result_dest = [];
+  let result_src = [];
   try {
     //check date
     if (!checkForValidDate(doj)) {
@@ -14,10 +16,9 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
       };
     }
     //src exists
-    const result_src = await client.query(
-      `select id from stations where code = $1`,
-      [source_code]
-    );
+    result_src = await client.query(`select *from stations where code = $1`, [
+      source_code,
+    ]);
     if (0 === result_src.rows.length) {
       throw {
         status: 200,
@@ -27,10 +28,9 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
       };
     }
     //dest exists
-    const result_dest = await client.query(
-      `select id from stations where code = $1`,
-      [destination_code]
-    );
+    result_dest = await client.query(`select *from stations where code = $1`, [
+      destination_code,
+    ]);
     if (0 === result_dest.rows.length) {
       throw {
         status: 200,
@@ -377,7 +377,14 @@ ORDER BY s1.departure, tf.train_number;`,
       [source_code, destination_code, doj]
     );
     //search_train_details = convertSearchTrainsToJson(result);
-    return search_train_details;
+    return {
+      source: result_src.rows[0].station_name,
+      source_code: result_src.rows[0].code,
+      destination: result_dest.rows[0].station_name,
+      destination_code: result_dest.rows[0].code,
+      date_of_journey: doj,
+      trains_list: search_train_details,
+    };
   } catch (err) {
     throw err;
   } finally {

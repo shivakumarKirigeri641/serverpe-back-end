@@ -1,10 +1,31 @@
 const express = require("express");
+const getReservationType = require("../SQL/fetchers/getReservationType");
 const { connectDB } = require("../database/connectDB");
 const dummyRouter = express.Router();
 const getPostgreClient = require("../SQL/getPostgreClient");
 const getBerth_sl = require("../utils/getBerth_sl");
+const confirmBooking = require("../SQL/confirmBooking");
 const proceedBooking = require("../SQL/proceedBooking");
 const searchTrains = require("../SQL/fetchers/searchTrains");
+//reservation_type
+dummyRouter.get("/reservation-type", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+  try {
+    //validation later
+    const result = await getReservationType(client);
+    res.status(200).json({
+      status: 200,
+      success: true,
+      message: "Trains fetch successfull",
+      data: result.rows,
+    });
+  } catch (err) {
+    res
+      .status(err.status)
+      .json({ status: err.status, success: false, data: err.message });
+  }
+});
 //search trains
 dummyRouter.post("/search-trains", async (req, res) => {
   const pool = await connectDB();
@@ -19,7 +40,7 @@ dummyRouter.post("/search-trains", async (req, res) => {
       destination_code.toUpperCase(),
       doj
     );
-    if (search_train_details.rows.length === 0) {
+    if (search_train_details.trains_list.rows.length === 0) {
       res.status(200).json({
         status: 200,
         success: true,
@@ -31,7 +52,7 @@ dummyRouter.post("/search-trains", async (req, res) => {
         status: 200,
         success: true,
         message: "Trains fetch successfull",
-        data: search_train_details.rows,
+        data: search_train_details,
       });
     }
   } catch (err) {
@@ -47,20 +68,26 @@ dummyRouter.post("/proceed-booking", async (req, res) => {
   let booking_summary = null;
   try {
     //validation later
-
     booking_summary = await proceedBooking(client, req.body);
     res.status(200).json({ status: 200, success: true, data: booking_summary });
   } catch (err) {
     res
-      .status(401)
+      .status(err.status)
       .json({ status: err.status, success: false, data: err.message });
   }
 });
 //confirm-ticket
-dummyRouter.post("/confirm-ticket", async (req, res) => {
+dummyRouter.post("/confirm-booking", async (req, res) => {
   const pool = await connectDB();
   client = await getPostgreClient(pool);
-  res.send("test");
+  try {
+    const ticket_details = await confirmBooking(client, req.body.booking_id);
+    res.status(200).json({ status: 200, success: true, data: ticket_details });
+  } catch (err) {
+    res
+      .status(err.status)
+      .json({ status: err.status, success: false, data: err.message });
+  }
 });
 
 //test
