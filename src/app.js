@@ -1,4 +1,5 @@
 const express = require("express");
+require("./crons/mock_Train_Scheduler");
 const { connectDB } = require("./database/connectDB");
 const app = new express();
 const cors = require("cors");

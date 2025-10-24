@@ -12,12 +12,12 @@ const book_general_sl = async (
   const pnr = getPnrNumber(booking_id);
   for (let i = 0; i < passengerdetails.rows.length; i++) {
     //lock
-    console.log(result_details.rows[0]);
+    console.log(result_details.rows[0].date_of_journey);
     let result_seats_availability = await client.query(
       `select *from seatsondate_sl where train_number=$1 and date_of_journey=$2 for update`,
       [
         result_details.rows[0].train_number,
-        result_details.rows[0].date_of_journey.toISOString().split("T")[0],
+        result_details.rows[0].date_of_journey,
       ]
     );
     //lock bookingdata
