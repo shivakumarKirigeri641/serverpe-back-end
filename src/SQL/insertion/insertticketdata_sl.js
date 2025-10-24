@@ -2,7 +2,7 @@ const book_general_sl = require("../reservations/book_general_sl");
 const insertticketdata_sl = async (client, booking_id) => {
   let confirm_details = {};
   const result_details = await client.query(
-    `select b.id, c.train_number, sr.code, dest.code, ct.coach_code, r.type_code, b.date_of_journey from bookingdata b join
+    `select b.id, c.train_number, sr.code AS source_code, dest.code as destination_code, ct.coach_code, r.type_code, b.date_of_journey, b.mobile_number from bookingdata b join
 reservationtype r on r.id=b.fkreservation_type
 join stations sr on sr.id = b.fksource_code
 join stations brding on brding.id = b.fkboarding_at

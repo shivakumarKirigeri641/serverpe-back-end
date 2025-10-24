@@ -5,14 +5,14 @@ const confirmBooking = async (client, booking_id) => {
     await client.query("BEGIN");
     //overall valiations
     const booking_details = await client.query(
-      `select b.id, c.train_number, sr.code, dest.code, ct.coach_code, r.type_code, b.date_of_journey from bookingdata b join
+      `select b.id, c.train_number, sr.code as source_code, dest.code as destination_code, ct.coach_code, r.type_code, b.date_of_journey, b.mobile_number from bookingdata b join
 reservationtype r on r.id=b.fkreservation_type
 join stations sr on sr.id = b.fksource_code
 join stations brding on brding.id = b.fkboarding_at
 join stations dest on dest.id = b.fkdestination_code
 join coaches c on c.id = b.fktrain_number
-join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 for update`,
-      [booking_id]
+join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and proceed_status=$2 for update`,
+      [booking_id, false]
     );
     if (0 === booking_details.rows.length) {
       throw {
