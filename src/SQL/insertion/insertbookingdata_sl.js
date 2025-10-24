@@ -1,3 +1,4 @@
+const getFareDetails = require("../fetchers/getFareDetails");
 const insertbookingdata_sl = async (client, booking_details) => {
   let booked_details = null;
   let passenger_details = [];
@@ -162,9 +163,17 @@ const insertbookingdata_sl = async (client, booking_details) => {
         );
         passenger_details.push(temp.rows[0]);
       }
+      //now get fare deatils:
+      const fare_details = await getFareDetails(
+        client,
+        booking_details,
+        booked_details,
+        passenger_details
+      );
       return {
         booked_details: booked_details.rows[0],
         passenger_details: passenger_details,
+        fare_details: fare_details,
       };
     } else {
       //insert passenger list
@@ -207,9 +216,17 @@ const insertbookingdata_sl = async (client, booking_details) => {
         );
         passenger_details.push(temp.rows[0]);
       }
+      //now get fare deatils:
+      const fare_details = await getFareDetails(
+        client,
+        booking_details,
+        booked_details,
+        passenger_details
+      );
       return {
         booked_details: result_is_already_user.rows[0],
         passenger_details: passenger_details,
+        fare_details: fare_details,
       };
     }
   } catch (err) {

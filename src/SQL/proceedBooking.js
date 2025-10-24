@@ -2,6 +2,19 @@ const insertbookingdata_sl = require("./insertion/insertbookingdata_sl");
 const proceedBooking = async (client, booking_details) => {
   let booking_summary = null;
   try {
+    //overall valiations
+    if (
+      booking_details.reservation_type == "LADIES" &&
+      2 < booking_details.passenger_details.length
+    ) {
+      throw {
+        status: 200,
+        success: false,
+        message:
+          "Ladies quota must be female passengers and maximum 2 female passengers!",
+      };
+    }
+    //overall valiations
     await client.query("BEGIN");
     switch (booking_details.coach_type) {
       case "SL":

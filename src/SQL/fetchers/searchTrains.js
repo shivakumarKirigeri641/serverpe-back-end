@@ -77,7 +77,7 @@ trains_filtered AS (
 seat_summary AS (
     SELECT t.train_number,
         -- SL
-        sl.gen_count  AS seat_count_gen_sl,
+        sl.gen_count::numeric  AS seat_count_gen_sl,
         sl.rac_count  AS seat_count_rac_sl,
         sl.rac_share_count AS seat_count_rac_share_sl,
         sl.ttl_count AS seat_count_ttl_sl,
@@ -165,9 +165,9 @@ seat_summary AS (
 		null as seat_count_duty_fc,
 
         -- 2S
-        s2.gen_count AS seat_count_gen_2s,
-        s2.ttl_count AS seat_count_ttl_2s,
-        s2.ptl_count AS seat_count_ptl_2s,
+        s2.gen_count::numeric AS seat_count_gen_2s,
+        s2.ttl_count::numeric AS seat_count_ttl_2s,
+        s2.ptl_count::numeric AS seat_count_ptl_2s,
 		null as seat_count_ladies_2s,
 		null as seat_count_pwd_2s,
 		null as seat_count_senior_2s
@@ -290,7 +290,6 @@ SELECT distinct
 CASE WHEN ss.seat_count_gen_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier ELSE NULL END AS fare_gen_sl,
 CASE WHEN ss.seat_count_ttl_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier + ct_sl.tatkal_charge_adder ELSE NULL END AS fare_ttl_sl,
 CASE WHEN ss.seat_count_ptl_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier + ct_sl.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_sl,
-CASE WHEN ss.seat_count_ladies_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier * ct_sl.concession_ladies ELSE NULL END AS fare_ladies_sl,
 CASE WHEN ss.seat_count_pwd_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier * ct_sl.concession_pwd ELSE NULL END AS fare_pwd_sl,
 CASE WHEN ss.seat_count_senior_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_sl.fare_multiplier * ct_sl.concession_senior ELSE NULL END AS fare_senior_sl,
 
@@ -298,7 +297,6 @@ CASE WHEN ss.seat_count_senior_sl IS NOT NULL THEN (s2.kilometer - s1.kilometer)
 CASE WHEN ss.seat_count_gen_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier ELSE NULL END AS fare_gen_3a,
 CASE WHEN ss.seat_count_ttl_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier + ct_3a.tatkal_charge_adder ELSE NULL END AS fare_ttl_3a,
 CASE WHEN ss.seat_count_ptl_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier + ct_3a.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_3a,
-CASE WHEN ss.seat_count_ladies_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier * ct_3a.concession_ladies ELSE NULL END AS fare_ladies_3a,
 CASE WHEN ss.seat_count_pwd_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier * ct_3a.concession_pwd ELSE NULL END AS fare_pwd_3a,
 CASE WHEN ss.seat_count_senior_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_3a.fare_multiplier * ct_3a.concession_senior ELSE NULL END AS fare_senior_3a,
 
@@ -306,7 +304,6 @@ CASE WHEN ss.seat_count_senior_3a IS NOT NULL THEN (s2.kilometer - s1.kilometer)
 CASE WHEN ss.seat_count_gen_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier ELSE NULL END AS fare_gen_2a,
 CASE WHEN ss.seat_count_ttl_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier + ct_2a.tatkal_charge_adder ELSE NULL END AS fare_ttl_2a,
 CASE WHEN ss.seat_count_ptl_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier + ct_2a.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_2a,
-CASE WHEN ss.seat_count_ladies_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier * ct_2a.concession_ladies ELSE NULL END AS fare_ladies_2a,
 CASE WHEN ss.seat_count_pwd_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier * ct_2a.concession_pwd ELSE NULL END AS fare_pwd_2a,
 CASE WHEN ss.seat_count_senior_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2a.fare_multiplier * ct_2a.concession_senior ELSE NULL END AS fare_senior_2a,
 
@@ -314,7 +311,6 @@ CASE WHEN ss.seat_count_senior_2a IS NOT NULL THEN (s2.kilometer - s1.kilometer)
 CASE WHEN ss.seat_count_gen_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier ELSE NULL END AS fare_gen_1a,
 CASE WHEN ss.seat_count_ttl_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier + ct_1a.tatkal_charge_adder ELSE NULL END AS fare_ttl_1a,
 CASE WHEN ss.seat_count_ptl_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier + ct_1a.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_1a,
-CASE WHEN ss.seat_count_ladies_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier * ct_1a.concession_ladies ELSE NULL END AS fare_ladies_1a,
 CASE WHEN ss.seat_count_pwd_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier * ct_1a.concession_pwd ELSE NULL END AS fare_pwd_1a,
 CASE WHEN ss.seat_count_senior_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_1a.fare_multiplier * ct_1a.concession_senior ELSE NULL END AS fare_senior_1a,
 
@@ -322,7 +318,6 @@ CASE WHEN ss.seat_count_senior_1a IS NOT NULL THEN (s2.kilometer - s1.kilometer)
 CASE WHEN ss.seat_count_gen_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier ELSE NULL END AS fare_gen_cc,
 CASE WHEN ss.seat_count_ttl_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier + ct_cc.tatkal_charge_adder ELSE NULL END AS fare_ttl_cc,
 CASE WHEN ss.seat_count_ptl_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier + ct_cc.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_cc,
-CASE WHEN ss.seat_count_ladies_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier * ct_cc.concession_ladies ELSE NULL END AS fare_ladies_cc,
 CASE WHEN ss.seat_count_pwd_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier * ct_cc.concession_pwd ELSE NULL END AS fare_pwd_cc,
 CASE WHEN ss.seat_count_senior_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_cc.fare_multiplier * ct_cc.concession_senior ELSE NULL END AS fare_senior_cc,
 
@@ -330,7 +325,6 @@ CASE WHEN ss.seat_count_senior_cc IS NOT NULL THEN (s2.kilometer - s1.kilometer)
 CASE WHEN ss.seat_count_gen_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier ELSE NULL END AS fare_gen_ec,
 CASE WHEN ss.seat_count_ttl_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier + ct_ec.tatkal_charge_adder ELSE NULL END AS fare_ttl_ec,
 CASE WHEN ss.seat_count_ptl_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier + ct_ec.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_ec,
-CASE WHEN ss.seat_count_ladies_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier * ct_ec.concession_ladies ELSE NULL END AS fare_ladies_ec,
 CASE WHEN ss.seat_count_pwd_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier * ct_ec.concession_pwd ELSE NULL END AS fare_pwd_ec,
 CASE WHEN ss.seat_count_senior_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ec.fare_multiplier * ct_ec.concession_senior ELSE NULL END AS fare_senior_ec,
 
@@ -338,7 +332,6 @@ CASE WHEN ss.seat_count_senior_ec IS NOT NULL THEN (s2.kilometer - s1.kilometer)
 CASE WHEN ss.seat_count_gen_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier ELSE NULL END AS fare_gen_ea,
 CASE WHEN ss.seat_count_ttl_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier + ct_ea.tatkal_charge_adder ELSE NULL END AS fare_ttl_ea,
 CASE WHEN ss.seat_count_ptl_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier + ct_ea.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_ea,
-CASE WHEN ss.seat_count_ladies_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier * ct_ea.concession_ladies ELSE NULL END AS fare_ladies_ea,
 CASE WHEN ss.seat_count_pwd_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier * ct_ea.concession_pwd ELSE NULL END AS fare_pwd_ea,
 CASE WHEN ss.seat_count_senior_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_ea.fare_multiplier * ct_ea.concession_senior ELSE NULL END AS fare_senior_ea,
 
@@ -346,7 +339,6 @@ CASE WHEN ss.seat_count_senior_ea IS NOT NULL THEN (s2.kilometer - s1.kilometer)
 CASE WHEN ss.seat_count_gen_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier ELSE NULL END AS fare_gen_e3,
 CASE WHEN ss.seat_count_ttl_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier + ct_e3.tatkal_charge_adder ELSE NULL END AS fare_ttl_e3,
 CASE WHEN ss.seat_count_ptl_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier + ct_e3.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_e3,
-CASE WHEN ss.seat_count_ladies_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier * ct_e3.concession_ladies ELSE NULL END AS fare_ladies_e3,
 CASE WHEN ss.seat_count_pwd_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier * ct_e3.concession_pwd ELSE NULL END AS fare_pwd_e3,
 CASE WHEN ss.seat_count_senior_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_e3.fare_multiplier * ct_e3.concession_senior ELSE NULL END AS fare_senior_e3,
 
@@ -354,7 +346,6 @@ CASE WHEN ss.seat_count_senior_e3 IS NOT NULL THEN (s2.kilometer - s1.kilometer)
 CASE WHEN ss.seat_count_gen_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier ELSE NULL END AS fare_gen_fc,
 CASE WHEN ss.seat_count_ttl_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier + ct_fc.tatkal_charge_adder ELSE NULL END AS fare_ttl_fc,
 CASE WHEN ss.seat_count_ptl_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier + ct_fc.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_fc,
-CASE WHEN ss.seat_count_ladies_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier * ct_fc.concession_ladies ELSE NULL END AS fare_ladies_fc,
 CASE WHEN ss.seat_count_pwd_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier * ct_fc.concession_pwd ELSE NULL END AS fare_pwd_fc,
 CASE WHEN ss.seat_count_senior_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_fc.fare_multiplier * ct_fc.concession_senior ELSE NULL END AS fare_senior_fc,
 
@@ -362,7 +353,6 @@ CASE WHEN ss.seat_count_senior_fc IS NOT NULL THEN (s2.kilometer - s1.kilometer)
 CASE WHEN ss.seat_count_gen_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier ELSE NULL END AS fare_gen_2s,
 CASE WHEN ss.seat_count_ttl_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier + ct_2s.tatkal_charge_adder ELSE NULL END AS fare_ttl_2s,
 CASE WHEN ss.seat_count_ptl_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier + ct_2s.premium_tatkal_charge_adder ELSE NULL END AS fare_ptl_2s,
-CASE WHEN ss.seat_count_ladies_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier * ct_2s.concession_ladies ELSE NULL END AS fare_ladies_2s,
 CASE WHEN ss.seat_count_pwd_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier * ct_2s.concession_pwd ELSE NULL END AS fare_pwd_2s,
 CASE WHEN ss.seat_count_senior_2s IS NOT NULL THEN (s2.kilometer - s1.kilometer) * ct_2s.fare_multiplier * ct_2s.concession_senior ELSE NULL END AS fare_senior_2s
 
@@ -383,8 +373,7 @@ LEFT JOIN coachtype ct_e3 ON ct_e3.coach_code = 'E3'
 LEFT JOIN coachtype ct_fc ON ct_fc.coach_code = 'FC'
 LEFT JOIN coachtype ct_2s ON ct_2s.coach_code = '2S'
 
-ORDER BY s1.departure, tf.train_number;
-`,
+ORDER BY s1.departure, tf.train_number;`,
       [source_code, destination_code, doj]
     );
     //search_train_details = convertSearchTrainsToJson(result);
