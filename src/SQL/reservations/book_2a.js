@@ -42,7 +42,7 @@ const book_2a = async (
           seat_allocation_status = "CNF";
           let current_gen_seat = result_seats_availability.rows[0].ttl_count;
           const seat_details = allocateSeat_2a(
-            "2a",
+            "A",
             current_gen_seat,
             result_details.rows[0].type_code?.toUpperCase()
           );
@@ -102,7 +102,7 @@ const book_2a = async (
           seat_allocation_status = "CNF";
           let current_gen_seat = result_seats_availability.rows[0].ptl_count;
           const seat_details = allocateSeat_2a(
-            "2a",
+            "A",
             current_gen_seat,
             result_details.rows[0].type_code?.toUpperCase()
           );
@@ -162,7 +162,7 @@ const book_2a = async (
           seat_allocation_status = "CNF";
           let current_gen_seat = result_seats_availability.rows[0].gen_count;
           const seat_details = allocateSeat_2a(
-            "2a",
+            "A",
             current_gen_seat,
             result_details.rows[0].type_code?.toUpperCase()
           );

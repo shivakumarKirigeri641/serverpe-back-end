@@ -64,7 +64,7 @@ const book_cc = async (
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -77,12 +77,12 @@ const book_cc = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -124,7 +124,7 @@ const book_cc = async (
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -137,12 +137,12 @@ const book_cc = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -184,7 +184,7 @@ const book_cc = async (
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -197,12 +197,12 @@ const book_cc = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -244,7 +244,7 @@ const book_cc = async (
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -257,12 +257,12 @@ const book_cc = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -304,7 +304,7 @@ const book_cc = async (
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -317,12 +317,12 @@ const book_cc = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );

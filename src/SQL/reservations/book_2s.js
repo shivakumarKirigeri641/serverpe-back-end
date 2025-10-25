@@ -64,7 +64,7 @@ const book_2s = async (
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -77,12 +77,12 @@ const book_2s = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -124,7 +124,7 @@ const book_2s = async (
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -137,12 +137,12 @@ const book_2s = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -184,7 +184,7 @@ const book_2s = async (
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -197,12 +197,12 @@ const book_2s = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -214,65 +214,6 @@ const book_2s = async (
             status: 200,
             success: false,
             message: "Booking not allowed for ladies!",
-          };
-        }
-        break;
-        if (0 < result_seats_availability.rows[0].duty_count) {
-          seat_allocation_status = "CNF";
-          let current_gen_seat = result_seats_availability.rows[0].duty_count;
-          const seat_details = allocateSeat_2s(
-            "2s",
-            current_gen_seat,
-            result_details.rows[0].type_code?.toUpperCase()
-          );
-          //decrement the count of gen_seats
-          await client.query(
-            `update seatsondate_2s set duty_count = $1, total_seats=$2 where id=$3`,
-            [
-              --result_seats_availability.rows[0].duty_count,
-              --result_seats_availability.rows[0].total_seats,
-              result_seats_availability.rows[0].id,
-            ]
-          );
-          //insert into seat alloation
-          await client.query(
-            `insert into seatallocation_2s (fkpassengerdata, fk_seatsondate_2s, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
-            [
-              passengerdetails.rows[i].id,
-              result_seats_availability.rows[0].id,
-              current_gen_seat,
-              "CNF",
-              seat_details.coach_code,
-              seat_details.berth_type,
-              seat_details.seat_number,
-            ]
-          );
-          //update the passengerdetails
-          const temp = await client.query(
-            `update passengerdata set seat_status=$1, current_seat_status=$2, updated_seat_status=$3 where id=$4 returning *`,
-            [
-              "CNF",
-              seat_details.coach_code +
-                "/" +
-                seat_details.seat_number +
-                "/" +
-                seat_details.berth_type,
-              seat_details.coach_code +
-                "/" +
-                seat_details.seat_number +
-                "/" +
-                seat_details.berth_type,
-              passengerdetails.rows[i].id,
-            ]
-          );
-          result_udpated_passengerdetails.push(temp.rows[0]);
-        }
-        //waiting list
-        else {
-          throw {
-            status: 200,
-            success: false,
-            message: "Booking not allowed for duty holders!",
           };
         }
         break;
@@ -303,7 +244,7 @@ const book_2s = async (
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -316,12 +257,12 @@ const book_2s = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -363,7 +304,7 @@ const book_2s = async (
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -376,12 +317,12 @@ const book_2s = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );

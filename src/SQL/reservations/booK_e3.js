@@ -1,8 +1,8 @@
 const axios = require("axios");
-const allocateSeat_ec = require("../../utils/allocateSeat_ec");
+const allocateSeat_e3 = require("../../utils/allocateSeat_e3");
 require("dotenv").config();
 const getPnrNumber = require("../../utils/getPnrNumber");
-const book_ec = async (
+const book_e3 = async (
   client,
   result_details,
   passengerdetails,
@@ -24,7 +24,7 @@ const book_ec = async (
   for (let i = 0; i < passengerdetails.rows.length; i++) {
     //lock
     let result_seats_availability = await client.query(
-      `select *from seatsondate_ec where train_number=$1 and date_of_journey=$2 for update`,
+      `select *from seatsondate_e3 where train_number=$1 and date_of_journey=$2 for update`,
       [
         result_details.rows[0].train_number,
         result_details.rows[0].date_of_journey,
@@ -41,14 +41,14 @@ const book_ec = async (
         if (0 < result_seats_availability.rows[0].ttl_count) {
           seat_allocation_status = "CNF";
           let current_gen_seat = result_seats_availability.rows[0].ttl_count;
-          const seat_details = allocateSeat_ec(
+          const seat_details = allocateSeat_e3(
             "EC",
             current_gen_seat,
             result_details.rows[0].type_code?.toUpperCase()
           );
           //decrement the count of gen_seats
           await client.query(
-            `update seatsondate_ec set ttl_count = $1, total_seats=$2 where id=$3`,
+            `update seatsondate_e3 set ttl_count = $1, total_seats=$2 where id=$3`,
             [
               --result_seats_availability.rows[0].ttl_count,
               --result_seats_availability.rows[0].total_seats,
@@ -57,14 +57,14 @@ const book_ec = async (
           );
           //insert into seat alloation
           await client.query(
-            `insert into seatallocation_ec (fkpassengerdata, fk_seatsondate_ec, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
+            `insert into seatallocation_e3 (fkpassengerdata, fk_seatsondate_e3, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
             [
               passengerdetails.rows[i].id,
               result_seats_availability.rows[0].id,
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -77,12 +77,12 @@ const book_ec = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -101,14 +101,14 @@ const book_ec = async (
         if (0 < result_seats_availability.rows[0].ptl_count) {
           seat_allocation_status = "CNF";
           let current_gen_seat = result_seats_availability.rows[0].ptl_count;
-          const seat_details = allocateSeat_ec(
+          const seat_details = allocateSeat_e3(
             "EC",
             current_gen_seat,
             result_details.rows[0].type_code?.toUpperCase()
           );
           //decrement the count of gen_seats
           await client.query(
-            `update seatsondate_ec set ptl_count = $1, total_seats=$2 where id=$3`,
+            `update seatsondate_e3 set ptl_count = $1, total_seats=$2 where id=$3`,
             [
               --result_seats_availability.rows[0].ptl_count,
               --result_seats_availability.rows[0].total_seats,
@@ -117,14 +117,14 @@ const book_ec = async (
           );
           //insert into seat alloation
           await client.query(
-            `insert into seatallocation_ec (fkpassengerdata, fk_seatsondate_ec, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
+            `insert into seatallocation_e3 (fkpassengerdata, fk_seatsondate_e3, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
             [
               passengerdetails.rows[i].id,
               result_seats_availability.rows[0].id,
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -137,12 +137,12 @@ const book_ec = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -161,14 +161,14 @@ const book_ec = async (
         if (0 < result_seats_availability.rows[0].ladies_count) {
           seat_allocation_status = "CNF";
           let current_gen_seat = result_seats_availability.rows[0].ladies_count;
-          const seat_details = allocateSeat_ec(
+          const seat_details = allocateSeat_e3(
             "EC",
             current_gen_seat,
             result_details.rows[0].type_code?.toUpperCase()
           );
           //decrement the count of gen_seats
           await client.query(
-            `update seatsondate_ec set ladies_count = $1, total_seats=$2 where id=$3`,
+            `update seatsondate_e3 set ladies_count = $1, total_seats=$2 where id=$3`,
             [
               --result_seats_availability.rows[0].ladies_count,
               --result_seats_availability.rows[0].total_seats,
@@ -177,14 +177,14 @@ const book_ec = async (
           );
           //insert into seat alloation
           await client.query(
-            `insert into seatallocation_ec (fkpassengerdata, fk_seatsondate_ec, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
+            `insert into seatallocation_e3 (fkpassengerdata, fk_seatsondate_e3, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
             [
               passengerdetails.rows[i].id,
               result_seats_availability.rows[0].id,
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -197,12 +197,12 @@ const book_ec = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -221,14 +221,14 @@ const book_ec = async (
         if (0 < result_seats_availability.rows[0].senior_count) {
           seat_allocation_status = "CNF";
           let current_gen_seat = result_seats_availability.rows[0].senior_count;
-          const seat_details = allocateSeat_ec(
+          const seat_details = allocateSeat_e3(
             "EC",
             current_gen_seat,
             result_details.rows[0].type_code?.toUpperCase()
           );
           //decrement the count of gen_seats
           await client.query(
-            `update seatsondate_ec set senior_count = $1, total_seats=$2 where id=$3`,
+            `update seatsondate_e3 set senior_count = $1, total_seats=$2 where id=$3`,
             [
               --result_seats_availability.rows[0].senior_count,
               --result_seats_availability.rows[0].total_seats,
@@ -237,14 +237,14 @@ const book_ec = async (
           );
           //insert into seat alloation
           await client.query(
-            `insert into seatallocation_ec (fkpassengerdata, fk_seatsondate_ec, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
+            `insert into seatallocation_e3 (fkpassengerdata, fk_seatsondate_e3, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
             [
               passengerdetails.rows[i].id,
               result_seats_availability.rows[0].id,
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -257,12 +257,12 @@ const book_ec = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -281,14 +281,14 @@ const book_ec = async (
         if (0 < result_seats_availability.rows[0].gen_count) {
           seat_allocation_status = "CNF";
           let current_gen_seat = result_seats_availability.rows[0].gen_count;
-          const seat_details = allocateSeat_ec(
+          const seat_details = allocateSeat_e3(
             "EC",
             current_gen_seat,
             result_details.rows[0].type_code?.toUpperCase()
           );
           //decrement the count of gen_seats
           await client.query(
-            `update seatsondate_ec set gen_count = $1, total_seats=$2 where id=$3`,
+            `update seatsondate_e3 set gen_count = $1, total_seats=$2 where id=$3`,
             [
               --result_seats_availability.rows[0].gen_count,
               --result_seats_availability.rows[0].total_seats,
@@ -297,14 +297,14 @@ const book_ec = async (
           );
           //insert into seat alloation
           await client.query(
-            `insert into seatallocation_ec (fkpassengerdata, fk_seatsondate_ec, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
+            `insert into seatallocation_e3 (fkpassengerdata, fk_seatsondate_e3, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
             [
               passengerdetails.rows[i].id,
               result_seats_availability.rows[0].id,
               current_gen_seat,
               "CNF",
               seat_details.coach_code,
-              seat_details.berth_type,
+              seat_details.seat_type,
               seat_details.seat_number,
             ]
           );
@@ -317,12 +317,12 @@ const book_ec = async (
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               seat_details.coach_code +
                 "/" +
                 seat_details.seat_number +
                 "/" +
-                seat_details.berth_type,
+                seat_details.seat_type,
               passengerdetails.rows[i].id,
             ]
           );
@@ -334,14 +334,14 @@ const book_ec = async (
           //first get RAC_Count
           let wtlcount = 1;
           const result_fetchrac_count = await client.query(
-            `select count(*) as count from seatallocation_ec where fk_seatsondate_ec=$1 and seat_status=$2`,
+            `select count(*) as count from seatallocation_e3 where fk_seatsondate_e3=$1 and seat_status=$2`,
             [result_seats_availability.rows[0].id, "WTL"]
           );
           //insert into seat alloation
           wtlcount = wtlcount + Number(result_fetchrac_count.rows[0].count);
           //insert into seat alloation
           await client.query(
-            `insert into seatallocation_ec (fkpassengerdata, fk_seatsondate_ec, seat_status, current_seat_status, updated_seat_status)values ($1,$2,$3,$4,$5) returning *`,
+            `insert into seatallocation_e3 (fkpassengerdata, fk_seatsondate_e3, seat_status, current_seat_status, updated_seat_status)values ($1,$2,$3,$4,$5) returning *`,
             [
               passengerdetails.rows[i].id,
               result_seats_availability.rows[0].id,
@@ -394,4 +394,4 @@ const book_ec = async (
     result_udpated_passengerdetails,
   };
 };
-module.exports = book_ec;
+module.exports = book_e3;

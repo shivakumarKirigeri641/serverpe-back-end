@@ -39,11 +39,6 @@ const book_1a = async (
       case "GEN":
         if (0 < result_seats_availability.rows[0].gen_count) {
           seat_allocation_status = "CNF";
-          const seat_details = allocateSeat_1a(
-            "1a",
-            current_gen_seat,
-            result_details.rows[0].type_code?.toUpperCase()
-          );
           //decrement the count of gen_seats
           await client.query(
             `update seatsondate_1a set gen_count = $1, total_seats=$2 where id=$3`,
@@ -55,7 +50,7 @@ const book_1a = async (
           );
           //insert into seat alloation
           await client.query(
-            `insert into seatallocation_1a (fkpassengerdata, fk_seatsondate_1a, seat_status)values ($1,$2,$3,$4) returning *`,
+            `insert into seatallocation_1a (fkpassengerdata, fk_seatsondate_1a, seat_status)values ($1,$2,$3) returning *`,
             [
               passengerdetails.rows[i].id,
               result_seats_availability.rows[0].id,
