@@ -8,7 +8,6 @@ const replaceNulls = (obj) => {
     }
     return newObj;
   } else if (obj === null) {
-    //return "NOT AVAILABLE";
     return "-";
   } else {
     return obj;
