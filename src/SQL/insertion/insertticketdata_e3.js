@@ -1,4 +1,4 @@
-const book_general_e3 = require("../reservations/book_general_e3");
+const book_e3 = require("../reservations/book_e3");
 const insertticketdata_e3 = async (client, booking_id) => {
   let confirm_details = {};
   const result_details = await client.query(
@@ -26,17 +26,13 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 for update`,
   //reserve seats
   switch (result_details.rows[0].type_code.toUpperCase()) {
     case "TTL":
-      break;
     case "PTL":
-      break;
     case "LADIES":
-      break;
     case "SENIOR":
-      break;
     case "GEN":
       switch (result_details.rows[0].coach_code.toUpperCase()) {
         default: //e3
-          confirm_details = await book_general_e3(
+          confirm_details = await book_e3(
             client,
             result_details,
             passengerdetails,

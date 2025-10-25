@@ -158,7 +158,7 @@ const proceedBooking = async (client, booking_details) => {
     const result_brding_point_withingschedule = await client.query(
       `select distinct s2.station_code from schedules s1 join
 schedules s2 on s1.train_number = s2.train_number
-where s1.station_code = $1 and s2.station_code = $2 and s1.station_sequence >s2.station_sequence and s1.train_number= $3`,
+where s1.station_code = $1 and s2.station_code = $2 and s1.station_sequence >=s2.station_sequence and s1.train_number= $3`,
       [
         booking_details.boarding_at.toUpperCase(),
         booking_details.source_code.toUpperCase(),
@@ -218,34 +218,124 @@ where s1.station_code = $1 and s2.station_code = $2 and s1.station_sequence >s2.
     await client.query("BEGIN");
     switch (booking_details.coach_type.toUpperCase()) {
       case "SL":
-        booking_summary = await insertbookingdata_sl(client, booking_details);
+        booking_summary = await insertbookingdata_sl(
+          client,
+          booking_details,
+          result_train_number,
+          result_src,
+          result_dest,
+          result_reservation_type,
+          result_coach_type,
+          result_brdingat
+        );
         break;
       case "1A":
-        booking_summary = await insertbookingdata_1a(client, booking_details);
+        booking_summary = await insertbookingdata_1a(
+          client,
+          booking_details,
+          result_train_number,
+          result_src,
+          result_dest,
+          result_reservation_type,
+          result_coach_type,
+          result_brdingat
+        );
         break;
       case "2A":
-        booking_summary = await insertbookingdata_2a(client, booking_details);
+        booking_summary = await insertbookingdata_2a(
+          client,
+          booking_details,
+          result_train_number,
+          result_src,
+          result_dest,
+          result_reservation_type,
+          result_coach_type,
+          result_brdingat
+        );
         break;
       case "3A":
-        booking_summary = await insertbookingdata_3a(client, booking_details);
+        booking_summary = await insertbookingdata_3a(
+          client,
+          booking_details,
+          result_train_number,
+          result_src,
+          result_dest,
+          result_reservation_type,
+          result_coach_type,
+          result_brdingat
+        );
         break;
       case "2S":
-        booking_summary = await insertbookingdata_2s(client, booking_details);
+        booking_summary = await insertbookingdata_2s(
+          client,
+          booking_details,
+          result_train_number,
+          result_src,
+          result_dest,
+          result_reservation_type,
+          result_coach_type,
+          result_brdingat
+        );
         break;
       case "CC":
-        booking_summary = await insertbookingdata_cc(client, booking_details);
+        booking_summary = await insertbookingdata_cc(
+          client,
+          booking_details,
+          result_train_number,
+          result_src,
+          result_dest,
+          result_reservation_type,
+          result_coach_type,
+          result_brdingat
+        );
         break;
       case "EC":
-        booking_summary = await insertbookingdata_ec(client, booking_details);
+        booking_summary = await insertbookingdata_ec(
+          client,
+          booking_details,
+          result_train_number,
+          result_src,
+          result_dest,
+          result_reservation_type,
+          result_coach_type,
+          result_brdingat
+        );
         break;
       case "EA":
-        booking_summary = await insertbookingdata_ea(client, booking_details);
+        booking_summary = await insertbookingdata_ea(
+          client,
+          booking_details,
+          result_train_number,
+          result_src,
+          result_dest,
+          result_reservation_type,
+          result_coach_type,
+          result_brdingat
+        );
         break;
       case "E3":
-        booking_summary = await insertbookingdata_e3(client, booking_details);
+        booking_summary = await insertbookingdata_e3(
+          client,
+          booking_details,
+          result_train_number,
+          result_src,
+          result_dest,
+          result_reservation_type,
+          result_coach_type,
+          result_brdingat
+        );
         break;
       case "FC":
-        booking_summary = await insertbookingdata_fc(client, booking_details);
+        booking_summary = await insertbookingdata_fc(
+          client,
+          booking_details,
+          result_train_number,
+          result_src,
+          result_dest,
+          result_reservation_type,
+          result_coach_type,
+          result_brdingat
+        );
         break;
       default:
         throw {

@@ -1,9 +1,22 @@
 const getFareDetails = require("../fetchers/getFareDetails");
-const insertbookingdata_1a = async (client, booking_details) => {
+const insertbookingdata_1a = async (
+  client,
+  booking_details,
+  result_train_number,
+  result_src,
+  result_dest,
+  result_reservation_type,
+  result_coach_type,
+  result_brdingat
+) => {
   let booked_details = null;
   let passenger_details = [];
   let search_details = {};
   try {
+    const result_train_number = await client.query(
+      `select id from coaches where train_number = $1`,
+      [booking_details.train_number]
+    );
     //check if coach given is applicable for selected train?
     const result_coach_check = await client.query(
       `select a_1 from coaches where train_number = $1`,

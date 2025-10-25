@@ -1,4 +1,4 @@
-const book_general_sl = require("../reservations/book_general_sl");
+const book_sl = require("../reservations/book_sl");
 const insertticketdata_sl = async (client, booking_id) => {
   let confirm_details = {};
   const result_details = await client.query(
@@ -26,26 +26,18 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 for update`,
   //reserve seats
   switch (result_details.rows[0].type_code.toUpperCase()) {
     case "TTL":
-      break;
     case "PTL":
-      break;
     case "LADIES":
-      break;
     case "PWD":
     case "DUTY":
     case "SENIOR":
-      break;
     case "GEN":
-      switch (result_details.rows[0].coach_code.toUpperCase()) {
-        default: //SL
-          confirm_details = await book_general_sl(
-            client,
-            result_details,
-            passengerdetails,
-            booking_id
-          );
-          break;
-      }
+      confirm_details = await book_sl(
+        client,
+        result_details,
+        passengerdetails,
+        booking_id
+      );
       break;
     default:
       throw {
