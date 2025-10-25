@@ -11,7 +11,7 @@ const insertbookingdata_fc = async (client, booking_details) => {
     );
     //check if coach given is applicable for selected train?
     const result_coach_check = await client.query(
-      `select a_1 from coaches where train_number = $1`,
+      `select fc from coaches where train_number = $1`,
       [booking_details.train_number]
     );
     if (0 < result_coach_check.rows.length) {
