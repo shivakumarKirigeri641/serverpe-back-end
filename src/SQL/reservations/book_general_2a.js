@@ -11,7 +11,11 @@ const book_general_2a = async (
   let result_updated_bookingdetails = {};
   let result_udpated_passengerdetails = [];
   let seat_allocation_status = "CNF";
-  const pnr = getPnrNumber(booking_id);
+  const result_bookingdata = await client.query(
+    `select mobile_number from bookingdata where id=$1`,
+    [booking_id]
+  );
+  const pnr = getPnrNumber(result_bookingdata.rows[0].mobile_number);
   //fetch scheduled departure
   const result_scheduled_departure = await client.query(
     `select departure from schedules where train_number=$1 and station_code = $2`,
