@@ -4,11 +4,6 @@ const insertbookingdata_fc = async (client, booking_details) => {
   let passenger_details = [];
   let search_details = {};
   try {
-    //check train
-    const result_train_number = await client.query(
-      `select id from coaches where train_number = $1`,
-      [booking_details.train_number]
-    );
     //check if coach given is applicable for selected train?
     const result_coach_check = await client.query(
       `select fc from coaches where train_number = $1`,
@@ -29,96 +24,12 @@ const insertbookingdata_fc = async (client, booking_details) => {
         message: "Invalid coach found!",
       };
     }
-    if (0 === result_train_number.rows.length) {
-      throw {
-        status: 400,
-        message: `Selected train number ${booking_details.train_number} not found!`,
-        data: {},
-      };
-    }
-    //check res_type
-    const result_reservation_type = await client.query(
-      `select id from reservationtype where type_code = $1`,
-      [booking_details.reservation_type.toUpperCase()]
-    );
-    if (0 === result_reservation_type.rows.length) {
-      throw {
-        status: 400,
-        message: `Selected reservation type ${booking_details.reservation_type} not found!`,
-        data: {},
-      };
-    }
-    //check coach_type
-    const result_coach_type = await client.query(
-      `select id from coachtype where coach_code = $1`,
-      [booking_details.coach_type.toUpperCase()]
-    );
-    if (0 === result_coach_type.rows.length) {
-      throw {
-        status: 400,
-        message: `Selected coach type ${booking_details.coach_code} not found!`,
-        data: {},
-      };
-    }
-    //src exists
-    const result_src = await client.query(
-      `select id from stations where code = $1`,
-      [booking_details.source_code.toUpperCase()]
-    );
-    if (0 === result_src.rows.length) {
-      throw {
-        status: 400,
-        message: `Source not found!`,
-        data: {},
-      };
-    }
-    //dest exists
-    const result_dest = await client.query(
-      `select id from stations where code = $1`,
-      [booking_details.destination_code.toUpperCase()]
-    );
-    if (0 === result_dest.rows.length) {
-      throw {
-        status: 400,
-        message: `Destination ${booking_details.destination_code} not found!`,
-        data: {},
-      };
-    }
-    //boarding_at
-    const result_brdingat = await client.query(
-      `select id from stations where code = $1`,
-      [booking_details.boarding_at.toUpperCase()]
-    );
-    if (0 === result_brdingat.rows.length) {
-      throw {
-        status: 400,
-        message: `Boarding point ${booking_details.boarding_at} not found!`,
-        data: {},
-      };
-    }
-    if (!booking_details.passenger_details) {
-      throw {
-        status: 400,
-        message: `Passenger list found!`,
-        data: {},
-      };
-    }
     let adult_count = booking_details.passenger_details.filter(
       (x) => x.passenger_ischild === false || x.passenger_issenior === true
     );
     let child_count = booking_details.passenger_details.filter(
       (x) => x.passenger_ischild === true
     );
-    if (
-      !booking_details.passenger_details ||
-      (0 === adult_count.length && 0 === child_count.length)
-    ) {
-      throw {
-        status: 400,
-        message: `Invalid passenger details found!`,
-        data: {},
-      };
-    }
     //lock advicery loack
     await client.query(
       `SELECT hashtext(mobile_number) FROM bookingdata WHERE mobile_number = $1`,
