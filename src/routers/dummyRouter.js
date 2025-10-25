@@ -3,6 +3,7 @@ const getReservationType = require("../SQL/fetchers/getReservationType");
 const { connectDB } = require("../database/connectDB");
 const dummyRouter = express.Router();
 const getPostgreClient = require("../SQL/getPostgreClient");
+const getTrainSchedule = require("../SQL/fetchers/getTrainSchedule");
 const getBerth_sl = require("../utils/getBerth_sl");
 const confirmBooking = require("../SQL/confirmBooking");
 const proceedBooking = require("../SQL/proceedBooking");
@@ -24,6 +25,30 @@ dummyRouter.get("/reservation-type", async (req, res) => {
     res
       .status(err.status)
       .json({ status: err.status, success: false, data: err.message });
+  }
+});
+//schedule
+dummyRouter.post("/train-schedule", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+
+  try {
+    //validation later
+    let { train_number } = req.body;
+    const train_schedule_details = await getTrainSchedule(
+      client,
+      train_number,
+      "YPR",
+      "KLBG"
+    );
+    res.status(200).json({
+      status: 200,
+      success: true,
+      message: "Train schedule fetched successfully!",
+      data: train_schedule_details,
+    });
+  } catch (err) {
+    res.json({ status: err.status, success: false, data: err.message });
   }
 });
 //search trains
