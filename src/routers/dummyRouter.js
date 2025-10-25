@@ -84,9 +84,7 @@ dummyRouter.post("/confirm-booking", async (req, res) => {
     const ticket_details = await confirmBooking(client, req.body.booking_id);
     res.status(200).json({ status: 200, success: true, data: ticket_details });
   } catch (err) {
-    res
-      .status(err.status)
-      .json({ status: err.status, success: false, data: err.message });
+    res.json({ success: false, data: err.message });
   }
 });
 

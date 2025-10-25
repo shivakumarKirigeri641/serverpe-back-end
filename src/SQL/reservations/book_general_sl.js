@@ -13,14 +13,10 @@ const book_general_sl = async (
   let seat_allocation_status = "CNF";
   const pnr = getPnrNumber(booking_id);
   //fetch scheduled departure
-  console.log("test");
-  console.log(result_details.rows[0]);
   const result_scheduled_departure = await client.query(
     `select departure from schedules where train_number=$1 and station_code = $2`,
     [result_details.rows[0].train_number, result_details.rows[0].source_code]
   );
-  console.log("test");
-  console.log(result_scheduled_departure.rows[0]);
   for (let i = 0; i < passengerdetails.rows.length; i++) {
     //lock
     let result_seats_availability = await client.query(
@@ -42,6 +38,7 @@ const book_general_sl = async (
       seat_allocation_status = "CNF";
       let current_gen_seat = result_seats_availability.rows[0].gen_count;
       const seat_details = allocateSeat_SL("SL", current_gen_seat);
+      //decrement the count of gen_seats
       await client.query(
         `update seatsondate_sl set gen_count = $1, total_seats=$2 where id=$3`,
         [
@@ -52,9 +49,10 @@ const book_general_sl = async (
       );
       //insert into seat alloation
       await client.query(
-        `insert into seatallocation_sl (fkpassengerdata, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6) returning *`,
+        `insert into seatallocation_sl (fkpassengerdata, fk_seatsondate_sl, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
         [
           passengerdetails.rows[i].id,
+          result_seats_availability.rows[0].id,
           current_gen_seat,
           "CNF",
           seat_details.coach_code,
@@ -85,18 +83,109 @@ const book_general_sl = async (
     //check if rac
     else if (0 < result_seats_availability.rows[0].rac_count) {
       seat_allocation_status = "RAC";
+      //decrement the count of rac_seats
+      await client.query(
+        `update seatsondate_sl set rac_count = $1, total_seats=$2 where id=$3`,
+        [
+          --result_seats_availability.rows[0].rac_count,
+          --result_seats_availability.rows[0].total_seats,
+          result_seats_availability.rows[0].id,
+        ]
+      );
+      //first get RAC_Count
+      let raccount = 1;
+      const result_fetchrac_count = await client.query(
+        `select count(*) as count from seatallocation_sl where fk_seatsondate_sl=$1 and seat_status=$2`,
+        [result_seats_availability.rows[0].id, "RAC"]
+      );
+      //insert into seat alloation
+      raccount = raccount + Number(result_fetchrac_count.rows[0].count);
+      await client.query(
+        `insert into seatallocation_sl (fkpassengerdata, fk_seatsondate_sl, seat_status, current_seat_status, updated_seat_status)values ($1,$2,$3,$4,$5) returning *`,
+        [
+          passengerdetails.rows[i].id,
+          result_seats_availability.rows[0].id,
+          "RAC",
+          raccount,
+          raccount,
+        ]
+      );
+      //update the passengerdetails
+      const temp = await client.query(
+        `update passengerdata set seat_status=$1, current_seat_status=$2, updated_seat_status=$3 where id=$4 returning *`,
+        ["RAC", raccount, raccount, passengerdetails.rows[i].id]
+      );
+      result_udpated_passengerdetails.push(temp.rows[0]);
     }
     //check if rac_share_count is present
     else if (0 < result_seats_availability.rows[0].rac_share_count) {
       seat_allocation_status = "RAC";
-      //first check if rac_count is 0
-    }
-    //check if rac_share
-    else if (0 < result_seats_availability.rows[0].rac_share_count) {
+      //decrement the count of rac_seats
+      await client.query(
+        `update seatsondate_sl set rac_share_count = $1 where id=$2`,
+        [
+          --result_seats_availability.rows[0].rac_share_count,
+          result_seats_availability.rows[0].id,
+        ]
+      );
+      //first get RAC_Count
+      let raccount = 1;
+      const result_fetchrac_count = await client.query(
+        `select count(*) as count from seatallocation_sl where fk_seatsondate_sl=$1 and seat_status=$2`,
+        [result_seats_availability.rows[0].id, "RAC"]
+      );
+      //insert into seat alloation
+      raccount = raccount + Number(result_fetchrac_count.rows[0].count);
+      await client.query(
+        `insert into seatallocation_sl (fkpassengerdata, fk_seatsondate_sl, seat_status, current_seat_status, updated_seat_status)values ($1,$2,$3,$4,$5) returning *`,
+        [
+          passengerdetails.rows[i].id,
+          result_seats_availability.rows[0].id,
+          "RAC",
+          raccount,
+          raccount,
+        ]
+      );
+      //update the passengerdetails
+      const temp = await client.query(
+        `update passengerdata set seat_status=$1, current_seat_status=$2, updated_seat_status=$3 where id=$4 returning *`,
+        [
+          "RAC",
+          Number(result_fetchrac_count.rows[0].count),
+          Number(result_fetchrac_count.rows[0].count),
+          passengerdetails.rows[i].id,
+        ]
+      );
+      result_udpated_passengerdetails.push(temp.rows[0]);
     }
     //waiting list
     else {
-      //direct insert in seatallocation_sl
+      seat_allocation_status = "WTL";
+      //first get RAC_Count
+      let wtlcount = 1;
+      const result_fetchrac_count = await client.query(
+        `select count(*) as count from seatallocation_sl where fk_seatsondate_sl=$1 and seat_status=$2`,
+        [result_seats_availability.rows[0].id, "WTL"]
+      );
+      //insert into seat alloation
+      wtlcount = wtlcount + Number(result_fetchrac_count.rows[0].count);
+      //insert into seat alloation
+      await client.query(
+        `insert into seatallocation_sl (fkpassengerdata, fk_seatsondate_sl, seat_status, current_seat_status, updated_seat_status)values ($1,$2,$3,$4,$5) returning *`,
+        [
+          passengerdetails.rows[i].id,
+          result_seats_availability.rows[0].id,
+          "WTL",
+          wtlcount,
+          wtlcount,
+        ]
+      );
+      //update the passengerdetails
+      const temp = await client.query(
+        `update passengerdata set seat_status=$1, current_seat_status=$2, updated_seat_status=$3 where id=$4 returning *`,
+        ["WTL", wtlcount, wtlcount, passengerdetails.rows[i].id]
+      );
+      result_udpated_passengerdetails.push(temp.rows[0]);
     }
   }
   //update bookingid with pnr
@@ -105,7 +194,7 @@ const book_general_sl = async (
     [pnr, seat_allocation_status, true, booking_id]
   );
   //send sms
-  const fast2smsResp = await axios.get(
+  /*const fast2smsResp = await axios.get(
     `https://www.fast2sms.com/dev/bulkV2?authorization=${
       process.env.FAST2SMSAPIKEY
     }&route=dlt&sender_id=NOQPNR&message=200941&variables_values=${pnr}|${
@@ -127,7 +216,7 @@ const book_general_sl = async (
   } else {
     // bubble details for debugging
     console.log(fast2smsResp.data);
-  }
+  }*/
   return {
     result_updated_bookingdetails: result_updated_bookingdetails.rows[0],
     result_udpated_passengerdetails,
