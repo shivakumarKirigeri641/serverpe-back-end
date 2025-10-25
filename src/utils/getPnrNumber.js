@@ -5,7 +5,13 @@ const getPnrNumber = (mobile_number) => {
   let pnr = null;
   const hash =
     Math.abs(
-      Array.from(mobile_number).reduce((acc, c) => acc + c.charCodeAt(0), 0)
+      Array.from(
+        mobile_number +
+          new Date().toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+            hour12: false,
+          })
+      ).reduce((acc, c) => acc + c.charCodeAt(0), 0)
     ) % 1000000;
   pnr = `PNR${String(hash).padStart(6, "0")}`;
   return pnr;

@@ -9,6 +9,7 @@ const getBerth_sl = require("../utils/getBerth_sl");
 const confirmBooking = require("../SQL/confirmBooking");
 const proceedBooking = require("../SQL/proceedBooking");
 const searchTrains = require("../SQL/fetchers/searchTrains");
+const cancel_ticket = require("../SQL/reservations/cancel_ticket");
 //reservation_type
 dummyRouter.get("/reservation-type", async (req, res) => {
   const pool = await connectDB();
@@ -79,6 +80,30 @@ dummyRouter.post("/search-trains", async (req, res) => {
   try {
     //validation later
     let { source_code, destination_code, doj } = req.body;
+    if (!source_code) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Source not found!`,
+        data: {},
+      };
+    }
+    if (!destination_code) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Destination not found!`,
+        data: {},
+      };
+    }
+    if (!doj) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Date of journey not found!`,
+        data: {},
+      };
+    }
     const search_train_details = await searchTrains(
       client,
       source_code.toUpperCase(),
@@ -128,7 +153,34 @@ dummyRouter.post("/confirm-booking", async (req, res) => {
     res.json({ success: false, data: err.message });
   }
 });
-
+//cancel-ticket
+dummyRouter.post("/cancel-ticket", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+  try {
+    const { pnr, passengerids } = req.body;
+    if (!pnr) {
+      throw {
+        status: 200,
+        success: false,
+        message: `PNR not found!`,
+        data: {},
+      };
+    }
+    if (!passengerids) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Passenger information not found!`,
+        data: {},
+      };
+    }
+    const result = await cancel_ticket(client, pnr, passengerids);
+    res.status(200).json({ success: false, data: result });
+  } catch (err) {
+    res.json({ success: false, data: err.message });
+  }
+});
 //test
 dummyRouter.post("/test", async (req, res) => {
   try {
