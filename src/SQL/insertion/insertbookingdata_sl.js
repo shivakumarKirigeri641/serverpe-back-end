@@ -85,16 +85,45 @@ const insertbookingdata_sl = async (client, booking_details) => {
       };
     }
     //boarding_at
-    const result_brdingat = await client.query(
-      `select id from stations where code = $1`,
-      [booking_details.boarding_at.toUpperCase()]
-    );
-    if (0 === result_brdingat.rows.length) {
-      throw {
-        status: 400,
-        message: `Boarding point ${booking_details.boarding_at} not found!`,
-        data: {},
-      };
+    if (booking_details.boarding_at) {
+      const result_brdingat = await client.query(
+        `select id from stations where code = $1`,
+        [booking_details.boarding_at.toUpperCase()]
+      );
+      if (0 === result_brdingat.rows.length) {
+        throw {
+          status: 400,
+          message: `Boarding point ${booking_details.boarding_at} not found!`,
+          data: {},
+        };
+      }
+      //check if boarding point is withing the train schedule
+      const result_brding_point_withingschedule = await client.query(
+        `select distinct s2.station_code from schedules s1 join
+schedules s2 on s1.train_number = s2.train_number
+where s1.station_code = $1 and s2.station_code = $2 and s1.station_sequence >s2.station_sequence and s1.train_number= $3`,
+        [
+          booking_details.boarding_at.toUpperCase(),
+          booking_details.source_code.toUpperCase(),
+          booking_details.train_number,
+        ]
+      );
+      const station_brding = result_brding_point_withingschedule.rows.filter(
+        (x) =>
+          x.station_code.toUpperCase() ===
+          booking_details.boarding_at.toUpperCase()
+      );
+      if (
+        0 === station_brding.length ||
+        0 === result_brding_point_withingschedule.rows.length
+      ) {
+        throw {
+          status: 200,
+          success: false,
+          message: `Boaring point is not within your mentioned train schedule!`,
+          data: {},
+        };
+      }
     }
     if (!booking_details.passenger_details) {
       throw {
