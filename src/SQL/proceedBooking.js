@@ -1,5 +1,6 @@
 const insertbookingdata_3a = require("./insertion/insertbookingdata_3a");
 const insertbookingdata_1a = require("./insertion/insertbookingdata_1a");
+const insertbookingdata_fc = require("./insertion/insertbookingdata_fc");
 const insertbookingdata_2a = require("./insertion/insertbookingdata_2a");
 const insertbookingdata_sl = require("./insertion/insertbookingdata_sl");
 const proceedBooking = async (client, booking_details) => {
@@ -54,6 +55,7 @@ const proceedBooking = async (client, booking_details) => {
       case "E3":
         break;
       case "FC":
+        booking_summary = await insertbookingdata_fc(client, booking_details);
         break;
       default:
         throw {
