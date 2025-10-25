@@ -85,7 +85,7 @@ dummyRouter.post("/search-trains", async (req, res) => {
       destination_code.toUpperCase(),
       doj
     );
-    if (search_train_details.trains_list.rows.length === 0) {
+    if (search_train_details.trains_list.length === 0) {
       res.status(200).json({
         status: 200,
         success: true,
@@ -101,9 +101,7 @@ dummyRouter.post("/search-trains", async (req, res) => {
       });
     }
   } catch (err) {
-    res
-      .status(err.status)
-      .json({ status: err.status, success: false, data: err.message });
+    res.json({ status: err.status, success: false, data: err.message });
   }
 });
 //prceed-booking
@@ -135,6 +133,11 @@ dummyRouter.post("/confirm-booking", async (req, res) => {
 
 //test
 dummyRouter.post("/test", async (req, res) => {
+  try {
+    const train_number = "11312";
+  } catch (err) {
+    res.send(err.message);
+  }
   res.send("test");
 });
 module.exports = dummyRouter;
