@@ -4,7 +4,6 @@ const proceedBooking = async (client, booking_details) => {
   try {
     await client.query("BEGIN");
     //overall valiations
-    //overall valiations
     if (
       booking_details.reservation_type == "LADIES" &&
       2 < booking_details.passenger_details.length

@@ -9,6 +9,26 @@ const insertbookingdata_sl = async (client, booking_details) => {
       `select id from coaches where train_number = $1`,
       [booking_details.train_number]
     );
+    //check if coach given is applicable for selected train?
+    const result_coach_check = await client.query(
+      `select sl from coaches where train_number = $1`,
+      [booking_details.train_number]
+    );
+    if (0 < result_coach_check.rows.length) {
+      if ("N" === result_coach_check.rows[0].sl.toUpperCase()) {
+        throw {
+          status: 200,
+          success: false,
+          message: "Coach not applicable for selected train!",
+        };
+      }
+    } else {
+      throw {
+        status: 200,
+        success: false,
+        message: "Invalid coach found!",
+      };
+    }
     if (0 === result_train_number.rows.length) {
       throw {
         status: 400,
