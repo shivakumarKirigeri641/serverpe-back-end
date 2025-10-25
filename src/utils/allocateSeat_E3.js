@@ -43,7 +43,7 @@ function allocateSeat_E3(coach_code, seat_sequence_number, quota = null) {
     return {
       coach_code: `${coach_code}${coachIndex}`,
       seat_number: nearestLB,
-      berth_type: berthType,
+      seat_type: berthType,
       allocated_for_quota: quota,
     };
   }
@@ -52,7 +52,7 @@ function allocateSeat_E3(coach_code, seat_sequence_number, quota = null) {
   return {
     coach_code: `${coach_code}${coachIndex}`,
     seat_number: seatNumberInCoach,
-    berth_type: berthType,
+    seat_type: berthType,
     allocated_for_quota: quota || "general",
   };
 }

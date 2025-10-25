@@ -11,11 +11,11 @@ const insertbookingdata_e3 = async (client, booking_details) => {
     );
     //check if coach given is applicable for selected train?
     const result_coach_check = await client.query(
-      `select e3 from coaches where train_number = $1`,
+      `select e_3 from coaches where train_number = $1`,
       [booking_details.train_number]
     );
     if (0 < result_coach_check.rows.length) {
-      if ("N" === result_coach_check.rows[0].e3.toUpperCase()) {
+      if ("N" === result_coach_check.rows[0].e_3.toUpperCase()) {
         throw {
           status: 200,
           sue3ess: false,
