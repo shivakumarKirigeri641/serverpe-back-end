@@ -1,4 +1,6 @@
 const insertticketdata_sl = require("./insertion/insertticketdata_sl");
+const insertticketdata_2a = require("./insertion/insertticketdata_2a");
+const insertticketdata_3a = require("./insertion/insertticketdata_3a");
 const confirmBooking = async (client, booking_id) => {
   let booking_summary = null;
   try {
@@ -29,8 +31,10 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and proceed_status=$2
       case "1A":
         break;
       case "2A":
+        booking_summary = await insertticketdata_2a(client, booking_id);
         break;
       case "3A":
+        booking_summary = await insertticketdata_3a(client, booking_id);
         break;
       case "2S":
         break;

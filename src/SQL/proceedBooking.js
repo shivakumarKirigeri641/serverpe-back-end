@@ -1,4 +1,5 @@
 const insertbookingdata_3a = require("./insertion/insertbookingdata_3a");
+const insertbookingdata_2a = require("./insertion/insertbookingdata_2a");
 const insertbookingdata_sl = require("./insertion/insertbookingdata_sl");
 const proceedBooking = async (client, booking_details) => {
   let booking_summary = null;
@@ -35,6 +36,7 @@ const proceedBooking = async (client, booking_details) => {
       case "1A":
         break;
       case "2A":
+        booking_summary = await insertbookingdata_2a(client, booking_details);
         break;
       case "3A":
         booking_summary = await insertbookingdata_3a(client, booking_details);
