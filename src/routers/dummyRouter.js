@@ -1,5 +1,6 @@
 const express = require("express");
 const getReservationType = require("../SQL/fetchers/getReservationType");
+const getCoachType = require("../SQL/fetchers/getCoachType");
 const { connectDB } = require("../database/connectDB");
 const dummyRouter = express.Router();
 const getPostgreClient = require("../SQL/getPostgreClient");
@@ -18,7 +19,26 @@ dummyRouter.get("/reservation-type", async (req, res) => {
     res.status(200).json({
       status: 200,
       success: true,
-      message: "Trains fetch successfull",
+      message: "Reservation type fetch successfull",
+      data: result.rows,
+    });
+  } catch (err) {
+    res
+      .status(err.status)
+      .json({ status: err.status, success: false, data: err.message });
+  }
+});
+//coach_type
+dummyRouter.get("/coach-type", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+  try {
+    //validation later
+    const result = await getCoachType(client);
+    res.status(200).json({
+      status: 200,
+      success: true,
+      message: "Coach type fetch successfull",
       data: result.rows,
     });
   } catch (err) {

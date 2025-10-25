@@ -10,8 +10,8 @@ cron.schedule(
     const pool = await connectDB();
     client = await getPostgreClient(pool);
     try {
-      backup_remove_newSeats(client); //runs in every 24hrs
-      console.log("backup successfull");
+      //backup_remove_newSeats(client); //runs in every 24hrs
+      //console.log("backup successfull");
     } catch (err) {
       console.log(err.message);
     }
