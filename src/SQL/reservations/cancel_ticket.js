@@ -121,8 +121,8 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
         [passengerids[i]]
       );
       await client.query(
-        `update seatallocation_${table_suffix} set seat_status=$1, fkpassengerdata=$2 where fkpassengerdata=$3`,
-        [null, null, passengerids[i]]
+        `update seatallocation_${table_suffix} set seat_status=$1 Where fkpassengerdata=$3`,
+        ["CAN", passengerids[i]]
       );
       //insert into cancellationdata
       await client.query(

@@ -7,7 +7,7 @@ const replaceNulls = (obj) => {
       newObj[key] = replaceNulls(obj[key]);
     }
     return newObj;
-  } else if (obj === null) {
+  } else if (obj === null || obj === "0") {
     return "-";
   } else {
     return obj;
