@@ -41,7 +41,7 @@ const book_general_ec = async (
     if (0 < result_seats_availability.rows[0].gen_count) {
       seat_allocation_status = "CNF";
       let current_gen_seat = result_seats_availability.rows[0].gen_count;
-      const seat_details = allocateSeat_ec("C", current_gen_seat);
+      const seat_details = allocateSeat_ec("EC", current_gen_seat);
       //decrement the count of gen_seats
       await client.query(
         `update seatsondate_ec set gen_count = $1, total_seats=$2 where id=$3`,
@@ -60,7 +60,7 @@ const book_general_ec = async (
           current_gen_seat,
           "CNF",
           seat_details.coach_code,
-          seat_details.berth_type,
+          seat_details.seat_type,
           seat_details.seat_number,
         ]
       );
@@ -73,12 +73,12 @@ const book_general_ec = async (
             "/" +
             seat_details.seat_number +
             "/" +
-            seat_details.berth_type,
+            seat_details.seat_type,
           seat_details.coach_code +
             "/" +
             seat_details.seat_number +
             "/" +
-            seat_details.berth_type,
+            seat_details.seat_type,
           passengerdetails.rows[i].id,
         ]
       );

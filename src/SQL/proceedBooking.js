@@ -1,4 +1,9 @@
 const insertbookingdata_3a = require("./insertion/insertbookingdata_3a");
+const insertbookingdata_2s = require("./insertion/insertbookingdata_2s");
+const insertbookingdata_cc = require("./insertion/insertbookingdata_cc");
+const insertbookingdata_ec = require("./insertion/insertbookingdata_ec");
+const insertbookingdata_ea = require("./insertion/insertbookingdata_ea");
+const insertbookingdata_e3 = require("./insertion/insertbookingdata_e3");
 const insertbookingdata_1a = require("./insertion/insertbookingdata_1a");
 const insertbookingdata_fc = require("./insertion/insertbookingdata_fc");
 const insertbookingdata_2a = require("./insertion/insertbookingdata_2a");
@@ -31,7 +36,7 @@ const proceedBooking = async (client, booking_details) => {
     }
     //overall valiations
     await client.query("BEGIN");
-    switch (booking_details.coach_type) {
+    switch (booking_details.coach_type.toUpperCase()) {
       case "SL":
         booking_summary = await insertbookingdata_sl(client, booking_details);
         break;
@@ -45,14 +50,19 @@ const proceedBooking = async (client, booking_details) => {
         booking_summary = await insertbookingdata_3a(client, booking_details);
         break;
       case "2S":
+        booking_summary = await insertbookingdata_2s(client, booking_details);
         break;
       case "CC":
+        booking_summary = await insertbookingdata_cc(client, booking_details);
         break;
       case "EC":
+        booking_summary = await insertbookingdata_ec(client, booking_details);
         break;
       case "EA":
+        booking_summary = await insertbookingdata_ea(client, booking_details);
         break;
       case "E3":
+        booking_summary = await insertbookingdata_e3(client, booking_details);
         break;
       case "FC":
         booking_summary = await insertbookingdata_fc(client, booking_details);

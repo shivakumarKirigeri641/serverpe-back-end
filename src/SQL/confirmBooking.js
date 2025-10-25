@@ -1,4 +1,9 @@
 const insertticketdata_sl = require("./insertion/insertticketdata_sl");
+const insertticketdata_2s = require("./insertion/insertticketdata_2s");
+const insertticketdata_cc = require("./insertion/insertticketdata_cc");
+const insertticketdata_ec = require("./insertion/insertticketdata_ec");
+const insertticketdata_e3 = require("./insertion/insertticketdata_e3");
+const insertticketdata_ea = require("./insertion/insertticketdata_ea");
 const insertticketdata_2a = require("./insertion/insertticketdata_2a");
 const insertticketdata_3a = require("./insertion/insertticketdata_3a");
 const insertticketdata_1a = require("./insertion/insertticketdata_1a");
@@ -40,14 +45,19 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and proceed_status=$2
         booking_summary = await insertticketdata_3a(client, booking_id);
         break;
       case "2S":
+        booking_summary = await insertticketdata_2s(client, booking_id);
         break;
       case "CC":
+        booking_summary = await insertticketdata_cc(client, booking_id);
         break;
       case "EC":
+        booking_summary = await insertticketdata_ec(client, booking_id);
         break;
       case "EA":
+        booking_summary = await insertticketdata_ea(client, booking_id);
         break;
       case "E3":
+        booking_summary = await insertticketdata_e3(client, booking_id);
         break;
       case "FC":
         booking_summary = await insertticketdata_fc(client, booking_id);

@@ -40,7 +40,7 @@ const insertbookingdata_ea = async (client, booking_details) => {
     //check res_type
     const result_reservation_type = await client.query(
       `select id from reservationtype where type_code = $1`,
-      [booking_details.reservation_type]
+      [booking_details.reservation_type.toUpperCase()]
     );
     if (0 === result_reservation_type.rows.length) {
       throw {
@@ -52,7 +52,7 @@ const insertbookingdata_ea = async (client, booking_details) => {
     //check coach_type
     const result_coach_type = await client.query(
       `select id from coachtype where coach_code = $1`,
-      [booking_details.coach_type]
+      [booking_details.coach_type.toUpperCase()]
     );
     if (0 === result_coach_type.rows.length) {
       throw {
