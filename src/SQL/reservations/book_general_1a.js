@@ -1,5 +1,4 @@
 const axios = require("axios");
-const allocateSeat_1a = require("../../utils/allocateSeat_1a");
 require("dotenv").config();
 const getPnrNumber = require("../../utils/getPnrNumber");
 const book_general_1a = async (
@@ -17,52 +16,70 @@ const book_general_1a = async (
     `select departure from schedules where train_number=$1 and station_code = $2`,
     [result_details.rows[0].train_number, result_details.rows[0].source_code]
   );
-  for (let i = 0; i < passengerdetails.rows.length; i++) {
-    //lock
-    let result_seats_availability = await client.query(
-      `select *from seatsondate_1a where train_number=$1 and date_of_journey=$2 for update`,
-      [
-        result_details.rows[0].train_number,
-        result_details.rows[0].date_of_journey,
-      ]
-    );
-    //lock bookingdata
-    let result_bookingdata = await client.query(
-      `select *from bookingdata where id=$1 for update`,
-      [booking_id]
-    );
-    //adivicerylock (LETS SEE HOW IT WORKS THEN DO THIS)
+  //check if seats & passengers are equal or more
+  let result_seats_availability = await client.query(
+    `select *from seatsondate_1a where train_number=$1 and date_of_journey=$2 for update`,
+    [
+      result_details.rows[0].train_number,
+      result_details.rows[0].date_of_journey,
+    ]
+  );
+  if (
+    result_seats_availability.rows[0].gen_count >= passengerdetails.rows.length
+  ) {
+    for (let i = 0; i < passengerdetails.rows.length; i++) {
+      //lock
+      result_seats_availability = await client.query(
+        `select *from seatsondate_1a where train_number=$1 and date_of_journey=$2 for update`,
+        [
+          result_details.rows[0].train_number,
+          result_details.rows[0].date_of_journey,
+        ]
+      );
+      //lock bookingdata
+      let result_bookingdata = await client.query(
+        `select *from bookingdata where id=$1 for update`,
+        [booking_id]
+      );
+      //adivicerylock (LETS SEE HOW IT WORKS THEN DO THIS)
 
-    //check if gen_seats are there
-    if (0 < result_seats_availability.rows[0].gen_count) {
-      seat_allocation_status = "CNF";
-      let current_gen_seat = result_seats_availability.rows[0].gen_count;
-      //decrement the count of gen_seats
-      await client.query(
-        `update seatsondate_1a set gen_count = $1, total_seats=$2 where id=$3`,
-        [
-          --result_seats_availability.rows[0].gen_count,
-          --result_seats_availability.rows[0].total_seats,
-          result_seats_availability.rows[0].id,
-        ]
-      );
-      //insert into seat alloation
-      await client.query(
-        `insert into seatallocation_1a (fkpassengerdata, fk_seatsondate_1a, seat_sequence_number, seat_status)values ($1,$2,$3,$4) returning *`,
-        [
-          passengerdetails.rows[i].id,
-          result_seats_availability.rows[0].id,
-          current_gen_seat,
-          "CNF",
-        ]
-      );
-      //update the passengerdetails
-      const temp = await client.query(
-        `update passengerdata set seat_status=$1, current_seat_status=$2, updated_seat_status=$3 where id=$4 returning *`,
-        ["CNF", "CNF", "CNF", passengerdetails.rows[i].id]
-      );
-      result_udpated_passengerdetails.push(temp.rows[0]);
+      //check if gen_seats are there
+      if (0 < result_seats_availability.rows[0].gen_count) {
+        seat_allocation_status = "CNF";
+        let current_gen_seat = result_seats_availability.rows[0].gen_count;
+        //decrement the count of gen_seats
+        await client.query(
+          `update seatsondate_1a set gen_count = $1, total_seats=$2 where id=$3`,
+          [
+            --result_seats_availability.rows[0].gen_count,
+            --result_seats_availability.rows[0].total_seats,
+            result_seats_availability.rows[0].id,
+          ]
+        );
+        //insert into seat alloation
+        await client.query(
+          `insert into seatallocation_1a (fkpassengerdata, fk_seatsondate_1a, seat_sequence_number, seat_status)values ($1,$2,$3,$4) returning *`,
+          [
+            passengerdetails.rows[i].id,
+            result_seats_availability.rows[0].id,
+            current_gen_seat,
+            "CNF",
+          ]
+        );
+        //update the passengerdetails
+        const temp = await client.query(
+          `update passengerdata set seat_status=$1, current_seat_status=$2, updated_seat_status=$3 where id=$4 returning *`,
+          ["CNF", "CNF", "CNF", passengerdetails.rows[i].id]
+        );
+        result_udpated_passengerdetails.push(temp.rows[0]);
+      }
     }
+  } else {
+    throw {
+      status: 200,
+      success: false,
+      message: "Seats are not available to book 1A passengers.!",
+    };
   }
   //update bookingid with pnr
   result_updated_bookingdetails = await client.query(
