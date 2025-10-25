@@ -196,6 +196,21 @@ const insertbookingdata_sl = async (client, booking_details) => {
         fare_details: fare_details,
       };
     } else {
+      //update coach
+      await client.query(
+        `update bookingdata set fktrain_number=$1, fksource_code=$2, fkdestination_code=$3, fkboarding_at=$4, fkcoach_type=$5, mobile_number=$6, adult_count=$7, child_count=$8 where id=$9`,
+        [
+          result_train_number.rows[0].id,
+          result_src.rows[0].id,
+          result_dest.rows[0].id,
+          result_brdingat.rows[0].id,
+          result_coach_type.rows[0].id,
+          booking_details.mobile_number,
+          adult_count.length,
+          child_count.length,
+          result_is_already_user.rows[0].id,
+        ]
+      );
       //insert passenger list
       await client.query(`delete from passengerdata where fkbookingdata = $1`, [
         result_is_already_user.rows[0].id,
