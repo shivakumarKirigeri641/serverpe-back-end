@@ -121,7 +121,7 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
         [passengerids[i]]
       );
       await client.query(
-        `update seatallocation_${table_suffix} set seat_status=$1 Where fkpassengerdata=$3`,
+        `update seatallocation_${table_suffix} set seat_status=$1 Where fkpassengerdata=$2`,
         ["CAN", passengerids[i]]
       );
       //insert into cancellationdata
@@ -136,12 +136,13 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
       //update passengerdata
       await client.query(
         //how will you get amount paid for passenger?
-        `update passengerdata set seat_status=$1, updated_seat_status=$2, refund_amount=$3 where id=$4 returning *`,
+        `update passengerdata set seat_status=$1, updated_seat_status=$2, refund_amount=$3, cancellation_status=$4 where id=$5 returning *`,
         [
           "CAN",
           null,
           result_passenger_details.rows[0].base_fare -
             result_passenger_details.rows[0].base_fare * refund_amount_percent,
+          true,
           passengerids[i],
         ]
       );
