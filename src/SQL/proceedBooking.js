@@ -1,4 +1,5 @@
 const insertbookingdata_3a = require("./insertion/insertbookingdata_3a");
+const checkSeats = require("./fetchers/checkSeats");
 const validateDateOfJourney = require("../utils/validateDateOfJourney");
 const insertbookingdata_2s = require("./insertion/insertbookingdata_2s");
 const insertbookingdata_cc = require("./insertion/insertbookingdata_cc");
@@ -211,6 +212,22 @@ where s1.station_code = $1 and s2.station_code = $2 and s1.station_sequence >=s2
       throw {
         status: 400,
         message: `Invalid passenger details found!`,
+        data: {},
+      };
+    }
+    //check seats
+    const seats_check = await checkSeats(
+      client,
+      booking_details.train_number,
+      booking_details.doj,
+      booking_details.coach_type,
+      booking_details.reservation_type
+    );
+    if (!seats_check) {
+      throw {
+        status: 400,
+        success: false,
+        message: `Booking not allowed for coach ${booking_details.coach_type} for reservation ${booking_details.reservation_type}!`,
         data: {},
       };
     }

@@ -35,8 +35,15 @@ const book_cc = async (
       `select *from bookingdata where id=$1 for update`,
       [booking_id]
     );
-
-    switch (result_details.rows[0].type_code.toUpperCase()) {
+    let type_code = result_details.rows[0].type_code.toUpperCase();
+    type_code =
+      (passengerdetails.rows[i].p_age >= 60 &&
+        passengerdetails.rows[i].p_gender.toUpperCase() === "M") ||
+      (passengerdetails.rows[i].p_age >= 50 &&
+        passengerdetails.rows[i].p_gender.toUpperCase() === "F")
+        ? "SENIOR"
+        : result_details.rows[0].type_code.toUpperCase();
+    switch (type_code) {
       case "TTL":
         if (0 < result_seats_availability.rows[0].ttl_count) {
           seat_allocation_status = "CNF";
