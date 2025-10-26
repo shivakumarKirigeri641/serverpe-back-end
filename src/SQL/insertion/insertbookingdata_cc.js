@@ -1,5 +1,5 @@
 const getFareDetails = require("../fetchers/getFareDetails");
-const insertbookingdata_sl = async (
+const insertbookingdata_cc = async (
   client,
   booking_details,
   result_train_number,
@@ -15,11 +15,11 @@ const insertbookingdata_sl = async (
   try {
     //check if coach given is applicable for selected train?
     const result_coach_check = await client.query(
-      `select sl from coaches where train_number = $1`,
+      `select cc from coaches where train_number = $1`,
       [booking_details.train_number]
     );
     if (0 < result_coach_check.rows.length) {
-      if ("N" === result_coach_check.rows[0].sl.toUpperCase()) {
+      if ("N" === result_coach_check.rows[0].cc.toUpperCase()) {
         throw {
           status: 200,
           success: false,
@@ -33,7 +33,6 @@ const insertbookingdata_sl = async (
         message: "Invalid coach found!",
       };
     }
-
     let adult_count = booking_details.passenger_details.filter(
       (x) => x.passenger_ischild === false || x.passenger_issenior === true
     );
@@ -189,4 +188,4 @@ const insertbookingdata_sl = async (
     throw err;
   }
 };
-module.exports = insertbookingdata_sl;
+module.exports = insertbookingdata_cc;

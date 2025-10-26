@@ -1,8 +1,8 @@
 const checkForValidDate = require("../../utils/checkForValidDate");
+const replaceNulls = require("../../utils/replaceNulls");
 const convertSearchTrainsToJson = require("../../utils/convertSearchTrainsToJson");
 
 const searchTrains = async (client, source_code, destination_code, doj) => {
-  let search_train_details = null;
   let result_dest = [];
   let result_src = [];
   try {
@@ -39,7 +39,7 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
         data: {},
       };
     }
-    search_train_details = await client.query(
+    let search_train_details = await client.query(
       `WITH params AS (
     SELECT 
         $3::date AS journey_date,
@@ -376,14 +376,14 @@ LEFT JOIN coachtype ct_2s ON ct_2s.coach_code = '2S'
 ORDER BY s1.departure, tf.train_number;`,
       [source_code, destination_code, doj]
     );
-    //search_train_details = convertSearchTrainsToJson(result);
+    const cleanedResult = replaceNulls(search_train_details.rows);
     return {
       source: result_src.rows[0].station_name,
       source_code: result_src.rows[0].code,
       destination: result_dest.rows[0].station_name,
       destination_code: result_dest.rows[0].code,
       date_of_journey: doj,
-      trains_list: search_train_details,
+      trains_list: cleanedResult,
     };
   } catch (err) {
     throw err;

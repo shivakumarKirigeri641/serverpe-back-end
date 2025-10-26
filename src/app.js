@@ -1,4 +1,5 @@
 const express = require("express");
+require("./crons/mock_Train_Scheduler");
 const { connectDB } = require("./database/connectDB");
 const app = new express();
 const cors = require("cors");
@@ -9,7 +10,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:1234",
+    origin: ["http://192.168.10.34:1234", "http://192.168.10.63:5173"],
     credentials: true,
   })
 );

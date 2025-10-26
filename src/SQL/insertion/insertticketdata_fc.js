@@ -1,5 +1,5 @@
-const book_sl = require("../reservations/book_sl");
-const insertticketdata_sl = async (client, booking_id) => {
+const book_fc = require("../reservations/book_fc");
+const insertticketdata_fc = async (client, booking_id) => {
   let confirm_details = {};
   const result_details = await client.query(
     `select b.id, c.train_number, sr.code AS source_code, dest.code as destination_code, ct.coach_code, r.type_code, b.date_of_journey, b.mobile_number from bookingdata b join
@@ -25,19 +25,17 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 for update`,
 
   //reserve seats
   switch (result_details.rows[0].type_code.toUpperCase()) {
-    case "TTL":
-    case "PTL":
-    case "LADIES":
-    case "PWD":
-    case "DUTY":
-    case "SENIOR":
     case "GEN":
-      confirm_details = await book_sl(
-        client,
-        result_details,
-        passengerdetails,
-        booking_id
-      );
+      switch (result_details.rows[0].coach_code.toUpperCase()) {
+        default: //fc
+          confirm_details = await book_fc(
+            client,
+            result_details,
+            passengerdetails,
+            booking_id
+          );
+          break;
+      }
       break;
     default:
       throw {
@@ -48,4 +46,4 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 for update`,
   }
   return confirm_details;
 };
-module.exports = insertticketdata_sl;
+module.exports = insertticketdata_fc;

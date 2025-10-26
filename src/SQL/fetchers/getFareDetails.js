@@ -19,7 +19,7 @@ s1.station_sequence < s2.station_sequence`,
   //first get individual fare
   let result_total_fare = await client.query(
     `select *from coachtype where coach_code=$1;`,
-    [booking_details.coach_type]
+    [booking_details.coach_type.toUpperCase()]
   );
   let additional_charges_details = await client.query(
     `select *from additionalcharges;`
@@ -32,7 +32,7 @@ s1.station_sequence < s2.station_sequence`,
     await client.query(`select *from passengerdata where id=$1 for update`, [
       passenger_details[i].id,
     ]);
-    switch (booking_details.reservation_type) {
+    switch (booking_details.reservation_type.toUpperCase()) {
       case "TTL":
         total_fare =
           total_fare +

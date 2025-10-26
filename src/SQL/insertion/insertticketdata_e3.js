@@ -1,5 +1,5 @@
-const book_sl = require("../reservations/book_sl");
-const insertticketdata_sl = async (client, booking_id) => {
+const book_e3 = require("../reservations/book_e3");
+const insertticketdata_e3 = async (client, booking_id) => {
   let confirm_details = {};
   const result_details = await client.query(
     `select b.id, c.train_number, sr.code AS source_code, dest.code as destination_code, ct.coach_code, r.type_code, b.date_of_journey, b.mobile_number from bookingdata b join
@@ -18,7 +18,7 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 for update`,
   if (0 === passengerdetails.rows.length) {
     throw {
       status: 200,
-      success: false,
+      sue3ess: false,
       message: "Passenger details not found!",
     };
   }
@@ -28,24 +28,26 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 for update`,
     case "TTL":
     case "PTL":
     case "LADIES":
-    case "PWD":
-    case "DUTY":
     case "SENIOR":
     case "GEN":
-      confirm_details = await book_sl(
-        client,
-        result_details,
-        passengerdetails,
-        booking_id
-      );
+      switch (result_details.rows[0].coach_code.toUpperCase()) {
+        default: //e3
+          confirm_details = await book_e3(
+            client,
+            result_details,
+            passengerdetails,
+            booking_id
+          );
+          break;
+      }
       break;
     default:
       throw {
         status: 200,
-        success: false,
+        sue3ess: false,
         message: "Booking not allowed for selected reservation type!",
       };
   }
   return confirm_details;
 };
-module.exports = insertticketdata_sl;
+module.exports = insertticketdata_e3;
