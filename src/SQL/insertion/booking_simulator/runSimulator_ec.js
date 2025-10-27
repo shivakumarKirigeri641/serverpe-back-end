@@ -20,18 +20,12 @@ LIMIT 1;
   );
   const random_date = getRandomDateNext60Days();
   const ARRAY = ["GEN", "LADIES", "SENIOR"];
-  const random_reservation_type =
-    ARRAY[Math.floor(Math.random() * ARRAY.length)];
+  let random_reservation_type = ARRAY[Math.floor(Math.random() * ARRAY.length)];
   //get booking details similar to req.body
   const { source_code, destination_code } = await getSourceAndDestination(
     client,
     train_numbers_ec.rows[0].train_number
   );
-  if (checkIfDateIsTomorrow(random_date)) {
-    const temp_ARRAY = ["TTL", "PTL"];
-    random_reservation_type =
-      temp_ARRAY[Math.floor(Math.random() * temp_ARRAY.length)];
-  }
   let mobilenumber = getRandomMobileNumber();
   const body = {
     train_number: train_numbers_ec.rows[0].train_number,
@@ -57,7 +51,7 @@ LIMIT 1;
   } catch (err) {
     console.error("Error:", err.message);
   } finally {
-    console.log(`Booking done:(ec)`);
+    console.log(`Booking done:(ec)${new Date()}`);
   }
 };
 module.exports = runSimulator_ec;
