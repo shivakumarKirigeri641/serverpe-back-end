@@ -10,6 +10,7 @@ const confirmBooking = require("../SQL/confirmBooking");
 const proceedBooking = require("../SQL/proceedBooking");
 const searchTrains = require("../SQL/fetchers/searchTrains");
 const cancel_ticket = require("../SQL/reservations/cancel_ticket");
+const runReservationSimulator = require("../SQL/insertion/runReservationSimulator");
 //reservation_type
 dummyRouter.get("/reservation-type", async (req, res) => {
   const pool = await connectDB();
@@ -185,11 +186,13 @@ dummyRouter.post("/cancel-ticket", async (req, res) => {
 });
 //test
 dummyRouter.post("/test", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
   try {
-    const train_number = "11312";
+    await runReservationSimulator(client);
+    res.send("reservation simulator running");
   } catch (err) {
     res.send(err.message);
   }
-  res.send("test");
 });
 module.exports = dummyRouter;

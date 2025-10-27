@@ -1,17 +1,52 @@
 // cronTask.js
+const runSimulator_sl = require("../SQL/insertion/booking_simulator/runSimulator_sl");
+const runSimulator_1a = require("../SQL/insertion/booking_simulator/runSimulator_1a");
+const runSimulator_2a = require("../SQL/insertion/booking_simulator/runSimulator_2a");
+const runSimulator_3a = require("../SQL/insertion/booking_simulator/runSimulator_3a");
+const runSimulator_2s = require("../SQL/insertion/booking_simulator/runSimulator_2s");
+const runSimulator_cc = require("../SQL/insertion/booking_simulator/runSimulator_cc");
+const runSimulator_ec = require("../SQL/insertion/booking_simulator/runSimulator_ec");
+const runSimulator_ea = require("../SQL/insertion/booking_simulator/runSimulator_ea");
+const runSimulator_e3 = require("../SQL/insertion/booking_simulator/runSimulator_e3");
+const runSimulator_fc = require("../SQL/insertion/booking_simulator/runSimulator_fc");
 const fs = require("fs");
 const cron = require("node-cron");
 const { connectDB } = require("../database/connectDB");
 const getPostgreClient = require("../SQL/getPostgreClient");
 // Schedule cron: At 12:01 AM every day
 cron.schedule(
-  "0 2 * * *",
+  "* * * * *",
   async () => {
     const pool = await connectDB();
     client = await getPostgreClient(pool);
     try {
-      //backup_remove_newSeats(client); //runs in every 24hrs
-      //console.log("backup successfull");
+      await runSimulator_2a(pool, client);
+      await runSimulator_1a(pool, client);
+      await runSimulator_2s(pool, client);
+      await runSimulator_cc(pool, client);
+      await runSimulator_ec(pool, client);
+      await runSimulator_e3(pool, client);
+      await runSimulator_ea(pool, client);
+      await runSimulator_fc(pool, client);
+      await runSimulator_sl(pool, client);
+      await runSimulator_3a(pool, client);
+    } catch (err) {
+      console.log(err.message);
+    }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+//runs at 12:01am daily
+cron.schedule(
+  "2 0 * * *",
+  async () => {
+    const pool = await connectDB();
+    client = await getPostgreClient(pool);
+    try {
+      backup_remove_newSeats(client); //runs in every 24hrs
+      console.log("backup successfull");
     } catch (err) {
       console.log(err.message);
     }
