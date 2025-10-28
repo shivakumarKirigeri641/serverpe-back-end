@@ -1,7 +1,7 @@
 const getPnrStatus = async (client, pnr) => {
   let result_pnr = await client.query(
-    `select count(*) as pnr_count from bookingdata where pnr= $1`,
-    pnr
+    `select * from bookingdata where pnr= $1`,
+    [pnr]
   );
   if (0 === result_pnr.rows.length) {
     throw {

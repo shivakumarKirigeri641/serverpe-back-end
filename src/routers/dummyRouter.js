@@ -1,4 +1,5 @@
 const express = require("express");
+const getPnrStatus = require("../SQL/fetchers/getPnrStatus");
 const getReservationType = require("../SQL/fetchers/getReservationType");
 const getCoachType = require("../SQL/fetchers/getCoachType");
 const { connectDB } = require("../database/connectDB");
@@ -195,7 +196,7 @@ dummyRouter.post("/cancel-ticket", async (req, res) => {
   }
 });
 //pnr-status
-dummyRouter.post("/cancel-ticket", async (req, res) => {
+dummyRouter.post("/pnr-status", async (req, res) => {
   const pool = await connectDB();
   client = await getPostgreClient(pool);
   try {
