@@ -37,11 +37,13 @@ LIMIT 1;
     reservation_type: random_reservation_type,
     passenger_details: getRandomPassengers(random_reservation_type),
   };
+  let client1 = null;
+  let client2 = null;
   try {
     // Booking summary
+    console.log("test");
     const client1 = await pool.connect();
     booking_summary = await proceedBooking(client1, body);
-
     // Confirm ticket
     const client2 = await pool.connect();
     confirmed_ticket = await confirmBooking(
@@ -52,6 +54,9 @@ LIMIT 1;
     console.error("Error:", err.message);
   } finally {
     console.log(`Booking done:(sl)${new Date()}`);
+    if (client) {
+      await client.release();
+    }
   }
 };
 module.exports = runSimulator_sl;

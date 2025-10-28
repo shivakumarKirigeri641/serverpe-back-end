@@ -13,14 +13,15 @@ const fs = require("fs");
 const cron = require("node-cron");
 const { connectDB } = require("../database/connectDB");
 const getPostgreClient = require("../SQL/getPostgreClient");
-// Schedule cron: At 12:01 AM every day
+//sl
 cron.schedule(
-  "* * * * *",
+  "* * * * * *",
   async () => {
-    const pool = await connectDB();
-    client = await getPostgreClient(pool);
+    let client = null;
     try {
-      await runSimulator_2a(pool, client);
+      const pool = await connectDB();
+      client = await pool.connect();
+      /*await runSimulator_2a(pool, client);
       await runSimulator_1a(pool, client);
       await runSimulator_2s(pool, client);
       await runSimulator_cc(pool, client);
@@ -29,7 +30,308 @@ cron.schedule(
       await runSimulator_ea(pool, client);
       await runSimulator_fc(pool, client);
       await runSimulator_sl(pool, client);
-      await runSimulator_3a(pool, client);
+      await runSimulator_3a(pool, client);*/
+      let isRunning = false;
+      if (isRunning) {
+        console.log("⏳ Previous cron still running, skipping...");
+        return;
+      }
+      isRunning = true;
+      try {
+        console.log("🚀 Starting runSimulator_sl");
+        await runSimulator_sl(pool, client);
+      } catch (err) {
+        console.error("❌ Cron failed:", err);
+      } finally {
+        isRunning = false;
+        console.log("✅ Cron finished");
+      }
+    } catch (err) {
+      console.log(err.message);
+    }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+//3a
+cron.schedule(
+  "* * * * * *",
+  async () => {
+    let client = null;
+    try {
+      const pool = await connectDB();
+      client = await pool.connect();
+      let isRunning = false;
+      if (isRunning) {
+        console.log("⏳ Previous cron still running, skipping...");
+        return;
+      }
+      isRunning = true;
+
+      try {
+        console.log("🚀 Starting runSimulator_sl");
+        await runSimulator_3a(pool, client);
+      } catch (err) {
+        console.error("❌ Cron failed:", err);
+      } finally {
+        isRunning = false;
+        console.log("✅ Cron finished");
+      }
+    } catch (err) {
+      console.log(err.message);
+    }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+//2a
+cron.schedule(
+  "* * * * * *",
+  async () => {
+    let client = null;
+    try {
+      client = await pool.connect();
+      let isRunning = false;
+      if (isRunning) {
+        console.log("⏳ Previous cron still running, skipping...");
+        return;
+      }
+      isRunning = true;
+
+      try {
+        console.log("🚀 Starting runSimulator_sl");
+        await runSimulator_2a(pool, client);
+      } catch (err) {
+        console.error("❌ Cron failed:", err);
+      } finally {
+        isRunning = false;
+        console.log("✅ Cron finished");
+      }
+    } catch (err) {
+      console.log(err.message);
+    }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+//1a
+cron.schedule(
+  "* * * * *",
+  async () => {
+    let client = null;
+    try {
+      client = await pool.connect();
+      let isRunning = false;
+      if (isRunning) {
+        console.log("⏳ Previous cron still running, skipping...");
+        return;
+      }
+      isRunning = true;
+
+      try {
+        console.log("🚀 Starting runSimulator_sl");
+        await runSimulator_1a(pool, client);
+      } catch (err) {
+        console.error("❌ Cron failed:", err);
+      } finally {
+        isRunning = false;
+        console.log("✅ Cron finished");
+      }
+    } catch (err) {
+      console.log(err.message);
+    }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+//fc
+cron.schedule(
+  "* * * * *",
+  async () => {
+    let client = null;
+    try {
+      const pool = await connectDB();
+      client = await pool.connect();
+      let isRunning = false;
+      if (isRunning) {
+        console.log("⏳ Previous cron still running, skipping...");
+        return;
+      }
+      isRunning = true;
+
+      try {
+        console.log("🚀 Starting runSimulator_sl");
+        await runSimulator_fc(pool, client);
+      } catch (err) {
+        console.error("❌ Cron failed:", err);
+      } finally {
+        isRunning = false;
+        console.log("✅ Cron finished");
+      }
+    } catch (err) {
+      console.log(err.message);
+    }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+//2s
+cron.schedule(
+  "* * * * * *",
+  async () => {
+    let client = null;
+    try {
+      const pool = await connectDB();
+      client = await pool.connect();
+      let isRunning = false;
+      if (isRunning) {
+        console.log("⏳ Previous cron still running, skipping...");
+        return;
+      }
+      isRunning = true;
+
+      try {
+        console.log("🚀 Starting runSimulator_sl");
+        await runSimulator_2s(pool, client);
+      } catch (err) {
+        console.error("❌ Cron failed:", err);
+      } finally {
+        isRunning = false;
+        console.log("✅ Cron finished");
+      }
+    } catch (err) {
+      console.log(err.message);
+    }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+//cc
+cron.schedule(
+  "* * * * *",
+  async () => {
+    let client = null;
+    try {
+      const pool = await connectDB();
+      client = await pool.connect();
+      let isRunning = false;
+      if (isRunning) {
+        console.log("⏳ Previous cron still running, skipping...");
+        return;
+      }
+      isRunning = true;
+
+      try {
+        console.log("🚀 Starting runSimulator_sl");
+        await runSimulator_cc(pool, client);
+      } catch (err) {
+        console.error("❌ Cron failed:", err);
+      } finally {
+        isRunning = false;
+        console.log("✅ Cron finished");
+      }
+    } catch (err) {
+      console.log(err.message);
+    }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+//ec
+cron.schedule(
+  "* * * * * *",
+  async () => {
+    let client = null;
+    try {
+      const pool = await connectDB();
+      client = await pool.connect();
+      let isRunning = false;
+      if (isRunning) {
+        console.log("⏳ Previous cron still running, skipping...");
+        return;
+      }
+      isRunning = true;
+
+      try {
+        console.log("🚀 Starting runSimulator_sl");
+        await runSimulator_ec(pool, client);
+      } catch (err) {
+        console.error("❌ Cron failed:", err);
+      } finally {
+        isRunning = false;
+        console.log("✅ Cron finished");
+      }
+    } catch (err) {
+      console.log(err.message);
+    }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+//ea
+cron.schedule(
+  "* * * * * *",
+  async () => {
+    let client = null;
+    try {
+      const pool = await connectDB();
+      client = await pool.connect();
+      let isRunning = false;
+      if (isRunning) {
+        console.log("⏳ Previous cron still running, skipping...");
+        return;
+      }
+      isRunning = true;
+
+      try {
+        console.log("🚀 Starting runSimulator_sl");
+        await runSimulator_ea(pool, client);
+      } catch (err) {
+        console.error("❌ Cron failed:", err);
+      } finally {
+        isRunning = false;
+        console.log("✅ Cron finished");
+      }
+    } catch (err) {
+      console.log(err.message);
+    }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+//e3
+cron.schedule(
+  "* * * * * *",
+  async () => {
+    let client = null;
+    try {
+      const pool = await connectDB();
+      client = await pool.connect();
+      let isRunning = false;
+      if (isRunning) {
+        console.log("⏳ Previous cron still running, skipping...");
+        return;
+      }
+      isRunning = true;
+
+      try {
+        console.log("🚀 Starting runSimulator_sl");
+        await runSimulator_e3(pool, client);
+      } catch (err) {
+        console.error("❌ Cron failed:", err);
+      } finally {
+        isRunning = false;
+        console.log("✅ Cron finished");
+      }
     } catch (err) {
       console.log(err.message);
     }
@@ -42,9 +344,10 @@ cron.schedule(
 cron.schedule(
   "2 0 * * *",
   async () => {
-    const pool = await connectDB();
-    client = await getPostgreClient(pool);
+    let client = null;
     try {
+      const pool = await connectDB();
+      client = await pool.connect();
       backup_remove_newSeats(client); //runs in every 24hrs
       console.log("backup successfull");
     } catch (err) {

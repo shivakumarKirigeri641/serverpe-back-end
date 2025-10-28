@@ -239,11 +239,14 @@ const getRandomPassengers = (reservation_type = "GENERAL") => {
     if (reservation_type.toUpperCase() === "LADIES") {
       // LADIES quota: only adult females, 18–59
       age = Math.floor(Math.random() * (59 - 18 + 1)) + 18;
+    } else if (reservation_type.toUpperCase() === "PWD") {
+      // PWD: adult passenger
+      age = Math.floor(Math.random() * (59 - 18 + 1)) + 18;
     } else if (passengerCount === 1) {
-      // Single passenger (any quota): must be adult 18–59
+      // Single passenger: must be adult 18–59
       age = Math.floor(Math.random() * (59 - 18 + 1)) + 18;
     } else {
-      // GENERAL or PWD with multiple passengers: 1–80
+      // GENERAL or other: any age 1–80
       age = Math.floor(Math.random() * 80) + 1;
     }
 
@@ -257,32 +260,19 @@ const getRandomPassengers = (reservation_type = "GENERAL") => {
     });
   }
 
-  // Ensure children have at least one adult (skip for LADIES and PWD)
-  if (reservation_type.toUpperCase() === "GENERAL" && passengerCount > 1) {
-    const childrenIndexes = passengers
-      .map((p, idx) => (p.passenger_ischild ? idx : -1))
-      .filter((idx) => idx !== -1);
-
-    if (childrenIndexes.length > 0) {
-      const adults = passengers.filter((p) => p.passenger_age >= 18);
-      if (adults.length === 0) {
-        // Add one adult if none exist
-        const gender = Math.random() < 0.5 ? "M" : "F";
-        const nameList = gender === "M" ? maleNames : femaleNames;
-        const name = nameList[Math.floor(Math.random() * nameList.length)];
-        const adultAge = Math.floor(Math.random() * (59 - 18 + 1)) + 18;
-
-        passengers.push({
-          passenger_name: name,
-          passenger_age: adultAge,
-          passenger_gender: gender,
-          passenger_ischild: false,
-          passenger_issenior:
-            (gender === "M" && adultAge >= 60) ||
-            (gender === "F" && adultAge >= 50),
-        });
-      }
-    }
+  // ✅ Ensure at least one adult passenger in all cases
+  const hasAdult = passengers.some((p) => p.passenger_age >= 18);
+  if (!hasAdult) {
+    // Force one random passenger to be adult (18–59)
+    const idx = Math.floor(Math.random() * passengers.length);
+    passengers[idx].passenger_age =
+      Math.floor(Math.random() * (59 - 18 + 1)) + 18;
+    passengers[idx].passenger_ischild = false;
+    passengers[idx].passenger_issenior =
+      (passengers[idx].passenger_gender === "M" &&
+        passengers[idx].passenger_age >= 60) ||
+      (passengers[idx].passenger_gender === "F" &&
+        passengers[idx].passenger_age >= 50);
   }
 
   return passengers;

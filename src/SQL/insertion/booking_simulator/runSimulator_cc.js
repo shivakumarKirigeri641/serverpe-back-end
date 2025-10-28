@@ -30,7 +30,7 @@ LIMIT 1;
   const body = {
     train_number: train_numbers_cc.rows[0].train_number,
     doj: train_numbers_cc.rows[0].date_of_journey,
-    coach_type: "cc",
+    coach_type: "CC",
     source_code: source_code,
     destination_code: destination_code,
     mobile_number: mobilenumber,
@@ -52,6 +52,9 @@ LIMIT 1;
     console.error("Error:", err.message);
   } finally {
     console.log(`Booking done${new Date()}`);
+    if (client) {
+      await client.release();
+    }
   }
 };
 module.exports = runSimulator_cc;

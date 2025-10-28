@@ -11,6 +11,16 @@ const proceedBooking = require("../SQL/proceedBooking");
 const searchTrains = require("../SQL/fetchers/searchTrains");
 const cancel_ticket = require("../SQL/reservations/cancel_ticket");
 const runReservationSimulator = require("../SQL/insertion/runReservationSimulator");
+const runSimulator_1a = require("../SQL/insertion/booking_simulator/runSimulator_1a");
+const runSimulator_2a = require("../SQL/insertion/booking_simulator/runSimulator_2a");
+const runSimulator_3a = require("../SQL/insertion/booking_simulator/runSimulator_3a");
+const runSimulator_sl = require("../SQL/insertion/booking_simulator/runSimulator_sl");
+const runSimulator_2s = require("../SQL/insertion/booking_simulator/runSimulator_2s");
+const runSimulator_cc = require("../SQL/insertion/booking_simulator/runSimulator_cc");
+const runSimulator_ec = require("../SQL/insertion/booking_simulator/runSimulator_ec");
+const runSimulator_e3 = require("../SQL/insertion/booking_simulator/runSimulator_e3");
+const runSimulator_ea = require("../SQL/insertion/booking_simulator/runSimulator_ea");
+const runSimulator_fc = require("../SQL/insertion/booking_simulator/runSimulator_fc");
 //reservation_type
 dummyRouter.get("/reservation-type", async (req, res) => {
   const pool = await connectDB();
@@ -184,12 +194,38 @@ dummyRouter.post("/cancel-ticket", async (req, res) => {
     res.json({ success: false, data: err.message });
   }
 });
+//pnr-status
+dummyRouter.post("/cancel-ticket", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+  try {
+    const { pnr } = req.body;
+    if (!pnr) {
+      throw {
+        status: 200,
+        success: false,
+        message: `PNR not found!`,
+        data: {},
+      };
+    }
+    const result = await getPnrStatus(client, pnr);
+    res.status(200).json({ success: false, data: result });
+  } catch (err) {
+    res.json({ success: false, data: err.message });
+  }
+});
 //test
 dummyRouter.post("/test", async (req, res) => {
   const pool = await connectDB();
   client = await getPostgreClient(pool);
   try {
-    await runReservationSimulator(client);
+    //await runReservationSimulator(client);
+    let i = 0;
+    for (;;) {
+      await runSimulator_sl(pool, client);
+      console.log("booking count:", i);
+      i++;
+    }
     res.send("reservation simulator running");
   } catch (err) {
     res.send(err.message);
