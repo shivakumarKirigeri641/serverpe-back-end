@@ -189,6 +189,7 @@ ORDER BY s1.departure, tf.train_number;
 `,
       [source_code, destination_code, via_code]
     );
+    //if via_station name is null that means train goes between mentioned first & last stations but via station it will not go.
     const cleanedResult = replaceNulls(search_train_details.rows);
     return {
       source: result_src.rows[0].station_name,
