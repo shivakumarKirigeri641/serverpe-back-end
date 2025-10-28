@@ -6,20 +6,11 @@ const searchTrainsBetweenSatations = async (
   client,
   source_code,
   destination_code,
-  via_code
+  via_code = null
 ) => {
   let result_dest = [];
   let result_src = [];
   try {
-    //check date
-    if (!checkForValidDate(doj)) {
-      throw {
-        status: 200,
-        success: false,
-        message: `Invalid date selected!`,
-        data: {},
-      };
-    }
     //src exists
     result_src = await client.query(`select *from stations where code = $1`, [
       source_code,
@@ -48,7 +39,7 @@ const searchTrainsBetweenSatations = async (
     if (via_code) {
       result_dest = await client.query(
         `select *from stations where code = $1`,
-        [via_code]
+        [via_code.toUpperCase()]
       );
       if (0 === result_dest.rows.length) {
         throw {
@@ -187,17 +178,11 @@ AND (
     )
 ORDER BY s1.departure, tf.train_number;
 `,
-      [source_code, destination_code, via_code]
+      [source_code, destination_code, via_code ? via_code.toUpperCase() : null]
     );
     //if via_station name is null that means train goes between mentioned first & last stations but via station it will not go.
-    const cleanedResult = replaceNulls(search_train_details.rows);
     return {
-      source: result_src.rows[0].station_name,
-      source_code: result_src.rows[0].code,
-      destination: result_dest.rows[0].station_name,
-      destination_code: result_dest.rows[0].code,
-      date_of_journey: doj,
-      trains_list: cleanedResult,
+      trains_list: search_train_details.rows,
     };
   } catch (err) {
     throw err;

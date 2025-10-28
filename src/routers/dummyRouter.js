@@ -1,4 +1,5 @@
 const express = require("express");
+const searchTrainsBetweenSatations = require("../SQL/fetchers/searchTrainsBetweenSatations");
 const getPnrStatus = require("../SQL/fetchers/getPnrStatus");
 const getReservationType = require("../SQL/fetchers/getReservationType");
 const getCoachType = require("../SQL/fetchers/getCoachType");
@@ -121,6 +122,55 @@ dummyRouter.post("/search-trains", async (req, res) => {
       source_code.toUpperCase(),
       destination_code.toUpperCase(),
       doj
+    );
+    if (search_train_details.trains_list.length === 0) {
+      res.status(200).json({
+        status: 200,
+        success: true,
+        message: "No trains found!",
+        data: {},
+      });
+    } else {
+      res.status(200).json({
+        status: 200,
+        success: true,
+        message: "Trains fetch successfull",
+        data: search_train_details,
+      });
+    }
+  } catch (err) {
+    res.json({ status: err.status, success: false, data: err.message });
+  }
+});
+//trains between two stations
+dummyRouter.post("/trains-between-two-stations", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+
+  try {
+    //validation later
+    let { source_code, destination_code, via_code } = req.body;
+    if (!source_code) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Source not found!`,
+        data: {},
+      };
+    }
+    if (!destination_code) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Destination not found!`,
+        data: {},
+      };
+    }
+    const search_train_details = await searchTrainsBetweenSatations(
+      client,
+      source_code.toUpperCase(),
+      destination_code.toUpperCase(),
+      via_code
     );
     if (search_train_details.trains_list.length === 0) {
       res.status(200).json({
