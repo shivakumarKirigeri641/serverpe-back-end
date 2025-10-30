@@ -7,8 +7,9 @@ const confirmBooking = require("../../confirmBooking");
 const getRandomPassengers = require("../../../utils/reservation_simulator_helpers/getRandomPassengers");
 const getRandomMobileNumber = require("../../../utils/reservation_simulator_helpers/getRandomMobileNumber");
 const getSourceAndDestination = require("../../../SQL/reservation_simulator_sql_helpers/getSourceAndDestination");
-const runSimulator_sl = async (pool, client) => {
-  const train_numbers_sl = await client.query(
+const runSimulator_sl = async (pool) => {
+  let client = await pool.connect();
+  /*const train_numbers_sl = await client.query(
     `SELECT train_number, date_of_journey
 FROM (
   SELECT DISTINCT train_number, date_of_journey
@@ -17,6 +18,10 @@ FROM (
 ORDER BY RANDOM()
 LIMIT 1;
 `
+  );*/
+  const train_numbers_sl = await client.query(
+    `select train_number, date_of_journey from seatsondate_sl where train_number = $1 and date_of_journey=$2`,
+    ["11312", "2025-11-1"]
   );
   const random_date = getRandomDateNext60Days();
   const ARRAY = ["GEN", "LADIES", "SENIOR", "PWD"];
@@ -37,11 +42,9 @@ LIMIT 1;
     reservation_type: random_reservation_type,
     passenger_details: getRandomPassengers(random_reservation_type),
   };
-  let client1 = null;
-  let client2 = null;
   try {
     // Booking summary
-    console.log("test");
+    console.log("testtt");
     const client1 = await pool.connect();
     booking_summary = await proceedBooking(client1, body);
     // Confirm ticket
@@ -53,10 +56,7 @@ LIMIT 1;
   } catch (err) {
     console.error("Error:", err.message);
   } finally {
-    console.log(`Booking done:(sl)${new Date()}`);
-    if (client) {
-      await client.release();
-    }
+    await client.release();
   }
 };
 module.exports = runSimulator_sl;

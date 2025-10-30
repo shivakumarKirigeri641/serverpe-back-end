@@ -13,327 +13,36 @@ const fs = require("fs");
 const cron = require("node-cron");
 const { connectDB } = require("../database/connectDB");
 const getPostgreClient = require("../SQL/getPostgreClient");
-//sl
 cron.schedule(
   "* * * * * *",
   async () => {
-    let client = null;
     try {
       const pool = await connectDB();
-      client = await pool.connect();
-      /*await runSimulator_2a(pool, client);
-      await runSimulator_1a(pool, client);
-      await runSimulator_2s(pool, client);
-      await runSimulator_cc(pool, client);
-      await runSimulator_ec(pool, client);
-      await runSimulator_e3(pool, client);
-      await runSimulator_ea(pool, client);
-      await runSimulator_fc(pool, client);
-      await runSimulator_sl(pool, client);
-      await runSimulator_3a(pool, client);*/
-      let isRunning = false;
-      if (isRunning) {
-        console.log("⏳ Previous cron still running, skipping...");
-        return;
-      }
-      isRunning = true;
-      try {
-        console.log("🚀 Starting runSimulator_sl");
-        await runSimulator_sl(pool, client);
-      } catch (err) {
-        console.error("❌ Cron failed:", err);
-      } finally {
-        isRunning = false;
-        console.log("✅ Cron finished");
-      }
+      //await runSimulator_1a(pool);
+      //await runSimulator_2a(pool);
+      //await runSimulator_3a(pool);
+      //await runSimulator_sl(pool);
+      await runSimulator_1a(pool);
+      console.log("finished 1a");
+      await runSimulator_2a(pool);
+      console.log("finished 2a");
+      await runSimulator_3a(pool);
+      console.log("finished ea");
+      await runSimulator_2s(pool);
+      console.log("finished 2s");
+      await runSimulator_sl(pool);
+      console.log("finished sl");
+      await runSimulator_ea(pool);
+      console.log("finished ea");
+      await runSimulator_ec(pool);
+      console.log("finished ec");
+      await runSimulator_e3(pool);
+      console.log("finished e3");
+      await runSimulator_fc(pool);
+      console.log("finished fc");
     } catch (err) {
       console.log(err.message);
-    }
-  },
-  {
-    timezone: "Asia/Kolkata", // optional: set timezone
-  }
-);
-//3a
-cron.schedule(
-  "* * * * * *",
-  async () => {
-    let client = null;
-    try {
-      const pool = await connectDB();
-      client = await pool.connect();
-      let isRunning = false;
-      if (isRunning) {
-        console.log("⏳ Previous cron still running, skipping...");
-        return;
-      }
-      isRunning = true;
-
-      try {
-        console.log("🚀 Starting runSimulator_sl");
-        await runSimulator_3a(pool, client);
-      } catch (err) {
-        console.error("❌ Cron failed:", err);
-      } finally {
-        isRunning = false;
-        console.log("✅ Cron finished");
-      }
-    } catch (err) {
-      console.log(err.message);
-    }
-  },
-  {
-    timezone: "Asia/Kolkata", // optional: set timezone
-  }
-);
-//2a
-cron.schedule(
-  "* * * * * *",
-  async () => {
-    let client = null;
-    try {
-      client = await pool.connect();
-      let isRunning = false;
-      if (isRunning) {
-        console.log("⏳ Previous cron still running, skipping...");
-        return;
-      }
-      isRunning = true;
-
-      try {
-        console.log("🚀 Starting runSimulator_sl");
-        await runSimulator_2a(pool, client);
-      } catch (err) {
-        console.error("❌ Cron failed:", err);
-      } finally {
-        isRunning = false;
-        console.log("✅ Cron finished");
-      }
-    } catch (err) {
-      console.log(err.message);
-    }
-  },
-  {
-    timezone: "Asia/Kolkata", // optional: set timezone
-  }
-);
-//1a
-cron.schedule(
-  "* * * * *",
-  async () => {
-    let client = null;
-    try {
-      client = await pool.connect();
-      let isRunning = false;
-      if (isRunning) {
-        console.log("⏳ Previous cron still running, skipping...");
-        return;
-      }
-      isRunning = true;
-
-      try {
-        console.log("🚀 Starting runSimulator_sl");
-        await runSimulator_1a(pool, client);
-      } catch (err) {
-        console.error("❌ Cron failed:", err);
-      } finally {
-        isRunning = false;
-        console.log("✅ Cron finished");
-      }
-    } catch (err) {
-      console.log(err.message);
-    }
-  },
-  {
-    timezone: "Asia/Kolkata", // optional: set timezone
-  }
-);
-//fc
-cron.schedule(
-  "* * * * *",
-  async () => {
-    let client = null;
-    try {
-      const pool = await connectDB();
-      client = await pool.connect();
-      let isRunning = false;
-      if (isRunning) {
-        console.log("⏳ Previous cron still running, skipping...");
-        return;
-      }
-      isRunning = true;
-
-      try {
-        console.log("🚀 Starting runSimulator_sl");
-        await runSimulator_fc(pool, client);
-      } catch (err) {
-        console.error("❌ Cron failed:", err);
-      } finally {
-        isRunning = false;
-        console.log("✅ Cron finished");
-      }
-    } catch (err) {
-      console.log(err.message);
-    }
-  },
-  {
-    timezone: "Asia/Kolkata", // optional: set timezone
-  }
-);
-//2s
-cron.schedule(
-  "* * * * * *",
-  async () => {
-    let client = null;
-    try {
-      const pool = await connectDB();
-      client = await pool.connect();
-      let isRunning = false;
-      if (isRunning) {
-        console.log("⏳ Previous cron still running, skipping...");
-        return;
-      }
-      isRunning = true;
-
-      try {
-        console.log("🚀 Starting runSimulator_sl");
-        await runSimulator_2s(pool, client);
-      } catch (err) {
-        console.error("❌ Cron failed:", err);
-      } finally {
-        isRunning = false;
-        console.log("✅ Cron finished");
-      }
-    } catch (err) {
-      console.log(err.message);
-    }
-  },
-  {
-    timezone: "Asia/Kolkata", // optional: set timezone
-  }
-);
-//cc
-cron.schedule(
-  "* * * * *",
-  async () => {
-    let client = null;
-    try {
-      const pool = await connectDB();
-      client = await pool.connect();
-      let isRunning = false;
-      if (isRunning) {
-        console.log("⏳ Previous cron still running, skipping...");
-        return;
-      }
-      isRunning = true;
-
-      try {
-        console.log("🚀 Starting runSimulator_sl");
-        await runSimulator_cc(pool, client);
-      } catch (err) {
-        console.error("❌ Cron failed:", err);
-      } finally {
-        isRunning = false;
-        console.log("✅ Cron finished");
-      }
-    } catch (err) {
-      console.log(err.message);
-    }
-  },
-  {
-    timezone: "Asia/Kolkata", // optional: set timezone
-  }
-);
-//ec
-cron.schedule(
-  "* * * * * *",
-  async () => {
-    let client = null;
-    try {
-      const pool = await connectDB();
-      client = await pool.connect();
-      let isRunning = false;
-      if (isRunning) {
-        console.log("⏳ Previous cron still running, skipping...");
-        return;
-      }
-      isRunning = true;
-
-      try {
-        console.log("🚀 Starting runSimulator_sl");
-        await runSimulator_ec(pool, client);
-      } catch (err) {
-        console.error("❌ Cron failed:", err);
-      } finally {
-        isRunning = false;
-        console.log("✅ Cron finished");
-      }
-    } catch (err) {
-      console.log(err.message);
-    }
-  },
-  {
-    timezone: "Asia/Kolkata", // optional: set timezone
-  }
-);
-//ea
-cron.schedule(
-  "* * * * * *",
-  async () => {
-    let client = null;
-    try {
-      const pool = await connectDB();
-      client = await pool.connect();
-      let isRunning = false;
-      if (isRunning) {
-        console.log("⏳ Previous cron still running, skipping...");
-        return;
-      }
-      isRunning = true;
-
-      try {
-        console.log("🚀 Starting runSimulator_sl");
-        await runSimulator_ea(pool, client);
-      } catch (err) {
-        console.error("❌ Cron failed:", err);
-      } finally {
-        isRunning = false;
-        console.log("✅ Cron finished");
-      }
-    } catch (err) {
-      console.log(err.message);
-    }
-  },
-  {
-    timezone: "Asia/Kolkata", // optional: set timezone
-  }
-);
-//e3
-cron.schedule(
-  "* * * * * *",
-  async () => {
-    let client = null;
-    try {
-      const pool = await connectDB();
-      client = await pool.connect();
-      let isRunning = false;
-      if (isRunning) {
-        console.log("⏳ Previous cron still running, skipping...");
-        return;
-      }
-      isRunning = true;
-
-      try {
-        console.log("🚀 Starting runSimulator_sl");
-        await runSimulator_e3(pool, client);
-      } catch (err) {
-        console.error("❌ Cron failed:", err);
-      } finally {
-        isRunning = false;
-        console.log("✅ Cron finished");
-      }
-    } catch (err) {
-      console.log(err.message);
+    } finally {
     }
   },
   {
@@ -348,10 +57,16 @@ cron.schedule(
     try {
       const pool = await connectDB();
       client = await pool.connect();
+      await client.query("BEGIN");
       backup_remove_newSeats(client); //runs in every 24hrs
       console.log("backup successfull");
+      await insertNewSeats_sl(client);
+      await client.query("COMMIT");
     } catch (err) {
+      await client.query("ROLLBACK");
       console.log(err.message);
+    } finally {
+      await client.release();
     }
   },
   {
@@ -359,12 +74,17 @@ cron.schedule(
   }
 );
 const backup_remove_newSeats = async (client) => {
-  //first backup
-  await backup(client);
-  //remove yesterday entry
-  await removePreviousDatEntries(client);
-  //insert new entry which must be exactly 60days from now
-  await insertNewSeats_sl(client);
+  try {
+    //first backup
+    await backup(client);
+    //remove yesterday entry
+    await removePreviousDatEntries(client);
+    //insert new entry which must be exactly 60days from now
+    await insertNewSeats_sl(client);
+  } catch (err) {
+    console.log(err.message);
+  } finally {
+  }
 };
 const backup = async (client) => {
   //try backup
@@ -398,33 +118,31 @@ const backup = async (client) => {
 const removePreviousDatEntries = async (client) => {
   //try backup
 
-  await client.query(`DO $$
+  await client.query(`
+    DO $$
 DECLARE
-    yesterday DATE := CURRENT_DATE - 1;
+    target_date DATE := CURRENT_DATE - INTERVAL '1 day';
+    table_name TEXT;
 BEGIN
-    -- 1️⃣ Delete child tables first
+    -- Delete from dependent table first
     DELETE FROM passengerdata
     WHERE fkbookingdata IN (
-        SELECT id FROM bookingdata
-        WHERE date_of_journey = yesterday
+        SELECT id FROM bookingdata WHERE date_of_journey = target_date
     );
 
-    -- 2️⃣ Delete parent tables
-    DELETE FROM bookingdata
-    WHERE date_of_journey = yesterday;
+    -- Then delete parent
+    DELETE FROM bookingdata WHERE date_of_journey = target_date;
 
-    -- 3️⃣ Delete seatsondate tables
-    DELETE FROM seatsondate_sl WHERE date_of_journey = yesterday;
-    DELETE FROM seatsondate_3a WHERE date_of_journey = yesterday;
-    DELETE FROM seatsondate_2a WHERE date_of_journey = yesterday;
-    DELETE FROM seatsondate_1a WHERE date_of_journey = yesterday;
-    DELETE FROM seatsondate_cc WHERE date_of_journey = yesterday;
-    DELETE FROM seatsondate_ec WHERE date_of_journey = yesterday;
-    DELETE FROM seatsondate_ea WHERE date_of_journey = yesterday;
-    DELETE FROM seatsondate_e3 WHERE date_of_journey = yesterday;
-    DELETE FROM seatsondate_fc WHERE date_of_journey = yesterday;
-    DELETE FROM seatsondate_2s WHERE date_of_journey = yesterday;
-
+    -- List of seat tables to loop
+    FOR table_name IN 
+        SELECT unnest(ARRAY[
+            'seatsondate_sl', 'seatsondate_3a', 'seatsondate_2a',
+            'seatsondate_1a', 'seatsondate_cc', 'seatsondate_ec',
+            'seatsondate_ea', 'seatsondate_e3', 'seatsondate_fc', 'seatsondate_2s'
+        ])
+    LOOP
+        EXECUTE format('DELETE FROM %I WHERE date_of_journey = %L', table_name, target_date);
+    END LOOP;
 END $$;
 
 `);

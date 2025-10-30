@@ -56,11 +56,11 @@ const checkSeats = async (
     );
     if (0 == result.rows.length) {
       status = false;
-    } else {
+    } /* else {
       if (!result.rows[0].seat_count || 0 === result.rows[0].seat_count) {
         status = false;
       }
-    }
+    }*/
   }
   return status;
 };

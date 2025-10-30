@@ -23,6 +23,7 @@ const runSimulator_ec = require("../SQL/insertion/booking_simulator/runSimulator
 const runSimulator_e3 = require("../SQL/insertion/booking_simulator/runSimulator_e3");
 const runSimulator_ea = require("../SQL/insertion/booking_simulator/runSimulator_ea");
 const runSimulator_fc = require("../SQL/insertion/booking_simulator/runSimulator_fc");
+const fillCancelledSeats = require("../SQL/reservations/fillCancelledSeats");
 //reservation_type
 dummyRouter.get("/reservation-type", async (req, res) => {
   const pool = await connectDB();
@@ -270,16 +271,11 @@ dummyRouter.post("/test", async (req, res) => {
   const pool = await connectDB();
   client = await getPostgreClient(pool);
   try {
-    //await runReservationSimulator(client);
-    let i = 0;
-    for (;;) {
-      await runSimulator_sl(pool, client);
-      console.log("booking count:", i);
-      i++;
-    }
-    res.send("reservation simulator running");
+    await fillCancelledSeats(client, "11312");
+    res.send("RE FILL on cancellation in testing");
   } catch (err) {
     res.send(err.message);
+  } finally {
   }
 });
 module.exports = dummyRouter;
