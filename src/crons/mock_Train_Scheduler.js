@@ -1,5 +1,6 @@
 // cronTask.js
 const runSimulator_sl = require("../SQL/insertion/booking_simulator/runSimulator_sl");
+const prepareChart = require("../SQL/reservations/prepareChart");
 const runSimulator_1a = require("../SQL/insertion/booking_simulator/runSimulator_1a");
 const runSimulator_2a = require("../SQL/insertion/booking_simulator/runSimulator_2a");
 const runSimulator_3a = require("../SQL/insertion/booking_simulator/runSimulator_3a");
@@ -91,6 +92,17 @@ cron.schedule(
     } finally {
       await client.release();
     }
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
+
+//prepareChart very minute
+cron.schedule(
+  "* * * * *",
+  async () => {
+    await prepareChart();
   },
   {
     timezone: "Asia/Kolkata", // optional: set timezone

@@ -13,7 +13,7 @@ const runSimulator_e3 = async (pool) => {
     `SELECT train_number, date_of_journey
 FROM (
   SELECT DISTINCT train_number, date_of_journey
-  FROM seatsondate_e3
+  FROM seatsondate_e3 date_of_journey >= (CURRENT_DATE + INTERVAL '1 day')
 ) AS distinct_data
 ORDER BY RANDOM()
 LIMIT 1;

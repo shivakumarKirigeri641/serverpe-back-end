@@ -1,8 +1,8 @@
 const allocateSeat_SL = require("../../utils/allocateSeat_SL");
-const allocateSeat_2A = require("../../utils/allocateSeat_2A");
-const allocateSeat_3A = require("../../utils/allocateSeat_3A");
 const { connectDB } = require("../../database/connectDB");
 const getPostgreClient = require("../getPostgreClient");
+const allocateSeat_2A = require("../../utils/allocateSeat_2a");
+const allocateSeat_3A = require("../../utils/allocateSeat_3a");
 const prepareChart = async () => {
   const pool = await connectDB();
   const client = await getPostgreClient(pool);
