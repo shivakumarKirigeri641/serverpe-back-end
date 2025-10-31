@@ -13,42 +13,65 @@ const fs = require("fs");
 const cron = require("node-cron");
 const { connectDB } = require("../database/connectDB");
 const getPostgreClient = require("../SQL/getPostgreClient");
-cron.schedule(
-  "* * * * * *",
-  async () => {
-    try {
-      const pool = await connectDB();
-      //await runSimulator_1a(pool);
-      //await runSimulator_2a(pool);
-      //await runSimulator_3a(pool);
-      //await runSimulator_sl(pool);
-      await runSimulator_1a(pool);
-      console.log("finished 1a");
-      await runSimulator_2a(pool);
-      console.log("finished 2a");
-      await runSimulator_3a(pool);
-      console.log("finished ea");
-      await runSimulator_2s(pool);
-      console.log("finished 2s");
-      await runSimulator_sl(pool);
-      console.log("finished sl");
-      await runSimulator_ea(pool);
-      console.log("finished ea");
-      await runSimulator_ec(pool);
-      console.log("finished ec");
-      await runSimulator_e3(pool);
-      console.log("finished e3");
-      await runSimulator_fc(pool);
-      console.log("finished fc");
-    } catch (err) {
-      console.log(err.message);
-    } finally {
-    }
-  },
-  {
-    timezone: "Asia/Kolkata", // optional: set timezone
+const { setTimeout } = require("timers/promises");
+async function runReservationSimulator() {
+  console.log("Running task at:", new Date().toLocaleString());
+  // 👉 Your method logic here
+  try {
+    const pool = await connectDB();
+    await runSimulator_1a(pool);
+    console.log("finished 1a");
+    await runSimulator_2a(pool);
+    console.log("finished 2a");
+    await runSimulator_3a(pool);
+    console.log("finished ea");
+    await runSimulator_2s(pool);
+    console.log("finished 2s");
+    await runSimulator_sl(pool);
+    console.log("finished sl");
+    await runSimulator_ea(pool);
+    console.log("finished ea");
+    await runSimulator_ec(pool);
+    console.log("finished ec");
+    await runSimulator_e3(pool);
+    console.log("finished e3");
+    await runSimulator_fc(pool);
+    console.log("finished fc");
+  } catch (err) {
+    console.log(err.message);
+  } finally {
   }
-);
+}
+// ✅ Get IST time safely
+function getIndianHour() {
+  const indiaTime = new Date().toLocaleString("en-US", {
+    timeZone: "Asia/Kolkata",
+  });
+  return new Date(indiaTime).getHours();
+}
+// ✅ Infinite loop that runs only from 6 AM – 10:59 PM IST
+async function startInfiniteLoop() {
+  console.log("🚀 Continuous runner started (6 AM – 10:59 PM IST)");
+
+  while (true) {
+    const hour = getIndianHour();
+
+    if (hour >= 6 && hour < 23) {
+      try {
+        await runReservationSimulator(); // keep running continuously
+      } catch (err) {
+        console.error("❌ Error in runSimulator:", err);
+        await setTimeout(5000); // wait a bit before retrying if error
+      }
+    } else {
+      console.log("🌙 Paused — outside working hours (11 PM – 6 AM IST)");
+      await setTimeout(5 * 60 * 1000); // sleep 5 minutes before checking again
+    }
+  }
+}
+// ✅ Start it
+startInfiniteLoop();
+
 //runs at 12:01am daily
 cron.schedule(
   "2 0 * * *",
