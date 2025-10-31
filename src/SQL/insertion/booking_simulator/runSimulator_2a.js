@@ -37,7 +37,7 @@ LIMIT 1;
 
   if (formatDate(dojDate) === formatDate(tomorrow)) {
     // ✅ If journey date is tomorrow, force TTL or PTL
-    const SPECIAL = ["TTL", "PTL"];
+    const SPECIAL = ["TTL", "PTL", "GEN"];
     random_reservation_type =
       SPECIAL[Math.floor(Math.random() * SPECIAL.length)];
   }

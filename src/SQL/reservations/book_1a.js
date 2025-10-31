@@ -1,4 +1,5 @@
 const axios = require("axios");
+const allocateSeat_1A = require("../../utils/allocateSeat_1A");
 require("dotenv").config();
 const getPnrNumber = require("../../utils/getPnrNumber");
 const book_1a = async (
@@ -39,6 +40,8 @@ const book_1a = async (
       case "GEN":
         if (0 < result_seats_availability.rows[0].gen_count) {
           seat_allocation_status = "CNF";
+          let current_gen_seat = result_seats_availability.rows[0].gen_count;
+          const seat_details = allocateSeat_1A("1A", current_gen_seat);
           //decrement the count of gen_seats
           await client.query(
             `update seatsondate_1a set gen_count = $1, total_seats=$2 where id=$3`,
@@ -50,17 +53,34 @@ const book_1a = async (
           );
           //insert into seat alloation
           await client.query(
-            `insert into seatallocation_1a (fkpassengerdata, fk_seatsondate_1a, seat_status)values ($1,$2,$3) returning *`,
+            `insert into seatallocation_1a (fkpassengerdata, fk_seatsondate_1a, seat_sequence_number, seat_status, coach, berth, seat_number)values ($1,$2,$3,$4,$5,$6,$7) returning *`,
             [
               passengerdetails.rows[i].id,
               result_seats_availability.rows[0].id,
+              current_gen_seat,
               "CNF",
+              seat_details.coach_code,
+              seat_details.berth_type,
+              seat_details.seat_number,
             ]
           );
           //update the passengerdetails
           const temp = await client.query(
-            `update passengerdata set seat_status=$1 where id=$2 returning *`,
-            ["CNF", passengerdetails.rows[i].id]
+            `update passengerdata set seat_status=$1, current_seat_status=$2, updated_seat_status=$3 where id=$4 returning *`,
+            [
+              "CNF",
+              seat_details.coach_code +
+                "/" +
+                seat_details.seat_number +
+                "/" +
+                seat_details.berth_type,
+              seat_details.coach_code +
+                "/" +
+                seat_details.seat_number +
+                "/" +
+                seat_details.berth_type,
+              passengerdetails.rows[i].id,
+            ]
           );
           result_udpated_passengerdetails.push(temp.rows[0]);
         }
