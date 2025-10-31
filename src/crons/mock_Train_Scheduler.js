@@ -159,13 +159,19 @@ DECLARE
     target_date DATE := CURRENT_DATE - INTERVAL '1 day';
     table_name TEXT;
 BEGIN
-    -- Delete from dependent table first
+    -- Delete passengerdata first
     DELETE FROM passengerdata
     WHERE fkbookingdata IN (
         SELECT id FROM bookingdata WHERE date_of_journey = target_date
     );
 
-    -- Then delete parent
+    -- Delete seat allocations first
+    DELETE FROM seatallocation_sl
+    WHERE fk_seatsondate_sl IN (
+        SELECT id FROM seatsondate_sl WHERE date_of_journey = target_date
+    );
+
+    -- Then delete parent bookingdata
     DELETE FROM bookingdata WHERE date_of_journey = target_date;
 
     -- List of seat tables to loop

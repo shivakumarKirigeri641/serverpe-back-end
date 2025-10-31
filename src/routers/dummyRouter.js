@@ -267,6 +267,54 @@ dummyRouter.post("/pnr-status", async (req, res) => {
     res.json({ success: false, data: err.message });
   }
 });
+//pnr-status
+dummyRouter.post("/live-train-running-status", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+  try {
+    const { train_number } = req.body;
+    if (!train_number) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Train information not found!`,
+        data: {},
+      };
+    }
+    const result = await getLiveTrainRunningInformation(client, train_number);
+    res.status(200).json({ success: false, data: result });
+  } catch (err) {
+    res.json({ success: false, data: err.message });
+  }
+});
+//live station->get list of trains which are arrivign/departing from given station
+dummyRouter.post("/live-station", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+  try {
+    const { station_code, next_hours } = req.body;
+    if (!station_code) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Station information not found!`,
+        data: {},
+      };
+    }
+    if (!next_hours) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Hours information not found!`,
+        data: {},
+      };
+    }
+    const result = await getLiveStation(client, station_code);
+    res.status(200).json({ success: false, data: result });
+  } catch (err) {
+    res.json({ success: false, data: err.message });
+  }
+});
 //test
 dummyRouter.post("/test", async (req, res) => {
   const pool = await connectDB();
