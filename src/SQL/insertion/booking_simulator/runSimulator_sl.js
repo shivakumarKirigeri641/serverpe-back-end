@@ -9,7 +9,7 @@ const getRandomMobileNumber = require("../../../utils/reservation_simulator_help
 const getSourceAndDestination = require("../../../SQL/reservation_simulator_sql_helpers/getSourceAndDestination");
 const runSimulator_sl = async (pool) => {
   let client = await pool.connect();
-  /*const train_numbers_sl = await client.query(
+  const train_numbers_sl = await client.query(
     `SELECT train_number, date_of_journey
 FROM (
   SELECT DISTINCT train_number, date_of_journey
@@ -18,10 +18,6 @@ FROM (
 ORDER BY RANDOM()
 LIMIT 1;
 `
-  );*/
-  const train_numbers_sl = await client.query(
-    `select train_number, date_of_journey from seatsondate_sl where train_number = $1 and date_of_journey=$2`,
-    ["11312", "2025-11-1"]
   );
   const random_date = getRandomDateNext60Days();
   const ARRAY = ["GEN", "LADIES", "SENIOR", "PWD"];
