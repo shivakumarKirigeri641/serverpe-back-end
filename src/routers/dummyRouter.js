@@ -1,4 +1,5 @@
 const express = require("express");
+const prepareChart = require("../SQL/reservations/prepareChart");
 const searchTrainsBetweenSatations = require("../SQL/fetchers/searchTrainsBetweenSatations");
 const getPnrStatus = require("../SQL/fetchers/getPnrStatus");
 const getReservationType = require("../SQL/fetchers/getReservationType");
@@ -271,7 +272,8 @@ dummyRouter.post("/test", async (req, res) => {
   const pool = await connectDB();
   client = await getPostgreClient(pool);
   try {
-    await fillCancelledSeats(client, "11312");
+    //await fillCancelledSeats(client, "11312");
+    await prepareChart();
     res.send("RE FILL on cancellation in testing");
   } catch (err) {
     res.send(err.message);

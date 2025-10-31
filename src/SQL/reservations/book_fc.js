@@ -1,4 +1,5 @@
 const axios = require("axios");
+const allocateSeat_FC = require("../../utils/allocateSeat_FC");
 require("dotenv").config();
 const getPnrNumber = require("../../utils/getPnrNumber");
 const book_fc = async (
@@ -40,7 +41,7 @@ const book_fc = async (
         if (0 < result_seats_availability.rows[0].gen_count) {
           seat_allocation_status = "CNF";
           let current_gen_seat = result_seats_availability.rows[0].gen_count;
-          const seat_details = allocateSeat_1A("FC", current_gen_seat);
+          const seat_details = allocateSeat_FC("FC", current_gen_seat);
           //decrement the count of gen_seats
           await client.query(
             `update seatsondate_fc set gen_count = $1, total_seats=$2 where id=$3`,
