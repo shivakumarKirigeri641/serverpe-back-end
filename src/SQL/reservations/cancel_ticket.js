@@ -1,6 +1,8 @@
 const getHoursUntilDeparture = require("../../utils/getHoursUntilDeparture");
+const fillCancelledSeats = require("../reservations/fillCancelledSeats");
 const getpercentValueForCancellation = require("../../utils/getpercentValueForCancellation");
 const cancel_ticket = async (client, pnr, passengerids) => {
+  let table_suffix = "sl";
   try {
     await client.query(`BEGIN`);
     const result_cancellation_policy = await client.query(
@@ -64,7 +66,7 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
       let fkcancellation = 1;
       let cancellation_message = "self";
       let refund_amount_percent = 1;
-      let table_suffix = "sl";
+      table_suffix = result_booking_details.rows[0].coach_code.toLowerCase();
       let result_passenger_details = await client.query(
         `select *from passengerdata where id=$1 for update`,
         [passengerids[i]]
@@ -157,10 +159,16 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
       result_booking_details.rows[0].pnr_status = "CAN";
     }
     //now fetch updated one and return the data
-
     const passenger_details = await client.query(
       `select *from passengerdata where fkbookingdata=$1 order by id`,
       [result_booking_details.rows[0].id]
+    );
+    //fill canclled seats to others
+    await fillCancelledSeats(
+      client,
+      passengerids,
+      result_booking_details.rows[0].train_number,
+      table_suffix
     );
     await client.query(`COMMIT`);
     return {

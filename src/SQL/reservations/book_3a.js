@@ -458,6 +458,7 @@ const book_3a = async (
         //check if rac
         else if (0 < result_seats_availability.rows[0].rac_count) {
           seat_allocation_status = "RAC";
+          let total_seats = result_seats_availability.rows[0].total_seats;
           //decrement the count of rac_seats
           await client.query(
             `update seatsondate_3a set rac_count = $1, total_seats=$2 where id=$3`,
@@ -476,13 +477,14 @@ const book_3a = async (
           //insert into seat alloation
           raccount = raccount + Number(result_fetchrac_count.rows[0].count);
           await client.query(
-            `insert into seatallocation_3a (fkpassengerdata, fk_seatsondate_3a, seat_status, current_seat_status, updated_seat_status)values ($1,$2,$3,$4,$5) returning *`,
+            `insert into seatallocation_3a (fkpassengerdata, fk_seatsondate_3a, seat_status, current_seat_status, updated_seat_status, seat_sequence_number)values ($1,$2,$3,$4,$5,$6) returning *`,
             [
               passengerdetails.rows[i].id,
               result_seats_availability.rows[0].id,
               "RAC",
               raccount,
               raccount,
+              total_seats,
             ]
           );
           //update the passengerdetails

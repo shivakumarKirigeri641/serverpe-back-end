@@ -1,4 +1,6 @@
 const express = require("express");
+const searchTrainsBetweenSatations = require("../SQL/fetchers/searchTrainsBetweenSatations");
+const getPnrStatus = require("../SQL/fetchers/getPnrStatus");
 const getReservationType = require("../SQL/fetchers/getReservationType");
 const getCoachType = require("../SQL/fetchers/getCoachType");
 const { connectDB } = require("../database/connectDB");
@@ -10,6 +12,18 @@ const confirmBooking = require("../SQL/confirmBooking");
 const proceedBooking = require("../SQL/proceedBooking");
 const searchTrains = require("../SQL/fetchers/searchTrains");
 const cancel_ticket = require("../SQL/reservations/cancel_ticket");
+const runReservationSimulator = require("../SQL/insertion/runReservationSimulator");
+const runSimulator_1a = require("../SQL/insertion/booking_simulator/runSimulator_1a");
+const runSimulator_2a = require("../SQL/insertion/booking_simulator/runSimulator_2a");
+const runSimulator_3a = require("../SQL/insertion/booking_simulator/runSimulator_3a");
+const runSimulator_sl = require("../SQL/insertion/booking_simulator/runSimulator_sl");
+const runSimulator_2s = require("../SQL/insertion/booking_simulator/runSimulator_2s");
+const runSimulator_cc = require("../SQL/insertion/booking_simulator/runSimulator_cc");
+const runSimulator_ec = require("../SQL/insertion/booking_simulator/runSimulator_ec");
+const runSimulator_e3 = require("../SQL/insertion/booking_simulator/runSimulator_e3");
+const runSimulator_ea = require("../SQL/insertion/booking_simulator/runSimulator_ea");
+const runSimulator_fc = require("../SQL/insertion/booking_simulator/runSimulator_fc");
+const fillCancelledSeats = require("../SQL/reservations/fillCancelledSeats");
 //reservation_type
 dummyRouter.get("/reservation-type", async (req, res) => {
   const pool = await connectDB();
@@ -129,6 +143,55 @@ dummyRouter.post("/search-trains", async (req, res) => {
     res.json({ status: err.status, success: false, data: err.message });
   }
 });
+//trains between two stations
+dummyRouter.post("/trains-between-two-stations", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+
+  try {
+    //validation later
+    let { source_code, destination_code, via_code } = req.body;
+    if (!source_code) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Source not found!`,
+        data: {},
+      };
+    }
+    if (!destination_code) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Destination not found!`,
+        data: {},
+      };
+    }
+    const search_train_details = await searchTrainsBetweenSatations(
+      client,
+      source_code.toUpperCase(),
+      destination_code.toUpperCase(),
+      via_code
+    );
+    if (search_train_details.trains_list.length === 0) {
+      res.status(200).json({
+        status: 200,
+        success: true,
+        message: "No trains found!",
+        data: {},
+      });
+    } else {
+      res.status(200).json({
+        status: 200,
+        success: true,
+        message: "Trains fetch successfull",
+        data: search_train_details,
+      });
+    }
+  } catch (err) {
+    res.json({ status: err.status, success: false, data: err.message });
+  }
+});
 //prceed-booking
 dummyRouter.post("/proceed-booking", async (req, res) => {
   const pool = await connectDB();
@@ -183,13 +246,36 @@ dummyRouter.post("/cancel-ticket", async (req, res) => {
     res.json({ success: false, data: err.message });
   }
 });
+//pnr-status
+dummyRouter.post("/pnr-status", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+  try {
+    const { pnr } = req.body;
+    if (!pnr) {
+      throw {
+        status: 200,
+        success: false,
+        message: `PNR not found!`,
+        data: {},
+      };
+    }
+    const result = await getPnrStatus(client, pnr);
+    res.status(200).json({ success: false, data: result });
+  } catch (err) {
+    res.json({ success: false, data: err.message });
+  }
+});
 //test
 dummyRouter.post("/test", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
   try {
-    const train_number = "11312";
+    await fillCancelledSeats(client, "11312");
+    res.send("RE FILL on cancellation in testing");
   } catch (err) {
     res.send(err.message);
+  } finally {
   }
-  res.send("test");
 });
 module.exports = dummyRouter;

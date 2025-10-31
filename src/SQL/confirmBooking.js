@@ -20,7 +20,7 @@ join stations sr on sr.id = b.fksource_code
 join stations brding on brding.id = b.fkboarding_at
 join stations dest on dest.id = b.fkdestination_code
 join coaches c on c.id = b.fktrain_number
-join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and proceed_status=$2 for update`,
+join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and b.proceed_status=$2 for update`,
       [booking_id, false]
     );
     if (0 === booking_details.rows.length) {
