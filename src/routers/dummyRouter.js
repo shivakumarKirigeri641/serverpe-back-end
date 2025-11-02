@@ -1,4 +1,6 @@
 const express = require("express");
+const getLiveStation = require("../SQL/fetchers/getLiveStation");
+const getLiveTrainRunningInformation = require("../SQL/fetchers/getLiveTrainRunningInformation");
 const prepareChart = require("../SQL/reservations/prepareChart");
 const searchTrainsBetweenSatations = require("../SQL/fetchers/searchTrainsBetweenSatations");
 const getPnrStatus = require("../SQL/fetchers/getPnrStatus");
@@ -292,6 +294,7 @@ dummyRouter.post("/live-station", async (req, res) => {
   const pool = await connectDB();
   client = await getPostgreClient(pool);
   try {
+    const hours = [2, 4, 8];
     const { station_code, next_hours } = req.body;
     if (!station_code) {
       throw {
@@ -309,7 +312,23 @@ dummyRouter.post("/live-station", async (req, res) => {
         data: {},
       };
     }
-    const result = await getLiveStation(client, station_code);
+    if (!Number.isInteger(next_hours)) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Invalid hours information found!`,
+        data: {},
+      };
+    }
+    if (!hours.includes(next_hours)) {
+      throw {
+        status: 200,
+        success: false,
+        message: `Invalid hours value found!`,
+        data: {},
+      };
+    }
+    const result = await getLiveStation(client, station_code, next_hours);
     res.status(200).json({ success: false, data: result });
   } catch (err) {
     res.json({ success: false, data: err.message });

@@ -136,8 +136,17 @@ const backup = async (client) => {
   const formattedDate = `${year}-${month}-${day}`;
   const result =
     await client.query(`select b.*, sa.*, p.* from bookingdata b join
-  passengerdata p on b.id = p.fkbookingdata join
-  seatallocation_sl sa on sa.fkpassengerdata = p.id
+  passengerdata p on b.id = p.fkbookingdata
+  left join seatallocation_sl sa on sa.fkpassengerdata = p.id
+  left join seatallocation_1a a1 on a1.fkpassengerdata = p.id
+  left join seatallocation_2a a2 on a2.fkpassengerdata = p.id
+  left join seatallocation_3a a3 on a3.fkpassengerdata = p.id
+  left join seatallocation_cc cc on cc.fkpassengerdata = p.id
+  left join seatallocation_2s _2s on _2s.fkpassengerdata = p.id
+  left join seatallocation_ec ec on ec.fkpassengerdata = p.id
+  left join seatallocation_ea ea on ea.fkpassengerdata = p.id
+  left join seatallocation_e3 e3 on e3.fkpassengerdat4a = p.id
+  left join seatallocation_fc fc on fc.fkpassengerdata = p.id
   where b.date_of_journey= CURRENT_DATE;`);
   if (0 < result.rows.length) {
     const csv = [
