@@ -127,7 +127,7 @@ ORDER BY so.station_sequence;
   if (0 === result.rows.length) {
     return {
       trains_list: result.rows,
-      message: "No trains found!",
+      message: "Train details not found!",
     };
   } else {
     return {
