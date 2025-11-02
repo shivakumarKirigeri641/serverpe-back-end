@@ -20,9 +20,14 @@ running_train AS (
                  (ist.today_dow = 5 AND t.train_runs_on_fri = 'Y') OR
                  (ist.today_dow = 6 AND t.train_runs_on_sat = 'Y')
             THEN TRUE ELSE FALSE
-        END AS runs_today
+        END AS runs_today,
+        -- Calculate correct origin date based on running_day of first station
+        CURRENT_DATE - ((s.running_day - 1) * INTERVAL '1 day') AS origin_date
     FROM trains t
     CROSS JOIN ist_now ist
+    JOIN schedules s 
+        ON t.train_number = s.train_number 
+       AND s.station_sequence = 1
     WHERE t.train_number = $1
 ),
 
@@ -35,118 +40,87 @@ schedule_with_ts AS (
         s.kilometer,
         s.arrival,
         s.departure,
-        ist.today_date + s.arrival AS arrival_ts_base,
-        ist.today_date + s.departure AS departure_ts_base
+        s.running_day,
+        rt.origin_date,
+        -- Arrival and departure timestamps based on running_day
+        rt.origin_date + (s.running_day - 1) * INTERVAL '1 day' + s.arrival AS arrival_ts,
+        rt.origin_date + (s.running_day - 1) * INTERVAL '1 day' + s.departure AS departure_ts
     FROM schedules s
-    CROSS JOIN ist_now ist
-    WHERE s.train_number = (SELECT train_number FROM running_train)
+    JOIN running_train rt ON s.train_number = rt.train_number
 ),
-schedule_ordered AS (
-    SELECT *,
-        arrival_ts_base + 
-            (CASE WHEN arrival_ts_base < LAG(departure_ts_base) OVER (ORDER BY station_sequence)
-                  THEN INTERVAL '1 day' ELSE INTERVAL '0' END) AS arrival_ts,
-        departure_ts_base + 
-            (CASE WHEN departure_ts_base < LAG(departure_ts_base) OVER (ORDER BY station_sequence)
-                  THEN INTERVAL '1 day' ELSE INTERVAL '0' END) AS departure_ts
-    FROM schedule_with_ts
-    ORDER BY station_sequence
-),
-bounds AS (
-    SELECT MIN(arrival_ts) AS first_arrival,
-           MAX(departure_ts) AS last_departure
-    FROM schedule_ordered
-),
+
+-- Last departed station (before now)
 last_departed AS (
     SELECT *
-    FROM schedule_ordered
+    FROM schedule_with_ts
     WHERE departure_ts <= (SELECT now_ist FROM ist_now)
     ORDER BY station_sequence DESC
     LIMIT 1
 ),
+
+-- Next station after last departed
 next_arrival AS (
     SELECT *
-    FROM schedule_ordered so
+    FROM schedule_with_ts so
     WHERE so.station_sequence > (SELECT station_sequence FROM last_departed)
     ORDER BY station_sequence ASC
     LIMIT 1
 )
 
 SELECT
+    so.station_sequence,
+    so.station_code,
+    so.station_name,
+    TO_CHAR(so.arrival_ts, 'YYYY-MM-DD HH24:MI:SS') AS arrival_time,
+    TO_CHAR(so.departure_ts, 'YYYY-MM-DD HH24:MI:SS') AS departure_time,
+    so.kilometer,
+
     rt.train_number,
     rt.runs_today,
-    
-    -- Dynamic train status
+
+    -- Train status at this station
     CASE
         WHEN NOT rt.runs_today THEN 'Train won''t run today'
-        WHEN (SELECT now_ist FROM ist_now) < (SELECT first_arrival FROM bounds) THEN 'Yet to Start'
-        WHEN ld.station_sequence = (SELECT MAX(station_sequence) FROM schedule_ordered) THEN 'Train reached its destination'
-        WHEN na.station_code IS NULL THEN 'Completed'
-        WHEN GREATEST(0, na.kilometer - ld.kilometer - 
-               (EXTRACT(EPOCH FROM ((SELECT now_ist FROM ist_now) - ld.departure_ts)) / 
-                EXTRACT(EPOCH FROM (na.arrival_ts - ld.departure_ts))
-               ) * (na.kilometer - ld.kilometer)
-             ) = 0 THEN 'Arrived at next station'
-        ELSE 'In Transit'
-    END AS train_status,
+        WHEN so.station_sequence = 1 AND (SELECT now_ist FROM ist_now) < so.departure_ts THEN 'Yet to Start'
+        WHEN so.station_sequence = (SELECT MAX(station_sequence) FROM schedule_with_ts) 
+             AND (SELECT now_ist FROM ist_now) >= so.departure_ts THEN 'Train reached its destination'
+        WHEN (SELECT now_ist FROM ist_now) >= so.departure_ts THEN 'Departed'
+        WHEN (SELECT now_ist FROM ist_now) >= so.arrival_ts THEN 'Arrived'
+        ELSE 'Yet to Arrive'
+    END AS train_status_at_station,
 
-    -- Last departed station
-    ld.station_code AS last_departed_station_code,
-    ld.station_name AS last_departed_station_name,
-    TO_CHAR(ld.departure_ts, 'YYYY-MM-DD HH24:MI:SS') AS last_departed_time,
-    ld.kilometer AS km_last_departed,
-
-    -- Next arrival station
-    na.station_code AS next_arrival_station_code,
-    na.station_name AS next_arrival_station_name,
-    TO_CHAR(na.arrival_ts, 'YYYY-MM-DD HH24:MI:SS') AS next_arrival_time,
-    na.kilometer AS km_next_arrival,
-
-    -- Total distance between last departed and next arrival
-    na.kilometer - ld.kilometer AS km_between_stations,
-
-    -- Distance already covered from last departed to next arrival
+    -- Distance ran from last departed station
     CASE
-        WHEN na.arrival_ts IS NOT NULL AND ld.departure_ts IS NOT NULL
-             AND (SELECT now_ist FROM ist_now) >= ld.departure_ts
-        THEN LEAST(
-             (EXTRACT(EPOCH FROM ((SELECT now_ist FROM ist_now) - ld.departure_ts)) / 
-              EXTRACT(EPOCH FROM (na.arrival_ts - ld.departure_ts))
-             ) * (na.kilometer - ld.kilometer),
-             na.kilometer - ld.kilometer
-        )
+        WHEN (SELECT now_ist FROM ist_now) >= (SELECT departure_ts FROM last_departed)
+             AND so.station_sequence > (SELECT station_sequence FROM last_departed)
+        THEN so.kilometer - (SELECT kilometer FROM last_departed)
         ELSE 0
     END AS km_ran_from_last_departed,
 
-    -- Remaining distance to next arrival
+    -- Remaining km to next station
     CASE
-        WHEN na.kilometer IS NOT NULL AND ld.kilometer IS NOT NULL
-        THEN GREATEST(0, na.kilometer - ld.kilometer - 
-              (EXTRACT(EPOCH FROM ((SELECT now_ist FROM ist_now) - ld.departure_ts)) / 
-               EXTRACT(EPOCH FROM (na.arrival_ts - ld.departure_ts))
-              ) * (na.kilometer - ld.kilometer)
-        )
-        ELSE NULL
+        WHEN so.station_sequence = (SELECT station_sequence FROM last_departed)
+             AND (SELECT station_sequence FROM next_arrival) IS NOT NULL
+        THEN (SELECT kilometer FROM next_arrival) - (SELECT kilometer FROM last_departed)
+        ELSE 0
     END AS km_remaining_to_next,
 
-    -- ETA to next arrival (hours & minutes)
+    -- ETA to this station from now
     CASE 
-        WHEN na.arrival_ts IS NOT NULL AND (SELECT now_ist FROM ist_now) < na.arrival_ts
-        THEN FLOOR(EXTRACT(EPOCH FROM (na.arrival_ts - (SELECT now_ist FROM ist_now))) / 3600)
+        WHEN (SELECT now_ist FROM ist_now) < so.arrival_ts
+        THEN FLOOR(EXTRACT(EPOCH FROM (so.arrival_ts - (SELECT now_ist FROM ist_now))) / 3600)
         ELSE 0
     END AS eta_hours,
 
     CASE 
-        WHEN na.arrival_ts IS NOT NULL AND (SELECT now_ist FROM ist_now) < na.arrival_ts
-        THEN FLOOR(MOD(EXTRACT(EPOCH FROM (na.arrival_ts - (SELECT now_ist FROM ist_now))), 3600) / 60)
+        WHEN (SELECT now_ist FROM ist_now) < so.arrival_ts
+        THEN FLOOR(MOD(EXTRACT(EPOCH FROM (so.arrival_ts - (SELECT now_ist FROM ist_now))), 3600) / 60)
         ELSE 0
     END AS eta_minutes
 
-FROM running_train rt
-LEFT JOIN last_departed ld ON TRUE
-LEFT JOIN next_arrival na ON TRUE;
-
-
+FROM schedule_with_ts so
+CROSS JOIN running_train rt
+ORDER BY so.station_sequence;
 `,
     [train_number]
   );
