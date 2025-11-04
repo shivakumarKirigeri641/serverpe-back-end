@@ -135,7 +135,7 @@ const backup = async (client) => {
 
   const formattedDate = `${year}-${month}-${day}`;
   const result =
-    await client.query(`select b.*, sa.*, p.* from bookingdata b join
+    await client.query(`select b.*, sa.*, a1.*, a2.*, a3.*, cc.*, _2s.*, ec.*, ea.*, e3.*, fc.*, p.* from bookingdata b join
   passengerdata p on b.id = p.fkbookingdata
   left join seatallocation_sl sa on sa.fkpassengerdata = p.id
   left join seatallocation_1a a1 on a1.fkpassengerdata = p.id
@@ -145,7 +145,7 @@ const backup = async (client) => {
   left join seatallocation_2s _2s on _2s.fkpassengerdata = p.id
   left join seatallocation_ec ec on ec.fkpassengerdata = p.id
   left join seatallocation_ea ea on ea.fkpassengerdata = p.id
-  left join seatallocation_e3 e3 on e3.fkpassengerdat4a = p.id
+  left join seatallocation_e3 e3 on e3.fkpassengerdata = p.id
   left join seatallocation_fc fc on fc.fkpassengerdata = p.id
   where b.date_of_journey= CURRENT_DATE;`);
   if (0 < result.rows.length) {
