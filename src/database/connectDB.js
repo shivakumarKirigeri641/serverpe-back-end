@@ -18,8 +18,14 @@ const connectDB = async () => {
     });
 
     // Optional: check connection once
-    await pool.query("SELECT NOW()");
-    console.log("✅ PostgreSQL connected");
+    try {
+      await pool.query("SELECT NOW()");
+      console.log("✅ PostgreSQL connected");
+    } catch (err) {
+      console.error("❌ Connection failed", err);
+      pool = null; // Reset pool so we can try again
+      throw err;
+    }
   }
 
   return pool;

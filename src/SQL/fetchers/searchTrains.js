@@ -281,6 +281,22 @@ SELECT distinct
     tf.station_to,
     s1.departure AS scheduled_departure,
     s2.arrival AS estimated_arrival,
+	s2.running_day as running_day,
+	(SELECT 
+  CASE WHEN tf.train_runs_on_sun ILIKE 'Y' THEN 'S' ELSE '-' END || ' ' ||
+  CASE WHEN tf.train_runs_on_mon ILIKE 'Y' THEN 'M' ELSE '-' END || ' ' ||
+  CASE WHEN tf.train_runs_on_tue ILIKE 'Y' THEN 'T' ELSE '-' END || ' ' ||
+  CASE WHEN tf.train_runs_on_wed ILIKE 'Y' THEN 'W' ELSE '-' END || ' ' ||
+  CASE WHEN tf.train_runs_on_thu ILIKE 'Y' THEN 'T' ELSE '-' END || ' ' ||
+  CASE WHEN tf.train_runs_on_fri ILIKE 'Y' THEN 'F' ELSE '-' END || ' ' ||
+  CASE WHEN tf.train_runs_on_sat ILIKE 'Y' THEN 'S' ELSE '-' END)
+AS running_days,
+	(SELECT 
+    FLOOR(EXTRACT(EPOCH FROM duration) / 3600) || ' hours ' || 
+    FLOOR((EXTRACT(EPOCH FROM duration) % 3600) / 60) || ' minutes' AS duration_text
+FROM (
+    SELECT ((s2.arrival::time - s1.departure::time) + ((s2.running_day - 1) * INTERVAL '1 day')) AS duration
+) sub) as journey_duration,
     (s2.kilometer - s1.kilometer) AS distance,
 
     ss.*,
