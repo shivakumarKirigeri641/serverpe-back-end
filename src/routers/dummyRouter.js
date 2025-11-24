@@ -12,8 +12,28 @@ const getPostgreClient = require("../SQL/getPostgreClient");
 const getTrainSchedule = require("../SQL/fetchers/getTrainSchedule");
 const confirmBooking = require("../SQL/confirmBooking");
 const proceedBooking = require("../SQL/proceedBooking");
+const getStations = require("../SQL/fetchers/getStations");
 const searchTrains = require("../SQL/fetchers/searchTrains");
 const cancel_ticket = require("../SQL/reservations/cancel_ticket");
+//stations
+dummyRouter.get("/stations", async (req, res) => {
+  const pool = await connectDB();
+  client = await getPostgreClient(pool);
+  try {
+    //validation later
+    const result = await getStations(client);
+    res.status(200).json({
+      status: 200,
+      success: true,
+      message: "Stations fetch successfull",
+      data: result.rows,
+    });
+  } catch (err) {
+    res
+      .status(err.status)
+      .json({ status: err.status, success: false, data: err.message });
+  }
+});
 //reservation_type
 dummyRouter.get("/reservation-type", async (req, res) => {
   const pool = await connectDB();
