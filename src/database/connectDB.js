@@ -15,6 +15,11 @@ const connectDB = async () => {
       password: process.env.PGPASSWORD,
       port: process.env.PGPORT,
       // ssl: { rejectUnauthorized: false }, // for AWS RDS
+      // --- ALWAYS CONNECTED SETTINGS ---
+      max: 20, // Max clients in the pool
+      idleTimeoutMillis: 30000, // Close idle clients after 30s
+      connectionTimeoutMillis: 2000, // Return an error after 2s if connection could not be established
+      keepAlive: true, // Prevent network timeouts
     });
 
     // Optional: check connection once

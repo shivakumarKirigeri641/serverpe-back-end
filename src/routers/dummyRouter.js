@@ -15,118 +15,93 @@ const proceedBooking = require("../SQL/proceedBooking");
 const getStations = require("../SQL/fetchers/getStations");
 const searchTrains = require("../SQL/fetchers/searchTrains");
 const cancel_ticket = require("../SQL/reservations/cancel_ticket");
+
+function sendSuccess(res, data = {}, message = "Success") {
+  return res.status(200).json({ status: 200, success: true, message, data });
+}
+
+function sendError(res, err) {
+  const status = err && err.status ? err.status : 500;
+  const message =
+    err && (err.message || err.msg)
+      ? err.message || err.msg
+      : "Internal server error";
+  const data = err && err.data ? err.data : {};
+  return res.status(status).json({ status, success: false, message, data });
+}
 //stations
 dummyRouter.get("/stations", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
   try {
     //validation later
     const result = await getStations(client);
-    res.status(200).json({
-      status: 200,
-      success: true,
-      message: "Stations fetch successfull",
-      data: result.rows,
-    });
+    return sendSuccess(res, result.rows, "Stations fetch successful");
   } catch (err) {
-    res
-      .status(err.status)
-      .json({ status: err.status, success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //reservation_type
 dummyRouter.get("/reservation-type", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
   try {
     //validation later
     const result = await getReservationType(client);
-    res.status(200).json({
-      status: 200,
-      success: true,
-      message: "Reservation type fetch successfull",
-      data: result.rows,
-    });
+    return sendSuccess(res, result.rows, "Reservation type fetch successful");
   } catch (err) {
-    res
-      .status(err.status)
-      .json({ status: err.status, success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //coach_type
 dummyRouter.get("/coach-type", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
   try {
     //validation later
     const result = await getCoachType(client);
-    res.status(200).json({
-      status: 200,
-      success: true,
-      message: "Coach type fetch successfull",
-      data: result.rows,
-    });
+    return sendSuccess(res, result.rows, "Coach type fetch successful");
   } catch (err) {
-    res
-      .status(err.status)
-      .json({ status: err.status, success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //schedule
 dummyRouter.post("/train-schedule", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
 
   try {
     //validation later
     let { train_number } = req.body;
-    const train_schedule_details = await getTrainSchedule(
-      client,
-      train_number,
-      "YPR",
-      "KLBG"
+    const train_schedule_details = await getTrainSchedule(client, train_number);
+    return sendSuccess(
+      res,
+      train_schedule_details,
+      "Train schedule fetched successfully!"
     );
-    res.status(200).json({
-      status: 200,
-      success: true,
-      message: "Train schedule fetched successfully!",
-      data: train_schedule_details,
-    });
   } catch (err) {
-    res.json({ status: err.status, success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //search trains
 dummyRouter.post("/search-trains", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
 
   try {
     //validation later
     let { source_code, destination_code, doj } = req.body;
     if (!source_code) {
-      throw {
-        status: 200,
-        success: false,
-        message: `Source not found!`,
-        data: {},
-      };
+      return sendError(res, { status: 400, message: `Source not found!` });
     }
     if (!destination_code) {
-      throw {
-        status: 200,
-        success: false,
-        message: `Destination not found!`,
-        data: {},
-      };
+      return sendError(res, { status: 400, message: `Destination not found!` });
     }
     if (!doj) {
-      throw {
-        status: 200,
-        success: false,
+      return sendError(res, {
+        status: 400,
         message: `Date of journey not found!`,
-        data: {},
-      };
+      });
     }
     const search_train_details = await searchTrains(
       client,
@@ -135,47 +110,26 @@ dummyRouter.post("/search-trains", async (req, res) => {
       doj
     );
     if (search_train_details.trains_list.length === 0) {
-      res.status(200).json({
-        status: 200,
-        success: true,
-        message: "No trains found!",
-        data: {},
-      });
-    } else {
-      res.status(200).json({
-        status: 200,
-        success: true,
-        message: "Trains fetch successfull",
-        data: search_train_details,
-      });
+      return sendSuccess(res, {}, "No trains found!");
     }
+    return sendSuccess(res, search_train_details, "Trains fetch successful");
   } catch (err) {
-    res.json({ status: err.status, success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //trains between two stations
 dummyRouter.post("/trains-between-two-stations", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
 
   try {
     //validation later
     let { source_code, destination_code, via_code } = req.body;
     if (!source_code) {
-      throw {
-        status: 200,
-        success: false,
-        message: `Source not found!`,
-        data: {},
-      };
+      return sendError(res, { status: 400, message: `Source not found!` });
     }
     if (!destination_code) {
-      throw {
-        status: 200,
-        success: false,
-        message: `Destination not found!`,
-        data: {},
-      };
+      return sendError(res, { status: 400, message: `Destination not found!` });
     }
     const search_train_details = await searchTrainsBetweenSatations(
       client,
@@ -184,167 +138,132 @@ dummyRouter.post("/trains-between-two-stations", async (req, res) => {
       via_code
     );
     if (search_train_details.trains_list.length === 0) {
-      res.status(200).json({
-        status: 200,
-        success: true,
-        message: "No trains found!",
-        data: {},
-      });
-    } else {
-      res.status(200).json({
-        status: 200,
-        success: true,
-        message: "Trains fetch successfull",
-        data: search_train_details,
-      });
+      return sendSuccess(res, {}, "No trains found!");
     }
+    return sendSuccess(res, search_train_details, "Trains fetch successful");
   } catch (err) {
-    res.json({ status: err.status, success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //prceed-booking
 dummyRouter.post("/proceed-booking", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
   let booking_summary = null;
   try {
     //validation later
     booking_summary = await proceedBooking(client, req.body);
-    res.status(200).json({ status: 200, success: true, data: booking_summary });
+    return sendSuccess(res, booking_summary, "Proceed booking successful");
   } catch (err) {
-    res
-      .status(err.status)
-      .json({ status: err.status, success: false, message: err.message });
+    return sendError(res, err);
   }
 });
 //confirm-ticket
 dummyRouter.post("/confirm-booking", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
   try {
     const ticket_details = await confirmBooking(client, req.body.booking_id);
-    res.status(200).json({ status: 200, success: true, data: ticket_details });
+    return sendSuccess(res, ticket_details, "Booking confirmed");
   } catch (err) {
-    res.json({ success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //cancel-ticket
 dummyRouter.post("/cancel-ticket", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
   try {
     const { pnr, passengerids } = req.body;
     if (!pnr) {
-      throw {
-        status: 200,
-        success: false,
-        message: `PNR not found!`,
-        data: {},
-      };
+      return sendError(res, { status: 400, message: `PNR not found!` });
     }
     if (!passengerids) {
-      throw {
-        status: 200,
-        success: false,
+      return sendError(res, {
+        status: 400,
         message: `Passenger information not found!`,
-        data: {},
-      };
+      });
     }
     const result = await cancel_ticket(client, pnr, passengerids);
-    res.status(200).json({ success: false, data: result });
+    return sendSuccess(res, result, "Cancellation processed");
   } catch (err) {
-    res.json({ success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //pnr-status
 dummyRouter.post("/pnr-status", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
   try {
     const { pnr } = req.body;
     if (!pnr) {
-      throw {
-        status: 200,
-        success: false,
-        message: `PNR not found!`,
-        data: {},
-      };
+      return sendError(res, { status: 400, message: `PNR not found!` });
     }
     const result = await getPnrStatus(client, pnr);
-    res.status(200).json({ success: false, data: result });
+    return sendSuccess(res, result, "PNR status fetched");
   } catch (err) {
-    res.json({ success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //pnr-status
 dummyRouter.post("/live-train-running-status", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
   try {
     const { train_number } = req.body;
     if (!train_number) {
-      throw {
-        status: 200,
-        success: false,
+      return sendError(res, {
+        status: 400,
         message: `Train information not found!`,
-        data: {},
-      };
+      });
     }
     const result = await getLiveTrainRunningInformation(client, train_number);
-    res.status(200).json({ success: false, data: result });
+    return sendSuccess(res, result, "Live train running status fetched");
   } catch (err) {
-    res.json({ success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //live station->get list of trains which are arrivign/departing from given station
 dummyRouter.post("/live-station", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
   try {
     const hours = [2, 4, 8];
     const { station_code, next_hours } = req.body;
     if (!station_code) {
-      throw {
-        status: 200,
-        success: false,
+      return sendError(res, {
+        status: 400,
         message: `Station information not found!`,
-        data: {},
-      };
+      });
     }
     if (!next_hours) {
-      throw {
-        status: 200,
-        success: false,
+      return sendError(res, {
+        status: 400,
         message: `Hours information not found!`,
-        data: {},
-      };
+      });
     }
     if (!Number.isInteger(next_hours)) {
-      throw {
-        status: 200,
-        success: false,
+      return sendError(res, {
+        status: 400,
         message: `Invalid hours information found!`,
-        data: {},
-      };
+      });
     }
     if (!hours.includes(next_hours)) {
-      throw {
-        status: 200,
-        success: false,
+      return sendError(res, {
+        status: 400,
         message: `Invalid hours value found!`,
-        data: {},
-      };
+      });
     }
     const result = await getLiveStation(client, station_code, next_hours);
-    res.status(200).json({ success: false, data: result });
+    return sendSuccess(res, result, "Live station data fetched");
   } catch (err) {
-    res.json({ success: false, data: err.message });
+    return sendError(res, err);
   }
 });
 //test
 dummyRouter.post("/test", async (req, res) => {
   const pool = await connectDB();
-  client = await getPostgreClient(pool);
+  const client = await getPostgreClient(pool);
   try {
     //await fillCancelledSeats(client, "11312");
     await prepareChart();

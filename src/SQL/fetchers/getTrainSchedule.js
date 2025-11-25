@@ -6,7 +6,7 @@ const getTrainSchedule = async (
 ) => {
   //check train_number
   let result_train_schedule_details = await client.query(
-    `select station_sequence, kilometer, station_code, station_name, arrival, departure, running_day from schedules where train_number=$1 order by station_sequence`,
+    `select distinct station_sequence, kilometer, station_code, station_name, arrival, departure, running_day from schedules where train_number=$1 order by station_sequence`,
     [train_number]
   );
   if (0 === result_train_schedule_details.rows.length) {

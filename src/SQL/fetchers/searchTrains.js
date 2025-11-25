@@ -50,7 +50,7 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
         CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' AS now_ist
 ),
 trains_filtered AS (
-    SELECT t.*
+    SELECT t.*, s1.station_code as source_code, s2.station_code as destination_code
     FROM trains t
     JOIN schedules s1 ON s1.train_number = t.train_number AND s1.station_code = (SELECT source_code FROM params)
 	JOIN coaches c on c.train_number = t.train_number
@@ -279,6 +279,8 @@ SELECT distinct
     tf.train_type,
     tf.station_from,
     tf.station_to,
+	tf.source_code,
+	tf.destination_code,
     s1.departure AS scheduled_departure,
     s2.arrival AS estimated_arrival,
 	s2.running_day as running_day,

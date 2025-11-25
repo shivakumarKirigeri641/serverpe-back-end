@@ -46,7 +46,7 @@ const insertbookingdata_sl = async (
       [booking_details.mobile_number]
     );
     //first check if user is already logged in but no booked (like check trains->again go back & modify src,dest date etc)
-    const result_is_already_user = await client.query(
+    let result_is_already_user = await client.query(
       `select *from bookingdata where mobile_number = $1 and proceed_status=$2`,
       [booking_details.mobile_number, false]
     );
@@ -178,6 +178,18 @@ const insertbookingdata_sl = async (
         booking_details,
         booked_details,
         passenger_details
+      );
+      //booked_details = //get the full details of train here, not the IDs
+      result_is_already_user = await client.query(
+        `select b.*, t.train_number, c.coach_code, r.type_code, src.code, src.station_name, dest.code, dest.station_name, brding.code, brding.station_name  from bookingdata b
+left join trains t on t.id = b.fktrain_number
+left join coachtype c on c.id = b.fkcoach_type
+left join reservationtype r on r.id = b.fkreservation_type
+left join stations src on src.id = b.fksource_code
+left join stations dest on dest.id = b.fkdestination_code
+left join stations brding on brding.id = b.fkboarding_at
+where b.mobile_number = $! and b.proceed_status=$2`,
+        [booking_details.mobile_number, false]
       );
       return {
         booked_details: result_is_already_user.rows[0],
