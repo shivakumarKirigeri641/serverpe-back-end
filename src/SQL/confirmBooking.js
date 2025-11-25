@@ -70,6 +70,20 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and b.proceed_status=
           data: {},
         };
     }
+    const updated_booked_details = await await client.query(
+      `select b.*, t.train_number as train_number, c.coach_code, r.type_code, src.code as source_code, src.station_name as source_name, dest.code as destination_code, dest.station_name as destination_name
+      , brding.code as boarding_point, brding.station_name as boarding_point_name from bookingdata b
+left join coaches t on t.id = b.fktrain_number
+left join coachtype c on c.id = b.fkcoach_type
+left join reservationtype r on r.id = b.fkreservation_type
+left join stations src on src.id = b.fksource_code
+left join stations dest on dest.id = b.fkdestination_code
+left join stations brding on brding.id = b.fkboarding_at
+where b.id = $1`,
+      [booking_id]
+    );
+    booking_summary.result_updated_bookingdetails =
+      updated_booked_details.rows[0];
     await client.query("COMMIT");
     return booking_summary;
   } catch (err) {
