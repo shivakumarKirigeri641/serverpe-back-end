@@ -362,6 +362,18 @@ where s1.station_code = $1 and s2.station_code = $2 and s1.station_sequence >=s2
           data: {},
         };
     }
+    const updated_booked_details = await await client.query(
+      `select b.*, t.train_number, c.coach_code, r.type_code, src.code, src.station_name, dest.code, dest.station_name, brding.code, brding.station_name  from bookingdata b
+left join trains t on t.id = b.fktrain_number
+left join coachtype c on c.id = b.fkcoach_type
+left join reservationtype r on r.id = b.fkreservation_type
+left join stations src on src.id = b.fksource_code
+left join stations dest on dest.id = b.fkdestination_code
+left join stations brding on brding.id = b.fkboarding_at
+where b.mobile_number = $1 and b.proceed_status=$2`,
+      [booking_details.mobile_number, false]
+    );
+    booking_summary.booked_details = updated_booked_details.rows[0];
     await client.query("COMMIT");
     return booking_summary;
   } catch (err) {
