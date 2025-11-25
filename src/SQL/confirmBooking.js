@@ -8,6 +8,7 @@ const insertticketdata_2a = require("./insertion/insertticketdata_2a");
 const insertticketdata_3a = require("./insertion/insertticketdata_3a");
 const insertticketdata_1a = require("./insertion/insertticketdata_1a");
 const insertticketdata_fc = require("./insertion/insertticketdata_fc");
+const getFareDetails = require("./fetchers/getFareDetails");
 const confirmBooking = async (client, booking_id) => {
   let booking_summary = null;
   try {
@@ -71,19 +72,55 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and b.proceed_status=
         };
     }
     const updated_booked_details = await await client.query(
-      `select b.*, t.train_number as train_number, c.coach_code, r.type_code, src.code as source_code, src.station_name as source_name, dest.code as destination_code, dest.station_name as destination_name
-      , brding.code as boarding_point, brding.station_name as boarding_point_name from bookingdata b
-left join coaches t on t.id = b.fktrain_number
-left join coachtype c on c.id = b.fkcoach_type
-left join reservationtype r on r.id = b.fkreservation_type
-left join stations src on src.id = b.fksource_code
-left join stations dest on dest.id = b.fkdestination_code
-left join stations brding on brding.id = b.fkboarding_at
-where b.id = $1`,
+      `SELECT 
+    b.*,
+    t.train_number,
+    c.coach_code,
+    r.type_code,
+    src.code AS source_code,
+    src.station_name AS source_name,
+    dest.code AS destination_code,
+    dest.station_name AS destination_name,
+    sch_src.departure AS scheduled_departure,
+    sch_dest.arrival AS estimated_arrival,
+    brding.code AS boarding_point,
+    brding.station_name AS boarding_point_name
+FROM bookingdata b
+LEFT JOIN coaches t 
+    ON t.id = b.fktrain_number
+LEFT JOIN coachtype c 
+    ON c.id = b.fkcoach_type
+LEFT JOIN reservationtype r 
+    ON r.id = b.fkreservation_type
+LEFT JOIN stations src 
+    ON src.id = b.fksource_code
+LEFT JOIN stations dest 
+    ON dest.id = b.fkdestination_code
+LEFT JOIN stations brding 
+    ON brding.id = b.fkboarding_at
+
+-- **Fast schedule lookup without subquery**
+LEFT JOIN schedules sch_src 
+    ON sch_src.train_number = t.train_number
+   AND sch_src.station_code = src.code
+
+LEFT JOIN schedules sch_dest 
+    ON sch_dest.train_number = t.train_number
+   AND sch_dest.station_code = dest.code
+
+WHERE b.id = $1;
+`,
       [booking_id]
     );
     booking_summary.result_updated_bookingdetails =
       updated_booked_details.rows[0];
+    const temp_fare_details = await getFareDetails(
+      client,
+      booking_summary.result_updated_bookingdetails,
+      null,
+      booking_summary.result_udpated_passengerdetails
+    );
+    booking_summary.fare_details = temp_fare_details;
     await client.query("COMMIT");
     return booking_summary;
   } catch (err) {
