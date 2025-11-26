@@ -72,9 +72,10 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and b.proceed_status=
         };
     }
     const updated_booked_details = await await client.query(
-      `SELECT 
+      `SELECT distinct
     b.*,
     t.train_number,
+	tr.train_name,
     c.coach_code,
     r.type_code,
     src.code AS source_code,
@@ -88,6 +89,8 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and b.proceed_status=
 FROM bookingdata b
 LEFT JOIN coaches t 
     ON t.id = b.fktrain_number
+LEFT JOIN trains tr 
+    ON tr.train_number = t.train_number
 LEFT JOIN coachtype c 
     ON c.id = b.fkcoach_type
 LEFT JOIN reservationtype r 

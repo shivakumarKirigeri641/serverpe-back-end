@@ -205,6 +205,24 @@ dummyRouter.post("/pnr-status", async (req, res) => {
     return sendError(res, err);
   }
 });
+//booking-history
+dummyRouter.post("/booking-history", async (req, res) => {
+  const pool = await connectDB();
+  const client = await getPostgreClient(pool);
+  try {
+    const { mobile_number } = req.body;
+    if (!pnr) {
+      return sendError(res, {
+        status: 400,
+        message: `Mobile number not found!`,
+      });
+    }
+    const result = await getBookingHistory(client, mobile_number);
+    return sendSuccess(res, result, "Booking history fetched");
+  } catch (err) {
+    return sendError(res, err);
+  }
+});
 //pnr-status
 dummyRouter.post("/live-train-running-status", async (req, res) => {
   const pool = await connectDB();
