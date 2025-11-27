@@ -1,5 +1,6 @@
 const express = require("express");
 const getLiveStation = require("../SQL/fetchers/getLiveStation");
+const getBookingHistory = require("../SQL/fetchers/getBookingHistory");
 const getLiveTrainRunningInformation = require("../SQL/fetchers/getLiveTrainRunningInformation");
 const prepareChart = require("../SQL/reservations/prepareChart");
 const searchTrainsBetweenSatations = require("../SQL/fetchers/searchTrainsBetweenSatations");
@@ -211,7 +212,7 @@ dummyRouter.post("/booking-history", async (req, res) => {
   const client = await getPostgreClient(pool);
   try {
     const { mobile_number } = req.body;
-    if (!pnr) {
+    if (!mobile_number) {
       return sendError(res, {
         status: 400,
         message: `Mobile number not found!`,
@@ -240,6 +241,10 @@ dummyRouter.post("/live-train-running-status", async (req, res) => {
   } catch (err) {
     return sendError(res, err);
   }
+});
+//connection-health
+dummyRouter.get("/connection-health", async (req, res) => {
+  res.status(200).json({ status: "OK" });
 });
 //live station->get list of trains which are arrivign/departing from given station
 dummyRouter.post("/live-station", async (req, res) => {
