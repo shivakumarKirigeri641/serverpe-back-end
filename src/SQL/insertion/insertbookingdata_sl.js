@@ -46,7 +46,7 @@ const insertbookingdata_sl = async (
       [booking_details.mobile_number]
     );
     //first check if user is already logged in but no booked (like check trains->again go back & modify src,dest date etc)
-    const result_is_already_user = await client.query(
+    let result_is_already_user = await client.query(
       `select *from bookingdata where mobile_number = $1 and proceed_status=$2`,
       [booking_details.mobile_number, false]
     );

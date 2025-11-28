@@ -13,7 +13,7 @@ const runSimulator_cc = async (pool) => {
     `SELECT train_number, date_of_journey
 FROM (
   SELECT DISTINCT train_number, date_of_journey
-  FROM seatsondate_cc
+  FROM seatsondate_cc where date_of_journey >= (CURRENT_DATE + INTERVAL '1 day')
 ) AS distinct_data
 ORDER BY RANDOM()
 LIMIT 1;
@@ -28,6 +28,20 @@ LIMIT 1;
     train_numbers_cc.rows[0].train_number
   );
   let mobilenumber = getRandomMobileNumber();
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  // Convert both to YYYY-MM-DD strings for comparison
+  const formatDate = (d) => d.toISOString().split("T")[0];
+  const dojDate = new Date(train_numbers_cc.rows[0].date_of_journey);
+
+  if (formatDate(dojDate) === formatDate(tomorrow)) {
+    // ✅ If journey date is tomorrow, force TTL or PTL
+    const SPECIAL = ["TTL", "PTL", "GEN"];
+    random_reservation_type =
+      SPECIAL[Math.floor(Math.random() * SPECIAL.length)];
+  }
   const body = {
     train_number: train_numbers_cc.rows[0].train_number,
     doj: train_numbers_cc.rows[0].date_of_journey,

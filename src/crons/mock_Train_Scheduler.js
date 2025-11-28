@@ -1,5 +1,6 @@
 // cronTask.js
 const runSimulator_sl = require("../SQL/insertion/booking_simulator/runSimulator_sl");
+const prepareChart = require("../SQL/reservations/prepareChart");
 const runSimulator_1a = require("../SQL/insertion/booking_simulator/runSimulator_1a");
 const runSimulator_2a = require("../SQL/insertion/booking_simulator/runSimulator_2a");
 const runSimulator_3a = require("../SQL/insertion/booking_simulator/runSimulator_3a");
@@ -96,6 +97,17 @@ cron.schedule(
     timezone: "Asia/Kolkata", // optional: set timezone
   }
 );
+
+//prepareChart very minute
+cron.schedule(
+  "* * * * *",
+  async () => {
+    await prepareChart();
+  },
+  {
+    timezone: "Asia/Kolkata", // optional: set timezone
+  }
+);
 const backup_remove_newSeats = async (client) => {
   try {
     //first backup
@@ -123,9 +135,18 @@ const backup = async (client) => {
 
   const formattedDate = `${year}-${month}-${day}`;
   const result =
-    await client.query(`select b.*, sa.*, p.* from bookingdata b join
-  passengerdata p on b.id = p.fkbookingdata join
-  seatallocation_sl sa on sa.fkpassengerdata = p.id
+    await client.query(`select b.*, sa.*, a1.*, a2.*, a3.*, cc.*, _2s.*, ec.*, ea.*, e3.*, fc.*, p.* from bookingdata b join
+  passengerdata p on b.id = p.fkbookingdata
+  left join seatallocation_sl sa on sa.fkpassengerdata = p.id
+  left join seatallocation_1a a1 on a1.fkpassengerdata = p.id
+  left join seatallocation_2a a2 on a2.fkpassengerdata = p.id
+  left join seatallocation_3a a3 on a3.fkpassengerdata = p.id
+  left join seatallocation_cc cc on cc.fkpassengerdata = p.id
+  left join seatallocation_2s _2s on _2s.fkpassengerdata = p.id
+  left join seatallocation_ec ec on ec.fkpassengerdata = p.id
+  left join seatallocation_ea ea on ea.fkpassengerdata = p.id
+  left join seatallocation_e3 e3 on e3.fkpassengerdata = p.id
+  left join seatallocation_fc fc on fc.fkpassengerdata = p.id
   where b.date_of_journey= CURRENT_DATE;`);
   if (0 < result.rows.length) {
     const csv = [
@@ -147,13 +168,19 @@ DECLARE
     target_date DATE := CURRENT_DATE - INTERVAL '1 day';
     table_name TEXT;
 BEGIN
-    -- Delete from dependent table first
+    -- Delete passengerdata first
     DELETE FROM passengerdata
     WHERE fkbookingdata IN (
         SELECT id FROM bookingdata WHERE date_of_journey = target_date
     );
 
-    -- Then delete parent
+    -- Delete seat allocations first
+    DELETE FROM seatallocation_sl
+    WHERE fk_seatsondate_sl IN (
+        SELECT id FROM seatsondate_sl WHERE date_of_journey = target_date
+    );
+
+    -- Then delete parent bookingdata
     DELETE FROM bookingdata WHERE date_of_journey = target_date;
 
     -- List of seat tables to loop

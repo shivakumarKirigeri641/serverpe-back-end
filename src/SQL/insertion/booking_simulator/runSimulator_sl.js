@@ -28,6 +28,20 @@ LIMIT 1;
     train_numbers_sl.rows[0].train_number
   );
   let mobilenumber = getRandomMobileNumber();
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  // Convert both to YYYY-MM-DD strings for comparison
+  const formatDate = (d) => d.toISOString().split("T")[0];
+  const dojDate = new Date(train_numbers_sl.rows[0].date_of_journey);
+
+  if (formatDate(dojDate) === formatDate(tomorrow)) {
+    // ✅ If journey date is tomorrow, force TTL or PTL
+    const SPECIAL = ["TTL", "PTL", "GEN"];
+    random_reservation_type =
+      SPECIAL[Math.floor(Math.random() * SPECIAL.length)];
+  }
   const body = {
     train_number: train_numbers_sl.rows[0].train_number,
     doj: train_numbers_sl.rows[0].date_of_journey,
@@ -40,7 +54,6 @@ LIMIT 1;
   };
   try {
     // Booking summary
-    console.log("testtt");
     const client1 = await pool.connect();
     booking_summary = await proceedBooking(client1, body);
     // Confirm ticket
