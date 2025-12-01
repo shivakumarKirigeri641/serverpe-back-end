@@ -1,9 +1,9 @@
-const { connectMainDB } = require("../db/connectMainDB");
+const { connectPinCodeDB } = require("../../database/connectDB");
 // main DB where users table lives
 
 // Fetch user by API key
 exports.getUserByApiKey = async (apiKey) => {
-  const db = await connectMainDB();
+  const db = await connectPinCodeDB();
 
   const { rows } = await db.query(
     `SELECT 
@@ -25,7 +25,7 @@ exports.getUserByApiKey = async (apiKey) => {
 
 // Deduct quota depending on type: "free" or "extra"
 exports.deductQuota = async (apiKey, type) => {
-  const db = await connectMainDB();
+  const db = await connectPinCodeDB();
 
   if (type === "extra") {
     await db.query(
@@ -46,7 +46,7 @@ exports.deductQuota = async (apiKey, type) => {
 
 // Reset daily free quota (optional helper)
 exports.resetDailyQuota = async (apiKey) => {
-  const db = await connectMainDB();
+  const db = await connectPinCodeDB();
 
   await db.query(
     `UPDATE users
@@ -59,7 +59,7 @@ exports.resetDailyQuota = async (apiKey) => {
 
 // Add recharge pack (₹15/₹29/₹69/₹169)
 exports.addRecharge = async (apiKey, amount) => {
-  const db = await connectMainDB();
+  const db = await connectPinCodeDB();
 
   // Recharge mapping
   const packs = {
