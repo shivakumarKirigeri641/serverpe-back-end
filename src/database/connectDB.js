@@ -4,6 +4,7 @@ require("dotenv").config();
 types.setTypeParser(1082, (val) => val);
 let pool = null;
 let poolpincode = null;
+let poolifsc = null;
 const connectDB = async () => {
   if (!pool) {
     pool = new Pool({
@@ -60,5 +61,32 @@ const connectPinCodeDB = async () => {
   }
   return poolpincode;
 };
+const connectIFSCDB = async () => {
+  if (!poolifsc) {
+    poolifsc = new Pool({
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASEIFSC,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      port: process.env.PGPORT,
+      // ssl: { rejectUnauthorized: false }, // for AWS RDS
+      // --- ALWAYS CONNECTED SETTINGS ---
+      max: 20, // Max clients in the pool
+      idleTimeoutMillis: 30000, // Close idle clients after 30s
+      connectionTimeoutMillis: 2000, // Return an error after 2s if connection could not be established
+      keepAlive: true, // Prevent network timeouts
+    });
 
-module.exports = { connectDB, connectPinCodeDB };
+    // Optional: check connection once
+    try {
+      await poolifsc.query("SELECT NOW()");
+      console.log("✅ PostgreSQL for PINCODE connected");
+    } catch (err) {
+      console.error("❌ Connection failed", err);
+      poolifsc = null; // Reset pool so we can try again
+      throw err;
+    }
+  }
+  return poolifsc;
+};
+module.exports = { connectDB, connectPinCodeDB, connectIFSCDB };
