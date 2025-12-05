@@ -2,11 +2,13 @@ const express = require("express");
 const validateSendOtp = require("../validations/main/validateSendOtp");
 const getPinCodes = require("../SQL/PINCODES/getAllPinCodes");
 const generateOtp = require("../utils/generateOtp");
+const generateToken = require("../utils/generateToken");
 const getPostgreClient = require("../SQL/getPostgreClient");
 const { connectPinCodeDB, connectMainDB } = require("../database/connectDB");
-const insertotpentry = require("../SQL/main/insertions/insertotpentry");
-const validateotp = require("../SQL/main/fetchers/validateotp");
+const insertotpentry = require("../SQL/main/insertotpentry");
+const validateotp = require("../SQL/main/validateotp");
 const validateverifyOtp = require("../validations/main/validateverifyOtp");
+const checkServerPeUser = require("../middleware/checkServerPeUser");
 const dummRouterPinCode = express.Router();
 dummRouterPinCode.get("/pincodes", async (req, res) => {
   const pool = await connectPinCodeDB();
@@ -39,11 +41,25 @@ dummRouterPinCode.post(
       );
       if (validateforverifyotpresult.successstatus) {
         //generate token & send back
+        const serverpe_user_token = await generateToken(req.body.mobile_number);
+        res.cookie("serverpe_user_token", serverpe_user_token, {
+          httpOnly: true,
+          secure: false, // true in production HTTPS
+          sameSite: "lax",
+          maxAge: 10 * 60 * 1000, // 10 minutes
+        }); // 10min}))
       }
     }
     res
       .status(validateforverifyotpresult.statuscode)
       .json(validateforverifyotpresult);
+  }
+);
+dummRouterPinCode.get(
+  "/mockapis/serverpeuser/api-usage",
+  checkServerPeUser,
+  async (req, res) => {
+    res.json({ status: "ok", message: "inside user" });
   }
 );
 module.exports = dummRouterPinCode;
