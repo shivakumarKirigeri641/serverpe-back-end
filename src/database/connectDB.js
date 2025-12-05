@@ -5,6 +5,7 @@ types.setTypeParser(1082, (val) => val);
 let pool = null;
 let poolpincode = null;
 let poolifsc = null;
+let poolmain = null;
 const connectDB = async () => {
   if (!pool) {
     pool = new Pool({
@@ -89,4 +90,32 @@ const connectIFSCDB = async () => {
   }
   return poolifsc;
 };
-module.exports = { connectDB, connectPinCodeDB, connectIFSCDB };
+const connectMainDB = async () => {
+  if (!poolmain) {
+    poolmain = new Pool({
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASEMAIN,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      port: process.env.PGPORT,
+      // ssl: { rejectUnauthorized: false }, // for AWS RDS
+      // --- ALWAYS CONNECTED SETTINGS ---
+      max: 20, // Max clients in the pool
+      idleTimeoutMillis: 30000, // Close idle clients after 30s
+      connectionTimeoutMillis: 2000, // Return an error after 2s if connection could not be established
+      keepAlive: true, // Prevent network timeouts
+    });
+
+    // Optional: check connection once
+    try {
+      await poolmain.query("SELECT NOW()");
+      console.log("✅ PostgreSQL for MAIN connected");
+    } catch (err) {
+      console.error("❌ Connection failed", err);
+      poolmain = null; // Reset pool so we can try again
+      throw err;
+    }
+  }
+  return poolmain;
+};
+module.exports = { connectDB, connectPinCodeDB, connectIFSCDB, connectMainDB };

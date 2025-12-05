@@ -4,11 +4,13 @@ const {
   connectDB,
   connectPinCodeDB,
   connectIFSCDB,
+  connectMainDB,
 } = require("./database/connectDB");
 const app = new express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dummyRouter = require("./routers/dummyRouter");
+const dummyRouterPinCode = require("./routers/dummyRouterPinCode");
 require("dotenv").config();
 app.use(cookieParser());
 app.use(express.json());
@@ -19,6 +21,7 @@ app.use(
   })
 );
 app.use("/", dummyRouter);
+app.use("/", dummyRouterPinCode);
 connectDB()
   .then(() => {
     console.log("Database connected successfully.");
@@ -43,6 +46,16 @@ connectPinCodeDB()
 connectIFSCDB()
   .then(() => {
     console.log("ifsc Database connected successfully.");
+    app.listen(8888, "0.0.0.0", () => {
+      console.log("Server is listening now.");
+    });
+  })
+  .catch((err) => {
+    console.log("Error in connecting database: Error:" + err.message);
+  });
+connectMainDB()
+  .then(() => {
+    console.log("Main Database connected successfully.");
     app.listen(8888, "0.0.0.0", () => {
       console.log("Server is listening now.");
     });
