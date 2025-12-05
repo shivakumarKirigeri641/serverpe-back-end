@@ -38,6 +38,25 @@ const validateotp = async (client, mobile_number, otp) => {
         `update serverpe_user set apikey_text = $1, secret_key=$2 where mobile_number = $3`,
         [result_apikey, secretkey, mobile_number]
       );
+      //getpricing
+      const result_free_Price = await client.query(
+        `select *from serverpe_apipricing where price=0`
+      );
+      //insert default credit
+      await client.query(
+        `insert into serverpe_user_apikeywallet_credit (fk_user, fk_pricing, credit_reason) values ($1,$2,$3);`,
+        [
+          result_user.rows[0].id,
+          result_free_Price.rows[0].id,
+          "first time subscription",
+        ]
+      );
+
+      //insert free api calls wallet.
+      await client.query(
+        `insert into serverpe_user_apikeywallet (fk_user, outstanding_apikey_count, outstanding_apikey_count_free) values ($1,0,50);`,
+        [result_user.rows[0].id]
+      );
     }
     return {
       statuscode: 200,

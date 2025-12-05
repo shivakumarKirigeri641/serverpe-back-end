@@ -1,12 +1,27 @@
 const { Pool, types } = require("pg");
 require("dotenv").config();
-// 🧩 Keep DATE as string (no timezone shifting)
+
+// Keep DATE as string (no timezone changes)
 types.setTypeParser(1082, (val) => val);
+
+// Global pools (created only once)
 let pool = null;
 let poolpincode = null;
 let poolifsc = null;
 let poolmain = null;
-const connectDB = async () => {
+
+// 🔥 Common function to test pool connection once
+function testConnection(pool, label) {
+  pool
+    .query("SELECT NOW()")
+    .then(() => console.log(`✅ PostgreSQL connected: ${label}`))
+    .catch((err) => console.error(`❌ Connection failed for ${label}`, err));
+}
+
+/* ============================================
+   DEFAULT DB (PGDATABASE)
+============================================ */
+const connectDB = () => {
   if (!pool) {
     pool = new Pool({
       host: process.env.PGHOST,
@@ -14,27 +29,21 @@ const connectDB = async () => {
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
       port: process.env.PGPORT,
-      // ssl: { rejectUnauthorized: false }, // for AWS RDS
-      // --- ALWAYS CONNECTED SETTINGS ---
-      max: 20, // Max clients in the pool
-      idleTimeoutMillis: 30000, // Close idle clients after 30s
-      connectionTimeoutMillis: 2000, // Return an error after 2s if connection could not be established
-      keepAlive: true, // Prevent network timeouts
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+      keepAlive: true,
     });
 
-    // Optional: check connection once
-    try {
-      await pool.query("SELECT NOW()");
-      console.log("✅ PostgreSQL connected");
-    } catch (err) {
-      console.error("❌ Connection failed", err);
-      pool = null; // Reset pool so we can try again
-      throw err;
-    }
+    testConnection(pool, "DEFAULT DB");
   }
   return pool;
 };
-const connectPinCodeDB = async () => {
+
+/* ============================================
+   PINCODE DB (PGDATABASEPINCODES)
+============================================ */
+const connectPinCodeDB = () => {
   if (!poolpincode) {
     poolpincode = new Pool({
       host: process.env.PGHOST,
@@ -42,27 +51,21 @@ const connectPinCodeDB = async () => {
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
       port: process.env.PGPORT,
-      // ssl: { rejectUnauthorized: false }, // for AWS RDS
-      // --- ALWAYS CONNECTED SETTINGS ---
-      max: 20, // Max clients in the pool
-      idleTimeoutMillis: 30000, // Close idle clients after 30s
-      connectionTimeoutMillis: 2000, // Return an error after 2s if connection could not be established
-      keepAlive: true, // Prevent network timeouts
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+      keepAlive: true,
     });
 
-    // Optional: check connection once
-    try {
-      await poolpincode.query("SELECT NOW()");
-      console.log("✅ PostgreSQL for PINCODE connected");
-    } catch (err) {
-      console.error("❌ Connection failed", err);
-      poolpincode = null; // Reset pool so we can try again
-      throw err;
-    }
+    testConnection(poolpincode, "PINCODE DB");
   }
   return poolpincode;
 };
-const connectIFSCDB = async () => {
+
+/* ============================================
+   IFSC DB (PGDATABASEIFSC)
+============================================ */
+const connectIFSCDB = () => {
   if (!poolifsc) {
     poolifsc = new Pool({
       host: process.env.PGHOST,
@@ -70,27 +73,21 @@ const connectIFSCDB = async () => {
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
       port: process.env.PGPORT,
-      // ssl: { rejectUnauthorized: false }, // for AWS RDS
-      // --- ALWAYS CONNECTED SETTINGS ---
-      max: 20, // Max clients in the pool
-      idleTimeoutMillis: 30000, // Close idle clients after 30s
-      connectionTimeoutMillis: 2000, // Return an error after 2s if connection could not be established
-      keepAlive: true, // Prevent network timeouts
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+      keepAlive: true,
     });
 
-    // Optional: check connection once
-    try {
-      await poolifsc.query("SELECT NOW()");
-      console.log("✅ PostgreSQL for PINCODE connected");
-    } catch (err) {
-      console.error("❌ Connection failed", err);
-      poolifsc = null; // Reset pool so we can try again
-      throw err;
-    }
+    testConnection(poolifsc, "IFSC DB");
   }
   return poolifsc;
 };
-const connectMainDB = async () => {
+
+/* ============================================
+   MAIN DB (PGDATABASEMAIN)
+============================================ */
+const connectMainDB = () => {
   if (!poolmain) {
     poolmain = new Pool({
       host: process.env.PGHOST,
@@ -98,24 +95,20 @@ const connectMainDB = async () => {
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
       port: process.env.PGPORT,
-      // ssl: { rejectUnauthorized: false }, // for AWS RDS
-      // --- ALWAYS CONNECTED SETTINGS ---
-      max: 20, // Max clients in the pool
-      idleTimeoutMillis: 30000, // Close idle clients after 30s
-      connectionTimeoutMillis: 2000, // Return an error after 2s if connection could not be established
-      keepAlive: true, // Prevent network timeouts
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+      keepAlive: true,
     });
 
-    // Optional: check connection once
-    try {
-      await poolmain.query("SELECT NOW()");
-      console.log("✅ PostgreSQL for MAIN connected");
-    } catch (err) {
-      console.error("❌ Connection failed", err);
-      poolmain = null; // Reset pool so we can try again
-      throw err;
-    }
+    testConnection(poolmain, "MAIN DB");
   }
   return poolmain;
 };
-module.exports = { connectDB, connectPinCodeDB, connectIFSCDB, connectMainDB };
+
+module.exports = {
+  connectDB,
+  connectPinCodeDB,
+  connectIFSCDB,
+  connectMainDB,
+};
