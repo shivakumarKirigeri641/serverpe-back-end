@@ -9,13 +9,18 @@ const insertotpentry = require("../SQL/main/insertotpentry");
 const validateotp = require("../SQL/main/validateotp");
 const validateverifyOtp = require("../validations/main/validateverifyOtp");
 const checkServerPeUser = require("../middleware/checkServerPeUser");
+const checkApiKey = require("../middleware/checkApiKey");
 const dummRouterPinCode = express.Router();
-dummRouterPinCode.get("/pincodes", async (req, res) => {
-  const pool = await connectPinCodeDB();
-  const client = await getPostgreClient(pool);
-  const result = await getPinCodes(client);
-  res.json(result);
-});
+dummRouterPinCode.get(
+  "/mockapis/serverpeuser/api/pincodes",
+  checkApiKey,
+  async (req, res) => {
+    const pool = await connectPinCodeDB();
+    const client = await getPostgreClient(pool);
+    const result = await getPinCodes(client);
+    res.json(result);
+  }
+);
 dummRouterPinCode.post("/mockapis/serverpeuser/send-otp", async (req, res) => {
   const pool = await connectMainDB();
   const client = await getPostgreClient(pool);
