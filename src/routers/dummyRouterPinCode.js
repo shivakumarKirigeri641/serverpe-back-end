@@ -10,14 +10,61 @@ const rateLimitPerApiKey = require("../middleware/rateLimitPerApiKey");
 const validateotp = require("../SQL/main/validateotp");
 const validateverifyOtp = require("../validations/main/validateverifyOtp");
 const checkServerPeUser = require("../middleware/checkServerPeUser");
+const getDetailsFromPinCode = require("../SQL/PINCODES/getDetailsFromPinCode");
 const checkApiKey = require("../middleware/checkApiKey");
+const validatePinCode = require("../validations/pincodes/validatePinCode");
 const updateApiUsage = require("../SQL/main/updateApiUsage"); // NEW ATOMIC VERSION
+const getAllPinCodes = require("../SQL/PINCODES/getAllPinCodes");
 const dummRouterPinCode = express.Router();
 
 // 🚀 CREATE DB POOLS ONCE (CRITICAL FIX)
 const poolMain = connectMainDB();
 const poolPin = connectPinCodeDB();
+// ======================================================
+//                PINCODE details
+// ======================================================
+dummRouterPinCode.post(
+  "/mockapis/serverpeuser/api/pincode-details",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientPin;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientPin = await getPostgreClient(poolPin);
 
+      // 1️⃣ Atomic usage deduction (fixed)
+      const usageStatus = await updateApiUsage(clientMain, req);
+      if (!usageStatus.ok) {
+        return res.status(429).json({
+          error: usageStatus.message,
+        });
+      }
+
+      // 2️⃣ Business Logic
+      //validate
+      let validatedetails = validatePinCode(req.body);
+      if (validatedetails.successstatus) {
+        validatedetails = await getDetailsFromPinCode(
+          clientPin,
+          req.body.pincode
+        );
+      }
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: validatedetails,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientPin) clientPin.release();
+    }
+  }
+);
 // ======================================================
 //                PINCODE API (FIXED)
 // ======================================================
@@ -41,7 +88,7 @@ dummRouterPinCode.get(
       }
 
       // 2️⃣ Business Logic
-      const result = await getPinCodes(clientPin);
+      const result = await getAllPinCodes(clientPin);
 
       return res.json({
         success: true,
