@@ -10,14 +10,19 @@ const validateotp = require("../SQL/main/validateotp");
 const validateverifyOtp = require("../validations/main/validateverifyOtp");
 const checkServerPeUser = require("../middleware/checkServerPeUser");
 const checkApiKey = require("../middleware/checkApiKey");
+const updateApiUsage = require("../SQL/main/updateApiUsage");
 const dummRouterPinCode = express.Router();
 dummRouterPinCode.get(
   "/mockapis/serverpeuser/api/pincodes",
   checkApiKey,
   async (req, res) => {
+    const poolmain = await connectMainDB();
     const pool = await connectPinCodeDB();
+    const clientmain = await getPostgreClient(poolmain);
     const client = await getPostgreClient(pool);
     const result = await getPinCodes(client);
+    //update api usage
+    updateApiUsage(clientmain, req, res);
     res.json(result);
   }
 );
