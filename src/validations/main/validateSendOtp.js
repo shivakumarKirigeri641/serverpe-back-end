@@ -1,28 +1,28 @@
 const validateSendOtp = (bodyjson) => {
   if (!bodyjson) {
     return {
-      statuscode: 401,
+      statuscode: 404,
       successstatus: false,
       message: "No body information present!",
     };
   }
   if (!bodyjson.mobile_number) {
     return {
-      statuscode: 401,
+      statuscode: 404,
       successstatus: false,
       message: "No mobile number present!",
     };
   }
   if (!bodyjson.user_name) {
     return {
-      statuscode: 401,
+      statuscode: 404,
       successstatus: false,
       message: "No name present!",
     };
   }
   if (!bodyjson.stateid) {
     return {
-      statuscode: 401,
+      statuscode: 404,
       successstatus: false,
       message: "state/union territory not selected!",
     };

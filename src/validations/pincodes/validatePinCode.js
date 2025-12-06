@@ -1,9 +1,9 @@
 const validatePinCode = (data) => {
   if (!data.pincode) {
     return {
-      statuscode: 401,
+      statuscode: 404,
       successstatus: false,
-      message: "Invalid pin code!",
+      message: "Pin code not found!",
     };
   }
   return { statuscode: 200, successstatus: true, message: "success" };

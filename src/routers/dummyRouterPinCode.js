@@ -1,4 +1,7 @@
 const express = require("express");
+const getDistrictFromState = require("../SQL/PINCODES/getDistrictFromState");
+const validateState = require("../validations/pincodes/validateState");
+const getStatesAndTerritories = require("../SQL/PINCODES/getStatesAndTerritories");
 const validateSendOtp = require("../validations/main/validateSendOtp");
 const getPinCodes = require("../SQL/PINCODES/getAllPinCodes");
 const generateOtp = require("../utils/generateOtp");
@@ -212,4 +215,87 @@ dummRouterPinCode.get(
   }
 );
 
+// ======================================================
+//                api get state list
+// ======================================================
+dummRouterPinCode.get(
+  "/mockapis/serverpeuser/api/pincodes/states",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientPin;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientPin = await getPostgreClient(poolPin);
+
+      // 1️⃣ Atomic usage deduction (fixed)
+      const usageStatus = await updateApiUsage(clientMain, req);
+      if (!usageStatus.ok) {
+        return res.status(429).json({
+          error: usageStatus.message,
+        });
+      }
+
+      // 2️⃣ Business Logic
+      const result = await getStatesAndTerritories(clientPin);
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientPin) clientPin.release();
+    }
+  }
+);
+// ======================================================
+//                api get district list from state parameter
+// ======================================================
+dummRouterPinCode.post(
+  "/mockapis/serverpeuser/api/pincodes/districts",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientPin;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientPin = await getPostgreClient(poolPin);
+
+      // 1️⃣ Atomic usage deduction (fixed)
+      const usageStatus = await updateApiUsage(clientMain, req);
+      if (!usageStatus.ok) {
+        return res.status(429).json({
+          error: usageStatus.message,
+        });
+      }
+
+      // 2️⃣ Business Logic
+      let result_for_data = validateState(req);
+      if (result_for_data.successstatus) {
+        result_for_data.data = await getDistrictFromState(
+          clientPin,
+          req.body.selectedState
+        );
+      }
+      return res.status(result_for_data.statuscode).json({
+        success: result_for_data.successstatus,
+        remaining_calls: usageStatus.remaining,
+        message: result_for_data.message,
+        data: result_for_data?.data,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientPin) clientPin.release();
+    }
+  }
+);
 module.exports = dummRouterPinCode;

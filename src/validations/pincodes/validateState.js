@@ -1,18 +1,18 @@
-const validateforverifyotp = (data) => {
-  if (!data.mobile_number) {
+const validateState = (req) => {
+  if (!req.body) {
     return {
       statuscode: 404,
       successstatus: false,
-      message: "No mobile number present!",
+      message: "Request body information not found!",
     };
   }
-  if (!data.otp) {
+  if (!req.body.selectedState) {
     return {
       statuscode: 404,
       successstatus: false,
-      message: "Otp not provided!",
+      message: "State not found!",
     };
   }
   return { statuscode: 200, successstatus: true, message: "success" };
 };
-module.exports = validateforverifyotp;
+module.exports = validateState;
