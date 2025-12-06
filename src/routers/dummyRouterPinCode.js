@@ -1,6 +1,8 @@
 const express = require("express");
 const getDistrictFromState = require("../SQL/PINCODES/getDistrictFromState");
 const validateState = require("../validations/pincodes/validateState");
+const getBlockFromDistrict = require("../SQL/PINCODES/getBlockFromDistrict");
+const validateDistrictAndState = require("../validations/pincodes/validateDistrictAndState");
 const getStatesAndTerritories = require("../SQL/PINCODES/getStatesAndTerritories");
 const validateSendOtp = require("../validations/main/validateSendOtp");
 const getPinCodes = require("../SQL/PINCODES/getAllPinCodes");
@@ -281,6 +283,52 @@ dummRouterPinCode.post(
         result_for_data.data = await getDistrictFromState(
           clientPin,
           req.body.selectedState
+        );
+      }
+      return res.status(result_for_data.statuscode).json({
+        success: result_for_data.successstatus,
+        remaining_calls: usageStatus.remaining,
+        message: result_for_data.message,
+        data: result_for_data?.data,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientPin) clientPin.release();
+    }
+  }
+);
+// ======================================================
+//                api get block list from state & district parameter
+// ======================================================
+dummRouterPinCode.post(
+  "/mockapis/serverpeuser/api/pincodes/blocks",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientPin;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientPin = await getPostgreClient(poolPin);
+
+      // 1️⃣ Atomic usage deduction (fixed)
+      const usageStatus = await updateApiUsage(clientMain, req);
+      if (!usageStatus.ok) {
+        return res.status(429).json({
+          error: usageStatus.message,
+        });
+      }
+
+      // 2️⃣ Business Logic
+      let result_for_data = validateDistrictAndState(req);
+      if (result_for_data.successstatus) {
+        result_for_data.data = await getBlockFromDistrict(
+          clientPin,
+          req.body.selectedState,
+          req.body.selectedDistrict
         );
       }
       return res.status(result_for_data.statuscode).json({
