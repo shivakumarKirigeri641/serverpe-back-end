@@ -22,7 +22,7 @@ const checkServerPeUser = async (req, res, next) => {
       }
 
       // Attach decoded user info to request object
-      req.user = decoded;
+      req.mobile_number = decoded;
       next();
     });
   }

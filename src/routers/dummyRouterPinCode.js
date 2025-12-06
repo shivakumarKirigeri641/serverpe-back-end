@@ -15,6 +15,8 @@ const checkApiKey = require("../middleware/checkApiKey");
 const validatePinCode = require("../validations/pincodes/validatePinCode");
 const updateApiUsage = require("../SQL/main/updateApiUsage"); // NEW ATOMIC VERSION
 const getAllPinCodes = require("../SQL/PINCODES/getAllPinCodes");
+const fetchApiHistory = require("../SQL/main/fetchApiHistory");
+const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const dummRouterPinCode = express.Router();
 
 // 🚀 CREATE DB POOLS ONCE (CRITICAL FIX)
@@ -89,7 +91,6 @@ dummRouterPinCode.get(
 
       // 2️⃣ Business Logic
       const result = await getAllPinCodes(clientPin);
-
       return res.json({
         success: true,
         remaining_calls: usageStatus.remaining,
@@ -177,7 +178,37 @@ dummRouterPinCode.get(
   "/mockapis/serverpeuser/api-usage",
   checkServerPeUser,
   async (req, res) => {
-    res.json({ status: "ok", message: "inside user" });
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      const historyResult = await fetchApiHistory(client, req.mobile_number);
+      return res.status(historyResult.statuscode).json(historyResult);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                API plans premium
+// ======================================================
+dummRouterPinCode.get(
+  "/mockapis/serverpeuser/api-plans-premium",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      const plansResult = await fetchApiPlans(client, false);
+      return res.status(plansResult.statuscode).json(plansResult);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (client) client.release();
+    }
   }
 );
 
