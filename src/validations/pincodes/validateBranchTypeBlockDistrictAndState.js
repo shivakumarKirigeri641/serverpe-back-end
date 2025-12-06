@@ -24,14 +24,14 @@ const validateBranchTypeBlockDistrictAndState = (req) => {
     return {
       statuscode: 404,
       successstatus: false,
-      message: "Selected district not found!",
+      message: "Selected block not found!",
     };
   }
   if (!req.body.selectedBranchType) {
     return {
       statuscode: 404,
       successstatus: false,
-      message: "Selected district not found!",
+      message: "Selected branch type not found!",
     };
   }
   return { statuscode: 200, successstatus: true, message: "success" };

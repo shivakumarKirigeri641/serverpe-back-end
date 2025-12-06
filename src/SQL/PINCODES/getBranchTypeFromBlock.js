@@ -5,7 +5,7 @@ const getBranchTypeFromBlock = async (
   selectedBlock
 ) => {
   const result = await client.query(
-    `select BranchType from pincodes where State =$1 and District=$2 and Block=$3 order by BranchType`,
+    `select distinct branch_type from pincodes where State =$1 and District=$2 and Block=$3 order by branch_type`,
     [selectedState, selectedDistrict, selectedBlock]
   );
   return result.rows;

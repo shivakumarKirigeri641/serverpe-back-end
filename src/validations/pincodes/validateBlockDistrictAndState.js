@@ -22,9 +22,9 @@ const validateBlockDistrictAndState = (req) => {
   }
   if (!req.body.selectedBlock) {
     return {
-      statuscode: 401,
+      statuscode: 404,
       successstatus: false,
-      message: "Selected district not found!",
+      message: "Selected block not found!",
     };
   }
   return { statuscode: 200, successstatus: true, message: "success" };

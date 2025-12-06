@@ -3,7 +3,12 @@ const getDistrictFromState = require("../SQL/PINCODES/getDistrictFromState");
 const validateState = require("../validations/pincodes/validateState");
 const getBlockFromDistrict = require("../SQL/PINCODES/getBlockFromDistrict");
 const validateDistrictAndState = require("../validations/pincodes/validateDistrictAndState");
+const getBranchTypeFromBlock = require("../SQL/PINCODES/getBranchTypeFromBlock");
+const validateBlockDistrictAndState = require("../validations/pincodes/validateBlockDistrictAndState");
+const getFullDetailsFromBranchType = require("../SQL/PINCODES/getFullDetailsFromBranchType");
+const validateBranchTypeBlockDistrictAndState = require("../validations/pincodes/validateBranchTypeBlockDistrictAndState");
 const getStatesAndTerritories = require("../SQL/PINCODES/getStatesAndTerritories");
+
 const validateSendOtp = require("../validations/main/validateSendOtp");
 const getPinCodes = require("../SQL/PINCODES/getAllPinCodes");
 const generateOtp = require("../utils/generateOtp");
@@ -329,6 +334,101 @@ dummRouterPinCode.post(
           clientPin,
           req.body.selectedState,
           req.body.selectedDistrict
+        );
+      }
+      return res.status(result_for_data.statuscode).json({
+        success: result_for_data.successstatus,
+        remaining_calls: usageStatus.remaining,
+        message: result_for_data.message,
+        data: result_for_data?.data,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientPin) clientPin.release();
+    }
+  }
+);
+// ======================================================
+//                api get branchtype list from state & district & block parameter
+// ======================================================
+dummRouterPinCode.post(
+  "/mockapis/serverpeuser/api/pincodes/branchtypes",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientPin;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientPin = await getPostgreClient(poolPin);
+
+      // 1️⃣ Atomic usage deduction (fixed)
+      const usageStatus = await updateApiUsage(clientMain, req);
+      if (!usageStatus.ok) {
+        return res.status(429).json({
+          error: usageStatus.message,
+        });
+      }
+
+      // 2️⃣ Business Logic
+      let result_for_data = validateBlockDistrictAndState(req);
+      if (result_for_data.successstatus) {
+        result_for_data.data = await getBranchTypeFromBlock(
+          clientPin,
+          req.body.selectedState,
+          req.body.selectedDistrict,
+          req.body.selectedBlock
+        );
+      }
+      return res.status(result_for_data.statuscode).json({
+        success: result_for_data.successstatus,
+        remaining_calls: usageStatus.remaining,
+        message: result_for_data.message,
+        data: result_for_data?.data,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientPin) clientPin.release();
+    }
+  }
+);
+// ======================================================
+//                api get full details from  state & district & block & branchtype parameter
+// ======================================================
+dummRouterPinCode.post(
+  "/mockapis/serverpeuser/api/pincodes/pincode-list",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientPin;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientPin = await getPostgreClient(poolPin);
+
+      // 1️⃣ Atomic usage deduction (fixed)
+      const usageStatus = await updateApiUsage(clientMain, req);
+      if (!usageStatus.ok) {
+        return res.status(429).json({
+          error: usageStatus.message,
+        });
+      }
+
+      // 2️⃣ Business Logic
+      let result_for_data = validateBranchTypeBlockDistrictAndState(req);
+      if (result_for_data.successstatus) {
+        result_for_data.data = await getFullDetailsFromBranchType(
+          clientPin,
+          req.body.selectedState,
+          req.body.selectedDistrict,
+          req.body.selectedBlock,
+          req.body.selectedBranchType
         );
       }
       return res.status(result_for_data.statuscode).json({
