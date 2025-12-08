@@ -25,7 +25,7 @@ const connectDB = () => {
   if (!pool) {
     pool = new Pool({
       host: process.env.PGHOST,
-      database: process.env.PGDATABASE,
+      database: process.env.PGDATABASEMOCKRESERVATION,
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
       port: process.env.PGPORT,
