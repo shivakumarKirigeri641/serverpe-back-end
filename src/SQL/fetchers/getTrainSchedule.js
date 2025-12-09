@@ -10,10 +10,10 @@ const getTrainSchedule = async (
     [train_number]
   );
   if (0 === result_train_schedule_details.rows.length) {
-    throw {
-      status: 200,
-      success: false,
-      message: "Invalid train number found!",
+    return {
+      statuscode: 204,
+      successstatus: false,
+      message: "Train number not found!",
     };
   }
   //fetch train_details

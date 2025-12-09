@@ -8,11 +8,10 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
   try {
     //check date
     if (!checkForValidDate(doj)) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Invalid date selected!`,
-        data: {},
       };
     }
     //src exists
@@ -20,11 +19,10 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
       source_code,
     ]);
     if (0 === result_src.rows.length) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Source ${source_code} not found!`,
-        data: {},
       };
     }
     //dest exists
@@ -32,11 +30,10 @@ const searchTrains = async (client, source_code, destination_code, doj) => {
       destination_code,
     ]);
     if (0 === result_dest.rows.length) {
-      throw {
-        status: 200,
-        success: false,
-        message: `Destination ${destination_code} not found!`,
-        data: {},
+      return {
+        statuscode: 422,
+        successstatus: false,
+        message: `Destination ${source_code} not found!`,
       };
     }
     let search_train_details = await client.query(
@@ -404,7 +401,11 @@ ORDER BY s1.departure, tf.train_number;`,
       trains_list: cleanedResult,
     };
   } catch (err) {
-    throw err;
+    return {
+      statuscode: 500,
+      successstatus: false,
+      message: err.message,
+    };
   } finally {
   }
 };

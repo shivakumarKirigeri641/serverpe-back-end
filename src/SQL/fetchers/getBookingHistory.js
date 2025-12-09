@@ -40,7 +40,11 @@ ORDER BY b.date_of_journey DESC;`,
       };
     }
   } catch (err) {
-    throw err;
+    return {
+      statuscode: 500,
+      successstatus: false,
+      message: err.message,
+    };
   }
 };
 module.exports = getBookingHistory;

@@ -33,19 +33,6 @@ const validateForLiveTrainRunningStatus = require("../validations/mocktrainreser
 const validateForLiveStation = require("../validations/mocktrainreservations/validateForLiveStation");
 const poolMain = connectMainDB();
 const poolMockTrain = connectMockTrainTicketsDb();
-function sendSuccess(res, data = {}, message = "Success") {
-  return res.status(200).json({ status: 200, success: true, message, data });
-}
-
-function sendError(res, err) {
-  const status = err && err.status ? err.status : 500;
-  const message =
-    err && (err.message || err.msg)
-      ? err.message || err.msg
-      : "Internal server error";
-  const data = err && err.data ? err.data : {};
-  return res.status(status).json({ status, success: false, message, data });
-}
 // ======================================================
 //                api get stations list
 // ======================================================
