@@ -27,6 +27,10 @@ const validateForTrainsBetweenTwostations = require("../validations/mocktrainres
 const validateForProceedBooking = require("../validations/mocktrainreservations/validateForProceedBooking");
 const validateForConfirmBooking = require("../validations/mocktrainreservations/validateForConfirmBooking");
 const validateForCancelTicket = require("../validations/mocktrainreservations/validateForCancelTicket");
+const validateForPNRStatus = require("../validations/mocktrainreservations/validateForPNRStatus");
+const validateForBookingHistory = require("../validations/mocktrainreservations/validateForBookingHistory");
+const validateForLiveTrainRunningStatus = require("../validations/mocktrainreservations/validateForLiveTrainRunningStatus");
+const validateForLiveStation = require("../validations/mocktrainreservations/validateForLiveStation");
 const poolMain = connectMainDB();
 const poolMockTrain = connectMockTrainTicketsDb();
 function sendSuccess(res, data = {}, message = "Success") {
@@ -273,7 +277,7 @@ dummyRouter.post(
 
       let result = validateForProceedBooking(req);
       if (result.successstatus) {
-        result = await proceedBooking(client, req.body);
+        result = await proceedBooking(clientMockTrain, req.body);
       }
       return res.json({
         success: true,
@@ -306,7 +310,7 @@ dummyRouter.post(
       let result = validateForConfirmBooking(req);
       //handle throw
       if (result.successstatus) {
-        result = await confirmBooking(client, req.body);
+        result = await confirmBooking(clientMockTrain, req.body.booking_id);
       }
       return res.json({
         success: true,
@@ -339,7 +343,7 @@ dummyRouter.post(
       let result = validateForCancelTicket(req);
       //handle throw
       if (result.successstatus) {
-        result = await cancel_ticket(client, req.body);
+        result = await cancel_ticket(clientMockTrain, req.body);
       }
       return res.json({
         success: true,
@@ -355,109 +359,146 @@ dummyRouter.post(
     }
   }
 );
-//pnr-status
-dummyRouter.post("/pnr-status", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  try {
-    const { pnr } = req.body;
-    if (!pnr) {
-      return sendError(res, { status: 400, message: `PNR not found!` });
+// ======================================================
+//                api post pnr-status
+// ======================================================
+dummyRouter.post(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/pnr-status",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+
+      let result = validateForPNRStatus(req);
+      //handle throw
+      if (result.successstatus) {
+        result = await getPnrStatus(clientMockTrain, req.body.pnr);
+      }
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
     }
-    const result = await getPnrStatus(client, pnr);
-    return sendSuccess(res, result, "PNR status fetched");
-  } catch (err) {
-    return sendError(res, err);
   }
-});
-//booking-history
-dummyRouter.post("/booking-history", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  try {
-    const { mobile_number } = req.body;
-    if (!mobile_number) {
-      return sendError(res, {
-        status: 400,
-        message: `Mobile number not found!`,
+);
+// ======================================================
+//                api post booking-history
+// ======================================================
+dummyRouter.post(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/booking-history",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+
+      let result = validateForBookingHistory(req);
+      //handle throw
+      if (result.successstatus) {
+        result = await getBookingHistory(
+          clientMockTrain,
+          req.body.mobile_number
+        );
+      }
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
       });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
     }
-    const result = await getBookingHistory(client, mobile_number);
-    return sendSuccess(res, result, "Booking history fetched");
-  } catch (err) {
-    return sendError(res, err);
   }
-});
-//pnr-status
-dummyRouter.post("/live-train-running-status", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  try {
-    const { train_number } = req.body;
-    if (!train_number) {
-      return sendError(res, {
-        status: 400,
-        message: `Train information not found!`,
+);
+// ======================================================
+//                api post live-train-running-status
+// ======================================================
+dummyRouter.post(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/train-live-running-status",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+
+      let result = validateForLiveTrainRunningStatus(req);
+      //handle throw
+      if (result.successstatus) {
+        result = await getLiveTrainRunningInformation(
+          clientMockTrain,
+          req.body.train_number
+        );
+      }
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
       });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
     }
-    const result = await getLiveTrainRunningInformation(client, train_number);
-    return sendSuccess(res, result, "Live train running status fetched");
-  } catch (err) {
-    return sendError(res, err);
   }
-});
-//connection-health
-dummyRouter.get("/connection-health", async (req, res) => {
-  res.status(200).json({ status: "OK" });
-});
-//live station->get list of trains which are arrivign/departing from given station
-dummyRouter.post("/live-station", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  try {
-    const hours = [2, 4, 8];
-    const { station_code, next_hours } = req.body;
-    if (!station_code) {
-      return sendError(res, {
-        status: 400,
-        message: `Station information not found!`,
+);
+// ======================================================
+//                api post live station->get list of trains which are arrivign/departing from given station
+// ======================================================
+dummyRouter.post(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/live-station",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+
+      let result = validateForLiveStation(req);
+      //handle throw
+      if (result.successstatus) {
+        result = await getLiveStation(
+          clientMockTrain,
+          req.body.station_code,
+          req.body.next_hours
+        );
+      }
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
       });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
     }
-    if (!next_hours) {
-      return sendError(res, {
-        status: 400,
-        message: `Hours information not found!`,
-      });
-    }
-    if (!Number.isInteger(next_hours)) {
-      return sendError(res, {
-        status: 400,
-        message: `Invalid hours information found!`,
-      });
-    }
-    if (!hours.includes(next_hours)) {
-      return sendError(res, {
-        status: 400,
-        message: `Invalid hours value found!`,
-      });
-    }
-    const result = await getLiveStation(client, station_code, next_hours);
-    return sendSuccess(res, result, "Live station data fetched");
-  } catch (err) {
-    return sendError(res, err);
   }
-});
-//test
-dummyRouter.post("/test", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  try {
-    //await fillCancelledSeats(client, "11312");
-    await prepareChart();
-    res.send("RE FILL on cancellation in testing");
-  } catch (err) {
-    res.send(err.message);
-  } finally {
-  }
-});
+);
 module.exports = dummyRouter;
