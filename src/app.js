@@ -12,7 +12,7 @@ const cookieParser = require("cookie-parser");
 const dummyRouter = require("./routers/dummyRouter");
 const generalRouter = require("./routers/generalRouter");
 const userRouter = require("./routers/userRouter");
-const dummyRouterPinCode = require("./routers/dummyRouterPinCode");
+const pincodeRouter = require("./routers/pincodeRouter");
 require("dotenv").config();
 app.use(cookieParser());
 app.use(express.json());
@@ -24,8 +24,8 @@ app.use(
 );
 app.use("/", dummyRouter);
 app.use("/", generalRouter);
+app.use("/", pincodeRouter);
 app.use("/", userRouter);
-app.use("/", dummyRouterPinCode);
 connectMockTrainTicketsDb();
 connectPinCodeDB();
 connectIFSCDB();

@@ -7,7 +7,10 @@ const searchTrainsBetweenSatations = require("../SQL/fetchers/searchTrainsBetwee
 const getPnrStatus = require("../SQL/fetchers/getPnrStatus");
 const getReservationType = require("../SQL/fetchers/getReservationType");
 const getCoachType = require("../SQL/fetchers/getCoachType");
-const { connectMockTrainTicketsDb } = require("../database/connectDB");
+const {
+  connectMockTrainTicketsDb,
+  connectMainDB,
+} = require("../database/connectDB");
 const dummyRouter = express.Router();
 const getPostgreClient = require("../SQL/getPostgreClient");
 const getTrainSchedule = require("../SQL/fetchers/getTrainSchedule");
@@ -16,7 +19,11 @@ const proceedBooking = require("../SQL/proceedBooking");
 const getStations = require("../SQL/fetchers/getStations");
 const searchTrains = require("../SQL/fetchers/searchTrains");
 const cancel_ticket = require("../SQL/reservations/cancel_ticket");
-
+const checkApiKey = require("../middleware/checkApiKey");
+const rateLimitPerApiKey = require("../middleware/rateLimitPerApiKey");
+const updateApiUsage = require("../SQL/main/updateApiUsage");
+const poolMain = connectMainDB();
+const poolMockTrain = connectMockTrainTicketsDb();
 function sendSuccess(res, data = {}, message = "Success") {
   return res.status(200).json({ status: 200, success: true, message, data });
 }
@@ -31,17 +38,38 @@ function sendError(res, err) {
   return res.status(status).json({ status, success: false, message, data });
 }
 //stations
-dummyRouter.get("/stations", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  try {
-    //validation later
-    const result = await getStations(client);
-    return sendSuccess(res, result.rows, "Stations fetch successful");
-  } catch (err) {
-    return sendError(res, err);
+dummyRouter.get(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/stations",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+      // 1️⃣ Atomic usage deduction (fixed)
+      const usageStatus = await updateApiUsage(clientMain, req);
+      if (!usageStatus.ok) {
+        return res.status(429).json({
+          error: usageStatus.message,
+        });
+      }
+      const result = await getStations(clientMockTrain);
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
+    }
   }
-});
+);
 //reservation_type
 dummyRouter.get("/reservation-type", async (req, res) => {
   const pool = await connectMockTrainTicketsDb();
