@@ -22,6 +22,11 @@ const cancel_ticket = require("../SQL/reservations/cancel_ticket");
 const checkApiKey = require("../middleware/checkApiKey");
 const rateLimitPerApiKey = require("../middleware/rateLimitPerApiKey");
 const updateApiUsage = require("../SQL/main/updateApiUsage");
+const validateForSearchTrains = require("../validations/mocktrainreservations/validateForSearchTrains");
+const validateForTrainsBetweenTwostations = require("../validations/mocktrainreservations/validateForTrainsBetweenTwostations");
+const validateForProceedBooking = require("../validations/mocktrainreservations/validateForProceedBooking");
+const validateForConfirmBooking = require("../validations/mocktrainreservations/validateForConfirmBooking");
+const validateForCancelTicket = require("../validations/mocktrainreservations/validateForCancelTicket");
 const poolMain = connectMainDB();
 const poolMockTrain = connectMockTrainTicketsDb();
 function sendSuccess(res, data = {}, message = "Success") {
@@ -37,7 +42,9 @@ function sendError(res, err) {
   const data = err && err.data ? err.data : {};
   return res.status(status).json({ status, success: false, message, data });
 }
-//stations
+// ======================================================
+//                api get stations list
+// ======================================================
 dummyRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/stations",
   rateLimitPerApiKey(3, 1000),
@@ -70,155 +77,284 @@ dummyRouter.get(
     }
   }
 );
-//reservation_type
-dummyRouter.get("/reservation-type", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  try {
-    //validation later
-    const result = await getReservationType(client);
-    return sendSuccess(res, result.rows, "Reservation type fetch successful");
-  } catch (err) {
-    return sendError(res, err);
-  }
-});
-//coach_type
-dummyRouter.get("/coach-type", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  try {
-    //validation later
-    const result = await getCoachType(client);
-    return sendSuccess(res, result.rows, "Coach type fetch successful");
-  } catch (err) {
-    return sendError(res, err);
-  }
-});
-//schedule
-dummyRouter.post("/train-schedule", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-
-  try {
-    //validation later
-    let { train_number } = req.body;
-    const train_schedule_details = await getTrainSchedule(client, train_number);
-    return sendSuccess(
-      res,
-      train_schedule_details,
-      "Train schedule fetched successfully!"
-    );
-  } catch (err) {
-    return sendError(res, err);
-  }
-});
-//search trains
-dummyRouter.post("/search-trains", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-
-  try {
-    //validation later
-    let { source_code, destination_code, doj } = req.body;
-    if (!source_code) {
-      return sendError(res, { status: 400, message: `Source not found!` });
-    }
-    if (!destination_code) {
-      return sendError(res, { status: 400, message: `Destination not found!` });
-    }
-    if (!doj) {
-      return sendError(res, {
-        status: 400,
-        message: `Date of journey not found!`,
+// ======================================================
+//                api get reservation type
+// ======================================================
+dummyRouter.get(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/reservation-type",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+      // 1️⃣ Atomic usage deduction (fixed)
+      const usageStatus = await updateApiUsage(clientMain, req);
+      if (!usageStatus.ok) {
+        return res.status(429).json({
+          error: usageStatus.message,
+        });
+      }
+      const result = await getReservationType(clientMockTrain);
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
       });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
     }
-    const search_train_details = await searchTrains(
-      client,
-      source_code.toUpperCase(),
-      destination_code.toUpperCase(),
-      doj
-    );
-    if (search_train_details.trains_list.length === 0) {
-      return sendSuccess(res, {}, "No trains found!");
-    }
-    return sendSuccess(res, search_train_details, "Trains fetch successful");
-  } catch (err) {
-    return sendError(res, err);
   }
-});
-//trains between two stations
-dummyRouter.post("/trains-between-two-stations", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-
-  try {
-    //validation later
-    let { source_code, destination_code, via_code } = req.body;
-    if (!source_code) {
-      return sendError(res, { status: 400, message: `Source not found!` });
-    }
-    if (!destination_code) {
-      return sendError(res, { status: 400, message: `Destination not found!` });
-    }
-    const search_train_details = await searchTrainsBetweenSatations(
-      client,
-      source_code.toUpperCase(),
-      destination_code.toUpperCase(),
-      via_code
-    );
-    if (search_train_details.trains_list.length === 0) {
-      return sendSuccess(res, {}, "No trains found!");
-    }
-    return sendSuccess(res, search_train_details, "Trains fetch successful");
-  } catch (err) {
-    return sendError(res, err);
-  }
-});
-//prceed-booking
-dummyRouter.post("/proceed-booking", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  let booking_summary = null;
-  try {
-    //validation later
-    booking_summary = await proceedBooking(client, req.body);
-    return sendSuccess(res, booking_summary, "Proceed booking successful");
-  } catch (err) {
-    return sendError(res, err);
-  }
-});
-//confirm-ticket
-dummyRouter.post("/confirm-booking", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  try {
-    const ticket_details = await confirmBooking(client, req.body.booking_id);
-    return sendSuccess(res, ticket_details, "Booking confirmed");
-  } catch (err) {
-    return sendError(res, err);
-  }
-});
-//cancel-ticket
-dummyRouter.post("/cancel-ticket", async (req, res) => {
-  const pool = await connectMockTrainTicketsDb();
-  const client = await getPostgreClient(pool);
-  try {
-    const { pnr, passengerids } = req.body;
-    if (!pnr) {
-      return sendError(res, { status: 400, message: `PNR not found!` });
-    }
-    if (!passengerids) {
-      return sendError(res, {
-        status: 400,
-        message: `Passenger information not found!`,
+);
+// ======================================================
+//                api get coach type
+// ======================================================
+dummyRouter.get(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/coach-type",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+      // 1️⃣ Atomic usage deduction (fixed)
+      const usageStatus = await updateApiUsage(clientMain, req);
+      if (!usageStatus.ok) {
+        return res.status(429).json({
+          error: usageStatus.message,
+        });
+      }
+      const result = await getCoachType(clientMockTrain);
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
       });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
     }
-    const result = await cancel_ticket(client, pnr, passengerids);
-    return sendSuccess(res, result, "Cancellation processed");
-  } catch (err) {
-    return sendError(res, err);
   }
-});
+);
+// ======================================================
+//                api get train-schedule
+// ======================================================
+dummyRouter.get(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/train-schedule",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+      // 1️⃣ Atomic usage deduction (fixed)
+      const usageStatus = await updateApiUsage(clientMain, req);
+      if (!usageStatus.ok) {
+        return res.status(429).json({
+          error: usageStatus.message,
+        });
+      }
+      const result = await getTrainSchedule(clientMockTrain);
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
+    }
+  }
+);
+// ======================================================
+//                api post search-trains
+// ======================================================
+dummyRouter.post(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/search-trains",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //validation later
+      let result = validateForSearchTrains(req);
+      if (result.successstatus) {
+        result = await searchTrains(
+          clientMockTrain,
+          source_code.toUpperCase(),
+          destination_code.toUpperCase(),
+          doj
+        );
+      }
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
+    }
+  }
+);
+// ======================================================
+//                api post trains between two stations
+// ======================================================
+dummyRouter.post(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/trains-between-two-stations",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //validation later
+      let result = validateForTrainsBetweenTwostations(req);
+      if (result.successstatus) {
+        result = await await searchTrainsBetweenSatations(
+          clientMockTrain,
+          req.source_code.toUpperCase(),
+          req.destination_code.toUpperCase(),
+          via_code
+        );
+      }
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
+    }
+  }
+);
+
+// ======================================================
+//                api post proceed-booking
+// ======================================================
+dummyRouter.post(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/proceed-booking",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+
+      let result = validateForProceedBooking(req);
+      if (result.successstatus) {
+        result = await proceedBooking(client, req.body);
+      }
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
+    }
+  }
+);
+// ======================================================
+//                api post confirm-ticket
+// ======================================================
+dummyRouter.post(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/confirm-ticket",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+
+      let result = validateForConfirmBooking(req);
+      //handle throw
+      if (result.successstatus) {
+        result = await confirmBooking(client, req.body);
+      }
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
+    }
+  }
+);
+// ======================================================
+//                api post cancel-ticket
+// ======================================================
+dummyRouter.post(
+  "/mockapis/serverpeuser/api/mocktrain/reserved/cancel-ticket",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientMockTrain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientMockTrain = await getPostgreClient(poolMockTrain);
+
+      let result = validateForCancelTicket(req);
+      //handle throw
+      if (result.successstatus) {
+        result = await cancel_ticket(client, req.body);
+      }
+      return res.json({
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientMockTrain) clientMockTrain.release();
+    }
+  }
+);
 //pnr-status
 dummyRouter.post("/pnr-status", async (req, res) => {
   const pool = await connectMockTrainTicketsDb();
