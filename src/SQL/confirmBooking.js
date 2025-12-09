@@ -25,10 +25,10 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and b.proceed_status=
       [booking_id, false]
     );
     if (0 === booking_details.rows.length) {
-      throw {
-        status: 200,
-        success: false,
-        message: "Booking details not found!",
+      return {
+        statuscode: 204,
+        successstatus: false,
+        message: "booking details not found!",
       };
     }
     //overall valiations
@@ -64,11 +64,10 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and b.proceed_status=
         booking_summary = await insertticketdata_fc(client, booking_id);
         break;
       default:
-        throw {
-          status: 401,
-          success: false,
+        return {
+          statuscode: 204,
+          successstatus: false,
           message: "Invalid coach type for booking!",
-          data: {},
         };
     }
     const updated_booked_details = await await client.query(
@@ -130,7 +129,11 @@ WHERE b.id = $1;
     if (client) {
       await client.query("ROLLBACK");
     }
-    throw err;
+    return {
+      statuscode: 500,
+      successstatus: false,
+      message: err.message,
+    };
   } finally {
     if (client) {
       await client.release();

@@ -20,9 +20,9 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
       [pnr]
     );
     if (0 === result_booking_details.rows.length) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 204,
+        successstatus: false,
         message: `Passenger details not found for pnr ${pnr}`,
       };
     }
@@ -32,9 +32,9 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
       [passengerids]
     );
     if (result_passengers.rows.length != passengerids.length) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Passenger details invalid for pnr ${pnr}`,
       };
     }
@@ -47,9 +47,9 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
       ]
     );
     if (0 === result_departure_time.rows.length) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Invalid train information found on fetching departure!`,
       };
     }
@@ -177,7 +177,11 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
     };
   } catch (err) {
     await client.query(`ROLLBACK`);
-    throw err;
+    return {
+      statuscode: 500,
+      successstatus: false,
+      message: err.message,
+    };
   } finally {
     await client.release();
   }

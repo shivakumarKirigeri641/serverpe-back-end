@@ -126,7 +126,8 @@ ORDER BY so.station_sequence;
   );
   if (0 === result.rows.length) {
     return {
-      trains_list: result.rows,
+      statuscode: 204,
+      successstatus: false,
       message: "Train details not found!",
     };
   } else {

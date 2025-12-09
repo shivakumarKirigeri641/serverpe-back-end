@@ -16,11 +16,10 @@ const searchTrainsBetweenSatations = async (
       source_code,
     ]);
     if (0 === result_src.rows.length) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 204,
+        successstatus: false,
         message: `Source ${source_code} not found!`,
-        data: {},
       };
     }
     //dest exists
@@ -28,11 +27,10 @@ const searchTrainsBetweenSatations = async (
       destination_code,
     ]);
     if (0 === result_dest.rows.length) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 204,
+        successstatus: false,
         message: `Destination ${destination_code} not found!`,
-        data: {},
       };
     }
     //via cod exists
@@ -42,11 +40,10 @@ const searchTrainsBetweenSatations = async (
         [via_code.toUpperCase()]
       );
       if (0 === result_dest.rows.length) {
-        throw {
-          status: 200,
-          success: false,
+        return {
+          statuscode: 204,
+          successstatus: false,
           message: `In-between station mentioned was not found!`,
-          data: {},
         };
       }
     }
@@ -185,7 +182,11 @@ ORDER BY s1.departure, tf.train_number;
       trains_list: search_train_details.rows,
     };
   } catch (err) {
-    throw err;
+    return {
+      statuscode: 500,
+      successstatus: false,
+      message: err.message,
+    };
   } finally {
   }
 };

@@ -93,7 +93,8 @@ ORDER BY s.arr_time_corrected ASC;
   );
   if (0 === result.rows.length) {
     return {
-      trains_list: result.rows,
+      statuscode: 204,
+      successstatus: false,
       message: "No trains found!",
     };
   } else {

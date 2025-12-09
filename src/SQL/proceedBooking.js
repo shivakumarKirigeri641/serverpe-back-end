@@ -19,9 +19,9 @@ const proceedBooking = async (client, booking_details) => {
       booking_details.reservation_type == "LADIES" &&
       2 < booking_details.passenger_details.length
     ) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message:
           "Ladies quota must be female passengers and maximum 2 female passengers!",
       };
@@ -30,18 +30,10 @@ const proceedBooking = async (client, booking_details) => {
       booking_details.reservation_type == "PWD" &&
       1 != booking_details.passenger_details.length
     ) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: "PWD booking can be done only for 1 person!",
-      };
-    }
-    //check train
-    if (!booking_details.train_number) {
-      throw {
-        status: 200,
-        success: false,
-        message: "Train number not found!",
       };
     }
     const result_train_number = await client.query(
@@ -49,18 +41,10 @@ const proceedBooking = async (client, booking_details) => {
       [booking_details.train_number]
     );
     if (0 === result_train_number.rows.length) {
-      throw {
-        status: 400,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Selected train number ${booking_details.train_number} not found!`,
-        data: {},
-      };
-    }
-    //check res_type
-    if (!booking_details.reservation_type) {
-      throw {
-        status: 200,
-        success: false,
-        message: "Reservation type not found!",
       };
     }
     const result_reservation_type = await client.query(
@@ -68,10 +52,10 @@ const proceedBooking = async (client, booking_details) => {
       [booking_details.reservation_type.toUpperCase()]
     );
     if (0 === result_reservation_type.rows.length) {
-      throw {
-        status: 400,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Selected reservation type ${booking_details.reservation_type} not found!`,
-        data: {},
       };
     }
     //check coach_type
@@ -80,18 +64,10 @@ const proceedBooking = async (client, booking_details) => {
       [booking_details.coach_type.toUpperCase()]
     );
     if (0 === result_coach_type.rows.length) {
-      throw {
-        status: 400,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Selected coach type ${booking_details.coach_code} not found!`,
-        data: {},
-      };
-    }
-    //src exists
-    if (!booking_details.source_code) {
-      throw {
-        status: 400,
-        message: `Source not found!`,
-        data: {},
       };
     }
     const result_src = await client.query(
@@ -99,34 +75,18 @@ const proceedBooking = async (client, booking_details) => {
       [booking_details.source_code.toUpperCase()]
     );
     if (0 === result_src.rows.length) {
-      throw {
-        status: 400,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Source not found!`,
-        data: {},
       };
     }
     //doj present?
     if (!validateDateOfJourney(booking_details.doj)) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Invalid date of journey found!`,
-        data: {},
-      };
-    }
-    if (!booking_details.doj) {
-      throw {
-        status: 400,
-        message: `Date of journey not found!`,
-        data: {},
-      };
-    }
-    //dest exists
-    if (!booking_details.destination_code) {
-      throw {
-        status: 400,
-        message: `Destination not found!`,
-        data: {},
       };
     }
     const result_dest = await client.query(
@@ -134,10 +94,10 @@ const proceedBooking = async (client, booking_details) => {
       [booking_details.destination_code.toUpperCase()]
     );
     if (0 === result_dest.rows.length) {
-      throw {
-        status: 400,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Destination ${booking_details.destination_code} not found!`,
-        data: {},
       };
     }
     //boarding_at
@@ -149,10 +109,10 @@ const proceedBooking = async (client, booking_details) => {
       [booking_details.boarding_at.toUpperCase()]
     );
     if (0 === result_brdingat.rows.length) {
-      throw {
-        status: 400,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Boarding point ${booking_details.boarding_at} not found!`,
-        data: {},
       };
     }
     //check if boarding point is withing the train schedule
@@ -175,28 +135,18 @@ where s1.station_code = $1 and s2.station_code = $2 and s1.station_sequence >=s2
       0 === station_brding.length ||
       0 === result_brding_point_withingschedule.rows.length
     ) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Boaring point is not within your mentioned train schedule!`,
-        data: {},
       };
     }
     //coachtype
     if (!booking_details.coach_type) {
-      throw {
-        status: 200,
-        success: false,
+      return {
+        statuscode: 404,
+        successstatus: false,
         message: `Coach type not found!`,
-        data: {},
-      };
-    }
-    //reservation
-    if (!booking_details.passenger_details) {
-      throw {
-        status: 400,
-        message: `Passenger list found!`,
-        data: {},
       };
     }
     let adult_count = booking_details.passenger_details.filter(
@@ -209,10 +159,10 @@ where s1.station_code = $1 and s2.station_code = $2 and s1.station_sequence >=s2
       !booking_details.passenger_details ||
       (0 === adult_count.length && 0 === child_count.length)
     ) {
-      throw {
-        status: 400,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Invalid passenger details found!`,
-        data: {},
       };
     }
     //check seats
@@ -224,11 +174,10 @@ where s1.station_code = $1 and s2.station_code = $2 and s1.station_sequence >=s2
       booking_details.reservation_type
     );
     if (!seats_check) {
-      throw {
-        status: 400,
-        success: false,
+      return {
+        statuscode: 422,
+        successstatus: false,
         message: `Booking not allowed for coach ${booking_details.coach_type} for reservation ${booking_details.reservation_type}!`,
-        data: {},
       };
     }
     //overall valiations
@@ -355,11 +304,10 @@ where s1.station_code = $1 and s2.station_code = $2 and s1.station_sequence >=s2
         );
         break;
       default:
-        throw {
-          status: 401,
-          success: false,
+        return {
+          statuscode: 422,
+          successstatus: false,
           message: "Invalid coach type for booking!",
-          data: {},
         };
     }
     const updated_booked_details = await await client.query(
@@ -381,7 +329,11 @@ where b.mobile_number = $1 and b.proceed_status=$2`,
     if (client) {
       await client.query("ROLLBACK");
     }
-    throw err;
+    return {
+      statuscode: 500,
+      successstatus: false,
+      message: err.message,
+    };
   } finally {
     if (client) {
       await client.release();

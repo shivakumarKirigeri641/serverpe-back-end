@@ -1,8 +1,8 @@
-const { connectDB } = require("../../database/connectDB");
+const { connectMockTrainTicketsDb } = require("../../database/connectDB");
 const getPostgreClient = require("../getPostgreClient");
 const runSimulator_3a = require("./booking_simulator/runSimulator_3a");
 const runReservationSimulator = async (client) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   client = await getPostgreClient(pool);
 
   const train_numbers_3a = await client.query(
