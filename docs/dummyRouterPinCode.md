@@ -1,6 +1,6 @@
-# `dummyRouterPinCode` — API Reference
+# `mockTrainReservationRouterPinCode` — API Reference
 
-This document provides a focused, professional reference for the routes implemented in `src/routers/dummyRouterPinCode.js`. It includes request/response shapes, middleware behavior, database notes, rate-limiting, authentication expectations and example requests.
+This document provides a focused, professional reference for the routes implemented in `src/routers/mockTrainReservationRouterPinCode.js`. It includes request/response shapes, middleware behavior, database notes, rate-limiting, authentication expectations and example requests.
 
 Base URL
 - `http://localhost:8888`
@@ -139,4 +139,4 @@ If you want, I can:
 - generate a machine-readable OpenAPI snippet for these endpoints and add it to `docs/openapi.yaml`, or
 - integrate Swagger UI into `src/app.js` to serve docs at `/docs`.
 
-File created from code review of `src/routers/dummyRouterPinCode.js` and its nested modules on Dec 05, 2025.
+File created from code review of `src/routers/mockTrainReservationRouterPinCode.js` and its nested modules on Dec 05, 2025.

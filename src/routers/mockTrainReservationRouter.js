@@ -11,7 +11,7 @@ const {
   connectMockTrainTicketsDb,
   connectMainDB,
 } = require("../database/connectDB");
-const dummyRouter = express.Router();
+const mockTrainReservationRouter = express.Router();
 const getPostgreClient = require("../SQL/getPostgreClient");
 const getTrainSchedule = require("../SQL/fetchers/getTrainSchedule");
 const confirmBooking = require("../SQL/confirmBooking");
@@ -36,7 +36,7 @@ const poolMockTrain = connectMockTrainTicketsDb();
 // ======================================================
 //                api get stations list
 // ======================================================
-dummyRouter.get(
+mockTrainReservationRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/stations",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -71,7 +71,7 @@ dummyRouter.get(
 // ======================================================
 //                api get reservation type
 // ======================================================
-dummyRouter.get(
+mockTrainReservationRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/reservation-type",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -106,7 +106,7 @@ dummyRouter.get(
 // ======================================================
 //                api get coach type
 // ======================================================
-dummyRouter.get(
+mockTrainReservationRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/coach-type",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -141,7 +141,7 @@ dummyRouter.get(
 // ======================================================
 //                api get train-schedule
 // ======================================================
-dummyRouter.get(
+mockTrainReservationRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/train-schedule",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -176,7 +176,7 @@ dummyRouter.get(
 // ======================================================
 //                api post search-trains
 // ======================================================
-dummyRouter.post(
+mockTrainReservationRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/search-trains",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -213,7 +213,7 @@ dummyRouter.post(
 // ======================================================
 //                api post trains between two stations
 // ======================================================
-dummyRouter.post(
+mockTrainReservationRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/trains-between-two-stations",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -251,7 +251,7 @@ dummyRouter.post(
 // ======================================================
 //                api post proceed-booking
 // ======================================================
-dummyRouter.post(
+mockTrainReservationRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/proceed-booking",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -283,7 +283,7 @@ dummyRouter.post(
 // ======================================================
 //                api post confirm-ticket
 // ======================================================
-dummyRouter.post(
+mockTrainReservationRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/confirm-ticket",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -316,7 +316,7 @@ dummyRouter.post(
 // ======================================================
 //                api post cancel-ticket
 // ======================================================
-dummyRouter.post(
+mockTrainReservationRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/cancel-ticket",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -349,7 +349,7 @@ dummyRouter.post(
 // ======================================================
 //                api post pnr-status
 // ======================================================
-dummyRouter.post(
+mockTrainReservationRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/pnr-status",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -382,7 +382,7 @@ dummyRouter.post(
 // ======================================================
 //                api post booking-history
 // ======================================================
-dummyRouter.post(
+mockTrainReservationRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/booking-history",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -418,7 +418,7 @@ dummyRouter.post(
 // ======================================================
 //                api post live-train-running-status
 // ======================================================
-dummyRouter.post(
+mockTrainReservationRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/train-live-running-status",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -454,7 +454,7 @@ dummyRouter.post(
 // ======================================================
 //                api post live station->get list of trains which are arrivign/departing from given station
 // ======================================================
-dummyRouter.post(
+mockTrainReservationRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/live-station",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -488,4 +488,4 @@ dummyRouter.post(
     }
   }
 );
-module.exports = dummyRouter;
+module.exports = mockTrainReservationRouter;

@@ -9,7 +9,7 @@ const {
 const app = new express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const dummyRouter = require("./routers/dummyRouter");
+const mockTrainReservationRouter = require("./routers/mockTrainReservationRouter");
 const generalRouter = require("./routers/generalRouter");
 const userRouter = require("./routers/userRouter");
 const pincodeRouter = require("./routers/pincodeRouter");
@@ -22,7 +22,7 @@ app.use(
     credentials: true,
   })
 );
-app.use("/", dummyRouter);
+app.use("/", mockTrainReservationRouter);
 app.use("/", generalRouter);
 app.use("/", pincodeRouter);
 app.use("/", userRouter);
