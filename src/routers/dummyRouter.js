@@ -7,7 +7,7 @@ const searchTrainsBetweenSatations = require("../SQL/fetchers/searchTrainsBetwee
 const getPnrStatus = require("../SQL/fetchers/getPnrStatus");
 const getReservationType = require("../SQL/fetchers/getReservationType");
 const getCoachType = require("../SQL/fetchers/getCoachType");
-const { connectDB } = require("../database/connectDB");
+const { connectMockTrainTicketsDb } = require("../database/connectDB");
 const dummyRouter = express.Router();
 const getPostgreClient = require("../SQL/getPostgreClient");
 const getTrainSchedule = require("../SQL/fetchers/getTrainSchedule");
@@ -32,7 +32,7 @@ function sendError(res, err) {
 }
 //stations
 dummyRouter.get("/stations", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   try {
     //validation later
@@ -44,7 +44,7 @@ dummyRouter.get("/stations", async (req, res) => {
 });
 //reservation_type
 dummyRouter.get("/reservation-type", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   try {
     //validation later
@@ -56,7 +56,7 @@ dummyRouter.get("/reservation-type", async (req, res) => {
 });
 //coach_type
 dummyRouter.get("/coach-type", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   try {
     //validation later
@@ -68,7 +68,7 @@ dummyRouter.get("/coach-type", async (req, res) => {
 });
 //schedule
 dummyRouter.post("/train-schedule", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
 
   try {
@@ -86,7 +86,7 @@ dummyRouter.post("/train-schedule", async (req, res) => {
 });
 //search trains
 dummyRouter.post("/search-trains", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
 
   try {
@@ -120,7 +120,7 @@ dummyRouter.post("/search-trains", async (req, res) => {
 });
 //trains between two stations
 dummyRouter.post("/trains-between-two-stations", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
 
   try {
@@ -148,7 +148,7 @@ dummyRouter.post("/trains-between-two-stations", async (req, res) => {
 });
 //prceed-booking
 dummyRouter.post("/proceed-booking", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   let booking_summary = null;
   try {
@@ -161,7 +161,7 @@ dummyRouter.post("/proceed-booking", async (req, res) => {
 });
 //confirm-ticket
 dummyRouter.post("/confirm-booking", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   try {
     const ticket_details = await confirmBooking(client, req.body.booking_id);
@@ -172,7 +172,7 @@ dummyRouter.post("/confirm-booking", async (req, res) => {
 });
 //cancel-ticket
 dummyRouter.post("/cancel-ticket", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   try {
     const { pnr, passengerids } = req.body;
@@ -193,7 +193,7 @@ dummyRouter.post("/cancel-ticket", async (req, res) => {
 });
 //pnr-status
 dummyRouter.post("/pnr-status", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   try {
     const { pnr } = req.body;
@@ -208,7 +208,7 @@ dummyRouter.post("/pnr-status", async (req, res) => {
 });
 //booking-history
 dummyRouter.post("/booking-history", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   try {
     const { mobile_number } = req.body;
@@ -226,7 +226,7 @@ dummyRouter.post("/booking-history", async (req, res) => {
 });
 //pnr-status
 dummyRouter.post("/live-train-running-status", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   try {
     const { train_number } = req.body;
@@ -248,7 +248,7 @@ dummyRouter.get("/connection-health", async (req, res) => {
 });
 //live station->get list of trains which are arrivign/departing from given station
 dummyRouter.post("/live-station", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   try {
     const hours = [2, 4, 8];
@@ -285,7 +285,7 @@ dummyRouter.post("/live-station", async (req, res) => {
 });
 //test
 dummyRouter.post("/test", async (req, res) => {
-  const pool = await connectDB();
+  const pool = await connectMockTrainTicketsDb();
   const client = await getPostgreClient(pool);
   try {
     //await fillCancelledSeats(client, "11312");

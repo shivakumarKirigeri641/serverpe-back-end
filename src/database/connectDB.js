@@ -21,11 +21,32 @@ function testConnection(pool, label) {
 /* ============================================
    DEFAULT DB (PGDATABASE)
 ============================================ */
-const connectDB = () => {
+const connectMockTrainTicketsDb = () => {
   if (!pool) {
     pool = new Pool({
       host: process.env.PGHOST,
-      database: process.env.PGDATABASEMOCKRESERVATION,
+      database: process.env.PGDATABASEMOCKTRAINTICKETS,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      port: process.env.PGPORT,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+      keepAlive: true,
+    });
+
+    testConnection(pool, "Mock train tickets DB");
+  }
+  return pool;
+};
+/* ============================================
+   DEFAULT DB (CARSPECS)
+============================================ */
+const connectCarSpecsDB = () => {
+  if (!pool) {
+    pool = new Pool({
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASECARSPECS,
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
       port: process.env.PGPORT,
@@ -107,7 +128,7 @@ const connectMainDB = () => {
 };
 
 module.exports = {
-  connectDB,
+  connectMockTrainTicketsDb,
   connectPinCodeDB,
   connectIFSCDB,
   connectMainDB,

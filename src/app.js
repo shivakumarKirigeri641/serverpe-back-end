@@ -1,7 +1,7 @@
 const express = require("express");
 //require("./crons/mock_Train_Scheduler");
 const {
-  connectDB,
+  connectMockTrainTicketsDb,
   connectPinCodeDB,
   connectIFSCDB,
   connectMainDB,
@@ -10,6 +10,8 @@ const app = new express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dummyRouter = require("./routers/dummyRouter");
+const generalRouter = require("./routers/generalRouter");
+const userRouter = require("./routers/userRouter");
 const dummyRouterPinCode = require("./routers/dummyRouterPinCode");
 require("dotenv").config();
 app.use(cookieParser());
@@ -21,8 +23,10 @@ app.use(
   })
 );
 app.use("/", dummyRouter);
+app.use("/", generalRouter);
+app.use("/", userRouter);
 app.use("/", dummyRouterPinCode);
-connectDB();
+connectMockTrainTicketsDb();
 connectPinCodeDB();
 connectIFSCDB();
 connectMainDB();

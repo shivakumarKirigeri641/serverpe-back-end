@@ -12,14 +12,14 @@ const runSimulator_e3 = require("../SQL/insertion/booking_simulator/runSimulator
 const runSimulator_fc = require("../SQL/insertion/booking_simulator/runSimulator_fc");
 const fs = require("fs");
 const cron = require("node-cron");
-const { connectDB } = require("../database/connectDB");
+const { connectMockTrainTicketsDb } = require("../database/connectDB");
 const getPostgreClient = require("../SQL/getPostgreClient");
 const { setTimeout } = require("timers/promises");
 async function runReservationSimulator() {
   console.log("Running task at:", new Date().toLocaleString());
   // 👉 Your method logic here
   try {
-    const pool = await connectDB();
+    const pool = await connectMockTrainTicketsDb();
     await runSimulator_1a(pool);
     console.log("finished 1a");
     await runSimulator_2a(pool);
@@ -79,7 +79,7 @@ cron.schedule(
   async () => {
     let client = null;
     try {
-      const pool = await connectDB();
+      const pool = await connectMockTrainTicketsDb();
       client = await pool.connect();
       await client.query("BEGIN");
       backup_remove_newSeats(client); //runs in every 24hrs
