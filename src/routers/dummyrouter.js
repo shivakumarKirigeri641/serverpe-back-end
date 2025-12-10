@@ -13,11 +13,13 @@ const getSeries = require("../SQL/carspecs/getSeries");
 const getGrades = require("../SQL/carspecs/getGrades");
 const getCarList = require("../SQL/carspecs/getCarList");
 const getCarSpecs = require("../SQL/carspecs/getCarSpecs");
+const searchCars = require("../SQL/carspecs/searchCars");
 const validateForModels = require("../validations/carspecs/validateForModels");
 const validateForSeries = require("../validations/carspecs/validateForSeries");
 const validateForGrades = require("../validations/carspecs/validateForGrades");
 const validateForCarList = require("../validations/carspecs/validateForCarList");
 const validateForCarSpecs = require("../validations/carspecs/validateForCarSpecs");
+const validateForSearchCars = require("../validations/carspecs/validateForSearchCars");
 let usageStatus = {};
 // ======================================================
 //                api get reservation type (unchargeable)
@@ -242,6 +244,53 @@ dummyrouter.post(
       let result = validateForCarSpecs(req);
       if (result.successstatus) {
         result = await getCarSpecs(clientCarSpecs, req.body.id);
+      }
+      if (!result.statuscode) {
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        success: true,
+        remaining_calls: usageStatus?.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      if (clientMain) clientMain.release();
+      if (clientCarSpecs) clientCarSpecs.release();
+    }
+  }
+);
+// ======================================================
+//                api get car-search
+// ======================================================
+dummyrouter.post(
+  "/mockapis/serverpeuser/api/carSpecs/search-cars",
+  rateLimitPerApiKey(3, 1000),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientCarSpecs;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      clientCarSpecs = await getPostgreClient(poolCarSpecs);
+      let result = validateForSearchCars(req);
+      if (result.successstatus) {
+        const q = req.body.query?.trim() || "";
+        const limit = parseInt(req.body.limit) || 20;
+        const skip = parseInt(req.body.skip) || 0;
+        result = await searchCars(
+          clientCarSpecs,
+          req.body.query,
+          req.body.limit,
+          req.body.skip
+        );
       }
       if (!result.statuscode) {
         usageStatus = await updateApiUsage(clientMain, req);
