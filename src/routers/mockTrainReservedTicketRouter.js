@@ -35,7 +35,7 @@ const poolMain = connectMainDB();
 const poolMockTrain = connectMockTrainTicketsDb();
 let usageStatus = {};
 // ======================================================
-//                api get stations list
+//                api get stations list (unchargeable)
 // ======================================================
 mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/stations",
@@ -48,7 +48,7 @@ mockTrainReservedTicketRouter.get(
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       const result = await getStations(clientMockTrain);
-      if (!result.statuscode) {
+      /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
         usageStatus = await updateApiUsage(clientMain, req);
         if (!usageStatus.ok) {
@@ -56,7 +56,7 @@ mockTrainReservedTicketRouter.get(
             error: usageStatus.message,
           });
         }
-      }
+      }*/
       return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
@@ -72,7 +72,7 @@ mockTrainReservedTicketRouter.get(
   }
 );
 // ======================================================
-//                api get reservation type
+//                api get reservation type (unchargeable)
 // ======================================================
 mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/reservation-type",
@@ -85,7 +85,7 @@ mockTrainReservedTicketRouter.get(
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       const result = await getReservationType(clientMockTrain);
-      if (!result.statuscode) {
+      /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
         usageStatus = await updateApiUsage(clientMain, req);
         if (!usageStatus.ok) {
@@ -93,7 +93,7 @@ mockTrainReservedTicketRouter.get(
             error: usageStatus.message,
           });
         }
-      }
+      }*/
       return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
@@ -109,7 +109,7 @@ mockTrainReservedTicketRouter.get(
   }
 );
 // ======================================================
-//                api get coach type
+//                api get coach type (unchargeable)
 // ======================================================
 mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/coach-type",
@@ -122,7 +122,7 @@ mockTrainReservedTicketRouter.get(
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       const result = await getCoachType(clientMockTrain);
-      if (!result.statuscode) {
+      /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
         usageStatus = await updateApiUsage(clientMain, req);
         if (!usageStatus.ok) {
@@ -130,7 +130,7 @@ mockTrainReservedTicketRouter.get(
             error: usageStatus.message,
           });
         }
-      }
+      }*/
       return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
@@ -333,7 +333,11 @@ mockTrainReservedTicketRouter.post(
       let result = validateForConfirmBooking(req);
       //handle throw
       if (result.successstatus) {
-        result = await confirmBooking(clientMockTrain, req.body.booking_id);
+        result = await confirmBooking(
+          clientMockTrain,
+          req.body.booking_id,
+          req.body.can_send_mock_ticket_sms
+        );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)

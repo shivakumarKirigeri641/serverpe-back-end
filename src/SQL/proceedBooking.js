@@ -334,10 +334,6 @@ where b.mobile_number = $1 and b.proceed_status=$2`,
       successstatus: false,
       message: err.message,
     };
-  } finally {
-    if (client) {
-      await client.release();
-    }
   }
 };
 module.exports = proceedBooking;

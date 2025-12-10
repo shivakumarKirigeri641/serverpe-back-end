@@ -182,8 +182,6 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
       successstatus: false,
       message: err.message,
     };
-  } finally {
-    await client.release();
   }
 };
 

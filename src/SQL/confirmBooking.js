@@ -9,7 +9,12 @@ const insertticketdata_3a = require("./insertion/insertticketdata_3a");
 const insertticketdata_1a = require("./insertion/insertticketdata_1a");
 const insertticketdata_fc = require("./insertion/insertticketdata_fc");
 const getFareDetails = require("./fetchers/getFareDetails");
-const confirmBooking = async (client, booking_id) => {
+const sendMockTicketSMS = require("./reservations/sendMockTicketSMS");
+const confirmBooking = async (
+  client,
+  booking_id,
+  can_send_mock_ticket_sms = false
+) => {
   let booking_summary = null;
   try {
     await client.query("BEGIN");
@@ -32,6 +37,10 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and b.proceed_status=
       };
     }
     //overall valiations
+    const train_details = await client.query(
+      `select *from trains where train_number = $1`,
+      [booking_details.rows[0].train_number]
+    );
     switch (booking_details.rows[0].coach_code) {
       case "SL":
         booking_summary = await insertticketdata_sl(client, booking_id);
@@ -124,6 +133,16 @@ WHERE b.id = $1;
     );
     booking_summary.fare_details = temp_fare_details;
     await client.query("COMMIT");
+    //send mock sms if enabled
+    if (can_send_mock_ticket_sms === true) {
+      sendMockTicketSMS(
+        booking_details.rows[0].mobile_number,
+        updated_booked_details.rows[0].pnr,
+        booking_details.rows[0].train_number,
+        train_details.rows[0].train_name,
+        updated_booked_details.rows[0].scheduled_departure
+      );
+    }
     return booking_summary;
   } catch (err) {
     if (client) {
@@ -134,10 +153,6 @@ WHERE b.id = $1;
       successstatus: false,
       message: err.message,
     };
-  } finally {
-    if (client) {
-      await client.release();
-    }
   }
 };
 module.exports = confirmBooking;
