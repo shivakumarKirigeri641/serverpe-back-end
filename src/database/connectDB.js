@@ -8,6 +8,7 @@ types.setTypeParser(1082, (val) => val);
 let pool = null;
 let poolpincode = null;
 let poolcaspecs = null;
+let poolbikepecs = null;
 let poolmain = null;
 
 // 🔥 Common function to test pool connection once
@@ -60,6 +61,27 @@ const connectCarSpecsDB = () => {
   }
   return poolcaspecs;
 };
+/* ============================================
+   DEFAULT DB (BIKESPEC)
+============================================ */
+const connectBikeSpecsDB = () => {
+  if (!poolbikepecs) {
+    poolbikepecs = new Pool({
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASEBIKESPECS,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      port: process.env.PGPORT,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+      keepAlive: true,
+    });
+
+    testConnection(poolbikepecs, "BIKESPECS DB");
+  }
+  return poolbikepecs;
+};
 
 /* ============================================
    PINCODE DB (PGDATABASEPINCODES)
@@ -110,4 +132,5 @@ module.exports = {
   connectPinCodeDB,
   connectCarSpecsDB,
   connectMainDB,
+  connectBikeSpecsDB,
 };

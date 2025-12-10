@@ -1,40 +1,40 @@
 const express = require("express");
-const { connectCarSpecsDB, connectMainDB } = require("../database/connectDB");
+const { connectBikeSpecsDB, connectMainDB } = require("../database/connectDB");
 const checkApiKey = require("../middleware/checkApiKey");
 const rateLimitPerApiKey = require("../middleware/rateLimitPerApiKey");
 const updateApiUsage = require("../SQL/main/updateApiUsage");
-const getMakes = require("../SQL/carspecs/getMakes");
+const getMakes = require("../SQL/bikespecs/getMakes");
 const getPostgreClient = require("../SQL/getPostgreClient");
-const dummyrouter = express.Router();
+const bikespecrouter = express.Router();
 const poolMain = connectMainDB();
-const poolCarSpecs = connectCarSpecsDB();
-const getModels = require("../SQL/carspecs/getModels");
-const getSeries = require("../SQL/carspecs/getSeries");
-const getGrades = require("../SQL/carspecs/getGrades");
-const getCarList = require("../SQL/carspecs/getCarList");
-const getCarSpecs = require("../SQL/carspecs/getCarSpecs");
-const searchCars = require("../SQL/carspecs/searchCars");
-const validateForModels = require("../validations/carspecs/validateForModels");
-const validateForSeries = require("../validations/carspecs/validateForSeries");
-const validateForGrades = require("../validations/carspecs/validateForGrades");
-const validateForCarList = require("../validations/carspecs/validateForCarList");
-const validateForCarSpecs = require("../validations/carspecs/validateForCarSpecs");
-const validateForSearchCars = require("../validations/carspecs/validateForSearchCars");
+const poolbikeSpecs = connectBikeSpecsDB();
+const getModels = require("../SQL/bikespecs/getModels");
+const getBikeTypes = require("../SQL/bikespecs/getBikeTypes");
+const getCategory = require("../SQL/bikespecs/getCategory");
+const getbikeList = require("../SQL/bikespecs/getbikeList");
+const getbikeSpecs = require("../SQL/bikespecs/getbikeSpecs");
+const searchbikes = require("../SQL/bikespecs/searchBikes");
+const validateForModels = require("../validations/bikespecs/validateForModels");
+const validateForBikeType = require("../validations/bikespecs/validateForBikeType");
+const validateForCategory = require("../validations/bikespecs/validateForCategory");
+const validateForbikeList = require("../validations/bikespecs/validateForbikeList");
+const validateForbikeSpecs = require("../validations/bikespecs/validateForbikeSpecs");
+const validateForSearchbikes = require("../validations/bikespecs/validateForSearchbikes");
 let usageStatus = {};
 // ======================================================
 //                api get reservation type (unchargeable)
 // ======================================================
-dummyrouter.get(
-  "/mockapis/serverpeuser/api/carspecs/car-makes",
+bikespecrouter.get(
+  "/mockapis/serverpeuser/api/bikespecs/bike-makes",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
   async (req, res) => {
     let clientMain;
-    let clientCarSpecs;
+    let clientbikeSpecs;
     try {
       clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
-      const result = await getMakes(clientCarSpecs);
+      clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
+      const result = await getMakes(clientbikeSpecs);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
         usageStatus = await updateApiUsage(clientMain, req);
@@ -53,26 +53,26 @@ dummyrouter.get(
       return res.status(500).json({ error: "Internal Server Error" });
     } finally {
       if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      if (clientbikeSpecs) clientbikeSpecs.release();
     }
   }
 );
 // ======================================================
-//                api get car-models
+//                api get bike-models
 // ======================================================
-dummyrouter.post(
-  "/mockapis/serverpeuser/api/carSpecs/car-models",
+bikespecrouter.post(
+  "/mockapis/serverpeuser/api/bikespecs/bike-models",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
   async (req, res) => {
     let clientMain;
-    let clientCarSpecs;
+    let clientbikeSpecs;
     try {
       clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
+      clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
       let result = validateForModels(req);
       if (result.successstatus) {
-        result = await getModels(clientCarSpecs, req.body.brand);
+        result = await getModels(clientbikeSpecs, req.body.brand);
       }
       if (!result.statuscode) {
         usageStatus = await updateApiUsage(clientMain, req);
@@ -92,27 +92,27 @@ dummyrouter.post(
       return res.status(500).json({ error: "Internal Server Error" });
     } finally {
       if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      if (clientbikeSpecs) clientbikeSpecs.release();
     }
   }
 );
 // ======================================================
-//                api get car-series
+//                api get bike-type
 // ======================================================
-dummyrouter.post(
-  "/mockapis/serverpeuser/api/carSpecs/car-series",
+bikespecrouter.post(
+  "/mockapis/serverpeuser/api/bikespecs/bike-type",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
   async (req, res) => {
     let clientMain;
-    let clientCarSpecs;
+    let clientbikeSpecs;
     try {
       clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
-      let result = validateForSeries(req);
+      clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
+      let result = validateForBikeType(req);
       if (result.successstatus) {
-        result = await getSeries(
-          clientCarSpecs,
+        result = await getBikeTypes(
+          clientbikeSpecs,
           req.body.brand,
           req.body.model
         );
@@ -135,30 +135,30 @@ dummyrouter.post(
       return res.status(500).json({ error: "Internal Server Error" });
     } finally {
       if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      if (clientbikeSpecs) clientbikeSpecs.release();
     }
   }
 );
 // ======================================================
-//                api get car-grades
+//                api get bike-category
 // ======================================================
-dummyrouter.post(
-  "/mockapis/serverpeuser/api/carSpecs/car-grades",
+bikespecrouter.post(
+  "/mockapis/serverpeuser/api/bikespecs/bike-category",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
   async (req, res) => {
     let clientMain;
-    let clientCarSpecs;
+    let clientbikeSpecs;
     try {
       clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
-      let result = validateForGrades(req);
+      clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
+      let result = validateForCategory(req);
       if (result.successstatus) {
-        result = await getGrades(
-          clientCarSpecs,
+        result = await getCategory(
+          clientbikeSpecs,
           req.body.brand,
           req.body.model,
-          req.body.series
+          req.body.bike_type
         );
       }
       if (!result.statuscode) {
@@ -179,31 +179,31 @@ dummyrouter.post(
       return res.status(500).json({ error: "Internal Server Error" });
     } finally {
       if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      if (clientbikeSpecs) clientbikeSpecs.release();
     }
   }
 );
 // ======================================================
-//                api get car-list
+//                api get bike-list
 // ======================================================
-dummyrouter.post(
-  "/mockapis/serverpeuser/api/carSpecs/car-list",
+bikespecrouter.post(
+  "/mockapis/serverpeuser/api/bikespecs/bike-list",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
   async (req, res) => {
     let clientMain;
-    let clientCarSpecs;
+    let clientbikeSpecs;
     try {
       clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
-      let result = validateForCarList(req);
+      clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
+      let result = validateForbikeList(req);
       if (result.successstatus) {
-        result = await getCarList(
-          clientCarSpecs,
+        result = await getbikeList(
+          clientbikeSpecs,
           req.body.brand,
           req.body.model,
-          req.body.series,
-          req.body.grade
+          req.body.bike_type,
+          req.body.category
         );
       }
       if (!result.statuscode) {
@@ -224,26 +224,26 @@ dummyrouter.post(
       return res.status(500).json({ error: "Internal Server Error" });
     } finally {
       if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      if (clientbikeSpecs) clientbikeSpecs.release();
     }
   }
 );
 // ======================================================
-//                api get car-SPECS
+//                api get bike-SPECS
 // ======================================================
-dummyrouter.post(
-  "/mockapis/serverpeuser/api/carSpecs/car-specs",
+bikespecrouter.post(
+  "/mockapis/serverpeuser/api/bikespecs/bike-specs",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
   async (req, res) => {
     let clientMain;
-    let clientCarSpecs;
+    let clientbikeSpecs;
     try {
       clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
-      let result = validateForCarSpecs(req);
+      clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
+      let result = validateForbikeSpecs(req);
       if (result.successstatus) {
-        result = await getCarSpecs(clientCarSpecs, req.body.id);
+        result = await getbikeSpecs(clientbikeSpecs, req.body.id);
       }
       if (!result.statuscode) {
         usageStatus = await updateApiUsage(clientMain, req);
@@ -263,30 +263,30 @@ dummyrouter.post(
       return res.status(500).json({ error: "Internal Server Error" });
     } finally {
       if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      if (clientbikeSpecs) clientbikeSpecs.release();
     }
   }
 );
 // ======================================================
-//                api get car-search
+//                api get bike-search
 // ======================================================
-dummyrouter.post(
-  "/mockapis/serverpeuser/api/carSpecs/search-cars",
+bikespecrouter.post(
+  "/mockapis/serverpeuser/api/bikespecs/search-bikes",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
   async (req, res) => {
     let clientMain;
-    let clientCarSpecs;
+    let clientbikeSpecs;
     try {
       clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
-      let result = validateForSearchCars(req);
+      clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
+      let result = validateForSearchbikes(req);
       if (result.successstatus) {
         const q = req.body.query?.trim() || "";
         const limit = parseInt(req.body.limit) || 20;
         const skip = parseInt(req.body.skip) || 0;
-        result = await searchCars(
-          clientCarSpecs,
+        result = await searchbikes(
+          clientbikeSpecs,
           req.body.query,
           req.body.limit,
           req.body.skip
@@ -310,8 +310,8 @@ dummyrouter.post(
       return res.status(500).json({ error: "Internal Server Error" });
     } finally {
       if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      if (clientbikeSpecs) clientbikeSpecs.release();
     }
   }
 );
-module.exports = dummyrouter;
+module.exports = bikespecrouter;
