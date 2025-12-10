@@ -3,9 +3,10 @@ const express = require("express");
 const {
   connectMockTrainTicketsDb,
   connectPinCodeDB,
-  connectIFSCDB,
+  connectCarSpecsDB,
   connectMainDB,
 } = require("./database/connectDB");
+const path = require("path");
 const app = new express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -13,6 +14,7 @@ const mockTrainReservedTicketRouter = require("./routers/mockTrainReservedTicket
 const generalRouter = require("./routers/generalRouter");
 const userRouter = require("./routers/userRouter");
 const pincodeRouter = require("./routers/pincodeRouter");
+const dummyrouter = require("./routers/dummyrouter");
 const checkApiKey = require("./middleware/checkApiKey");
 require("dotenv").config();
 app.use(cookieParser());
@@ -23,13 +25,15 @@ app.use(
     credentials: true,
   })
 );
+app.use("/images", express.static(path.join(__dirname, "images")));
 app.use("/", mockTrainReservedTicketRouter);
 app.use("/", generalRouter);
+app.use("/", dummyrouter);
 app.use("/", pincodeRouter);
 app.use("/", userRouter);
 connectMockTrainTicketsDb();
 connectPinCodeDB();
-connectIFSCDB();
+connectCarSpecsDB();
 connectMainDB();
 app.listen(8888, "0.0.0.0", () => {
   console.log("Server is listening now.");

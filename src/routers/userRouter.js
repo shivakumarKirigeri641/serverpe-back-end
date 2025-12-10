@@ -22,7 +22,7 @@ const poolMain = connectMainDB();
 //                API USAGE
 // ======================================================
 userRouter.get(
-  "/mockapis/serverpeuser/api-usage",
+  "/mockapis/serverpeuser/loggedinuser/api-usage",
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -42,7 +42,7 @@ userRouter.get(
 //                API plans premium
 // ======================================================
 userRouter.get(
-  "/mockapis/serverpeuser/api-plans-premium",
+  "/mockapis/serverpeuser/loggedinuser/api-plans-premium",
   checkServerPeUser,
   async (req, res) => {
     let client;
