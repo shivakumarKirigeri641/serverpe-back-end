@@ -14,7 +14,7 @@ const getMakes = async (client) => {
     "logos",
     "original"
   );
-  const baseUrl = "http://localhost:8888/images/logos/original/";
+  const baseUrl = "http://localhost:8888/images/logos/optimized/";
 
   let arrayofmakesandlogos = [];
 
