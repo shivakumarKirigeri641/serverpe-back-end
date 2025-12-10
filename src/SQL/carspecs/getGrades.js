@@ -1,7 +1,7 @@
-const getGrades = async (client, makename, modelname) => {
+const getGrades = async (client, makename, modelname, seriesname) => {
   const result = await client.query(
-    `select distinct Grade from vehicle_information where LOWER(brand) = LOWER($1) and LOWER(model) = LOWER($2) order by grade asc`,
-    [makename, modelname]
+    `select distinct grade from vehicle_information where LOWER(brand) = LOWER($1) and LOWER(model) = LOWER($2) and lower(series) = lower($3) order by grade asc`,
+    [makename, modelname, seriesname]
   );
   if (0 < result.rows.length) {
     return result.rows;

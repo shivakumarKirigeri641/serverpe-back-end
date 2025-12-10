@@ -1,4 +1,4 @@
-const validateForGrades = (req) => {
+const validateForSeries = (req) => {
   if (!req.body) {
     return {
       statuscode: 404,
@@ -20,18 +20,11 @@ const validateForGrades = (req) => {
       message: "model not found!",
     };
   }
-  if (!req.body.series) {
-    return {
-      statuscode: 404,
-      successstatus: false,
-      message: "Series not found!",
-    };
-  }
   if (req.body.brand === "") {
     return {
       statuscode: 422,
       successstatus: false,
-      message: "brand is invalid!",
+      message: "make_name is invalid!",
     };
   }
   if (req.body.model === "") {
@@ -41,13 +34,6 @@ const validateForGrades = (req) => {
       message: "model is invalid!",
     };
   }
-  if (req.body.series === "") {
-    return {
-      statuscode: 422,
-      successstatus: false,
-      message: "series is invalid!",
-    };
-  }
   return { statuscode: 200, successstatus: true, message: "success" };
 };
-module.exports = validateForGrades;
+module.exports = validateForSeries;

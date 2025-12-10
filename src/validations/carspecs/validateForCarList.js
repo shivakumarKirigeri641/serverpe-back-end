@@ -1,4 +1,4 @@
-const validateForGrades = (req) => {
+const validateForCarList = (req) => {
   if (!req.body) {
     return {
       statuscode: 404,
@@ -27,6 +27,13 @@ const validateForGrades = (req) => {
       message: "Series not found!",
     };
   }
+  if (!req.body.grade) {
+    return {
+      statuscode: 404,
+      successstatus: false,
+      message: "grade not found!",
+    };
+  }
   if (req.body.brand === "") {
     return {
       statuscode: 422,
@@ -48,6 +55,13 @@ const validateForGrades = (req) => {
       message: "series is invalid!",
     };
   }
+  if (req.body.grade === "") {
+    return {
+      statuscode: 422,
+      successstatus: false,
+      message: "grade is invalid!",
+    };
+  }
   return { statuscode: 200, successstatus: true, message: "success" };
 };
-module.exports = validateForGrades;
+module.exports = validateForCarList;
