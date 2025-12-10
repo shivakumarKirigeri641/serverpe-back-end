@@ -29,6 +29,7 @@ const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const pincodeRouter = express.Router();
 const poolMain = connectMainDB();
 const poolPin = connectPinCodeDB();
+let usageStatus = {};
 // ======================================================
 //                PINCODE details
 // ======================================================
@@ -43,24 +44,22 @@ pincodeRouter.post(
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
       //validate
-      let validatedetails = validatePinCode(req.body);
-      if (validatedetails.successstatus) {
-        validatedetails = await getDetailsFromPinCode(
-          clientPin,
-          req.body.pincode
-        );
+      let result = validatePinCode(req.body);
+      if (result.successstatus) {
+        result = await getDetailsFromPinCode(clientPin, req.body.pincode);
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: validatedetails,
@@ -87,18 +86,18 @@ pincodeRouter.get(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
-
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
       const result = await getAllPinCodes(clientPin);
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -113,7 +112,7 @@ pincodeRouter.get(
   }
 );
 // ======================================================
-//                api get state list
+//                api get state list (unchargeable)
 // ======================================================
 pincodeRouter.get(
   "/mockapis/serverpeuser/api/pincodes/states",
@@ -126,19 +125,19 @@ pincodeRouter.get(
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
       const result = await getStatesAndTerritories(clientPin);
-      return res.json({
+      /*if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }*/
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
-        remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
@@ -165,7 +164,7 @@ pincodeRouter.post(
       clientPin = await getPostgreClient(poolPin);
 
       // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
+      usageStatus = await updateApiUsage(clientMain, req);
       if (!usageStatus.ok) {
         return res.status(429).json({
           error: usageStatus.message,
@@ -173,18 +172,24 @@ pincodeRouter.post(
       }
 
       // 2️⃣ Business Logic
-      let result_for_data = validateState(req);
-      if (result_for_data.successstatus) {
-        result_for_data.data = await getDistrictFromState(
-          clientPin,
-          req.body.selectedState
-        );
+      let result = validateState(req);
+      if (result.successstatus) {
+        result = await getDistrictFromState(clientPin, req.body.selectedState);
       }
-      return res.status(result_for_data.statuscode).json({
-        success: result_for_data.successstatus,
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        success: result.successstatus,
         remaining_calls: usageStatus.remaining,
-        message: result_for_data.message,
-        data: result_for_data?.data,
+        message: result.message,
+        data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
@@ -209,28 +214,29 @@ pincodeRouter.post(
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
-      let result_for_data = validateDistrictAndState(req);
-      if (result_for_data.successstatus) {
-        result_for_data.data = await getBlockFromDistrict(
+      let result = validateDistrictAndState(req);
+      if (result.successstatus) {
+        result = await getBlockFromDistrict(
           clientPin,
           req.body.selectedState,
           req.body.selectedDistrict
         );
       }
-      return res.status(result_for_data.statuscode).json({
-        success: result_for_data.successstatus,
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        success: result.successstatus,
         remaining_calls: usageStatus.remaining,
-        message: result_for_data.message,
-        data: result_for_data?.data,
+        message: result.message,
+        data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
@@ -255,29 +261,30 @@ pincodeRouter.post(
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
-      let result_for_data = validateBlockDistrictAndState(req);
-      if (result_for_data.successstatus) {
-        result_for_data.data = await getBranchTypeFromBlock(
+      let result = validateBlockDistrictAndState(req);
+      if (result.successstatus) {
+        result = await getBranchTypeFromBlock(
           clientPin,
           req.body.selectedState,
           req.body.selectedDistrict,
           req.body.selectedBlock
         );
       }
-      return res.status(result_for_data.statuscode).json({
-        success: result_for_data.successstatus,
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        success: result.successstatus,
         remaining_calls: usageStatus.remaining,
-        message: result_for_data.message,
-        data: result_for_data?.data,
+        message: result.message,
+        data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
@@ -302,18 +309,10 @@ pincodeRouter.post(
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
-      let result_for_data = validateBranchTypeBlockDistrictAndState(req);
-      if (result_for_data.successstatus) {
-        result_for_data.data = await getFullDetailsFromBranchType(
+      let result = validateBranchTypeBlockDistrictAndState(req);
+      if (result.successstatus) {
+        result = await getFullDetailsFromBranchType(
           clientPin,
           req.body.selectedState,
           req.body.selectedDistrict,
@@ -321,11 +320,20 @@ pincodeRouter.post(
           req.body.selectedBranchType
         );
       }
-      return res.status(result_for_data.statuscode).json({
-        success: result_for_data.successstatus,
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        success: result.successstatus,
         remaining_calls: usageStatus.remaining,
-        message: result_for_data.message,
-        data: result_for_data?.data,
+        message: result.message,
+        data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
