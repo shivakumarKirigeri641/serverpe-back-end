@@ -11,7 +11,7 @@ const {
   connectMockTrainTicketsDb,
   connectMainDB,
 } = require("../database/connectDB");
-const mockTrainReservationRouter = express.Router();
+const mockTrainReservedTicketRouter = express.Router();
 const getPostgreClient = require("../SQL/getPostgreClient");
 const getTrainSchedule = require("../SQL/fetchers/getTrainSchedule");
 const confirmBooking = require("../SQL/confirmBooking");
@@ -33,10 +33,11 @@ const validateForLiveTrainRunningStatus = require("../validations/mocktrainreser
 const validateForLiveStation = require("../validations/mocktrainreservations/validateForLiveStation");
 const poolMain = connectMainDB();
 const poolMockTrain = connectMockTrainTicketsDb();
+let usageStatus = {};
 // ======================================================
 //                api get stations list
 // ======================================================
-mockTrainReservationRouter.get(
+mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/stations",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -46,15 +47,17 @@ mockTrainReservationRouter.get(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
       const result = await getStations(clientMockTrain);
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -71,7 +74,7 @@ mockTrainReservationRouter.get(
 // ======================================================
 //                api get reservation type
 // ======================================================
-mockTrainReservationRouter.get(
+mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/reservation-type",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -81,15 +84,17 @@ mockTrainReservationRouter.get(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
       const result = await getReservationType(clientMockTrain);
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -106,7 +111,7 @@ mockTrainReservationRouter.get(
 // ======================================================
 //                api get coach type
 // ======================================================
-mockTrainReservationRouter.get(
+mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/coach-type",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -116,15 +121,17 @@ mockTrainReservationRouter.get(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
       const result = await getCoachType(clientMockTrain);
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -141,7 +148,7 @@ mockTrainReservationRouter.get(
 // ======================================================
 //                api get train-schedule
 // ======================================================
-mockTrainReservationRouter.get(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/train-schedule",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -151,15 +158,17 @@ mockTrainReservationRouter.get(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
       const result = await getTrainSchedule(clientMockTrain);
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -176,34 +185,44 @@ mockTrainReservationRouter.get(
 // ======================================================
 //                api post search-trains
 // ======================================================
-mockTrainReservationRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/search-trains",
   rateLimitPerApiKey(3, 1000),
-  checkApiKey,
-  async (req, res) => {
+  async (req, res, next) => {
     let clientMain;
     let clientMockTrain;
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      //validation later
+      // Validate request
       let result = validateForSearchTrains(req);
+      //repair
+
+      // 200 → auto usage deduct middleware will run
+      // 1️⃣ Atomic usage deduction (fixed)
       if (result.successstatus) {
         result = await searchTrains(
           clientMockTrain,
-          source_code.toUpperCase(),
-          destination_code.toUpperCase(),
-          doj
+          req.body.source_code.toUpperCase(),
+          req.body.destination_code.toUpperCase(),
+          req.body.doj
         );
       }
-      return res.json({
+      if (!result.statuscode) {
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
-      console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      next(err);
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -213,7 +232,7 @@ mockTrainReservationRouter.post(
 // ======================================================
 //                api post trains between two stations
 // ======================================================
-mockTrainReservationRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/trains-between-two-stations",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -226,14 +245,23 @@ mockTrainReservationRouter.post(
       //validation later
       let result = validateForTrainsBetweenTwostations(req);
       if (result.successstatus) {
-        result = await await searchTrainsBetweenSatations(
+        result = await searchTrainsBetweenSatations(
           clientMockTrain,
-          req.source_code.toUpperCase(),
-          req.destination_code.toUpperCase(),
-          via_code
+          req.body.source_code.toUpperCase(),
+          req.body.destination_code.toUpperCase(),
+          req.body.via_code
         );
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -251,7 +279,7 @@ mockTrainReservationRouter.post(
 // ======================================================
 //                api post proceed-booking
 // ======================================================
-mockTrainReservationRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/proceed-booking",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -266,7 +294,16 @@ mockTrainReservationRouter.post(
       if (result.successstatus) {
         result = await proceedBooking(clientMockTrain, req.body);
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -283,7 +320,7 @@ mockTrainReservationRouter.post(
 // ======================================================
 //                api post confirm-ticket
 // ======================================================
-mockTrainReservationRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/confirm-ticket",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -293,13 +330,21 @@ mockTrainReservationRouter.post(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForConfirmBooking(req);
       //handle throw
       if (result.successstatus) {
         result = await confirmBooking(clientMockTrain, req.body.booking_id);
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -316,7 +361,7 @@ mockTrainReservationRouter.post(
 // ======================================================
 //                api post cancel-ticket
 // ======================================================
-mockTrainReservationRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/cancel-ticket",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -326,13 +371,21 @@ mockTrainReservationRouter.post(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForCancelTicket(req);
       //handle throw
       if (result.successstatus) {
         result = await cancel_ticket(clientMockTrain, req.body);
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -349,7 +402,7 @@ mockTrainReservationRouter.post(
 // ======================================================
 //                api post pnr-status
 // ======================================================
-mockTrainReservationRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/pnr-status",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -359,15 +412,24 @@ mockTrainReservationRouter.post(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForPNRStatus(req);
       //handle throw
       if (result.successstatus) {
         result = await getPnrStatus(clientMockTrain, req.body.pnr);
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
+        //usageStatus not found if returns with 204/404/422
         data: result,
       });
     } catch (err) {
@@ -382,7 +444,7 @@ mockTrainReservationRouter.post(
 // ======================================================
 //                api post booking-history
 // ======================================================
-mockTrainReservationRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/booking-history",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -392,7 +454,6 @@ mockTrainReservationRouter.post(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForBookingHistory(req);
       //handle throw
       if (result.successstatus) {
@@ -401,7 +462,16 @@ mockTrainReservationRouter.post(
           req.body.mobile_number
         );
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -418,7 +488,7 @@ mockTrainReservationRouter.post(
 // ======================================================
 //                api post live-train-running-status
 // ======================================================
-mockTrainReservationRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/train-live-running-status",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
@@ -428,7 +498,6 @@ mockTrainReservationRouter.post(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForLiveTrainRunningStatus(req);
       //handle throw
       if (result.successstatus) {
@@ -437,7 +506,16 @@ mockTrainReservationRouter.post(
           req.body.train_number
         );
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -454,17 +532,17 @@ mockTrainReservationRouter.post(
 // ======================================================
 //                api post live station->get list of trains which are arrivign/departing from given station
 // ======================================================
-mockTrainReservationRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/live-station",
   rateLimitPerApiKey(3, 1000),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientMockTrain;
+    let usageStatus = {};
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForLiveStation(req);
       //handle throw
       if (result.successstatus) {
@@ -474,7 +552,16 @@ mockTrainReservationRouter.post(
           req.body.next_hours
         );
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
@@ -488,4 +575,4 @@ mockTrainReservationRouter.post(
     }
   }
 );
-module.exports = mockTrainReservationRouter;
+module.exports = mockTrainReservedTicketRouter;

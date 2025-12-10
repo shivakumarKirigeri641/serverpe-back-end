@@ -13,7 +13,7 @@ const validateForBookingHistory = (req) => {
       message: "mobile_number not found!",
     };
   }
-  if (!req.body.mobile_number.length != 10) {
+  if (req.body.mobile_number.length !== 10) {
     return {
       statuscode: 400,
       successstatus: false,

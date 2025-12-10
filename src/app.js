@@ -9,10 +9,11 @@ const {
 const app = new express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const mockTrainReservationRouter = require("./routers/mockTrainReservationRouter");
+const mockTrainReservedTicketRouter = require("./routers/mockTrainReservedTicketRouter");
 const generalRouter = require("./routers/generalRouter");
 const userRouter = require("./routers/userRouter");
 const pincodeRouter = require("./routers/pincodeRouter");
+const checkApiKey = require("./middleware/checkApiKey");
 require("dotenv").config();
 app.use(cookieParser());
 app.use(express.json());
@@ -22,7 +23,7 @@ app.use(
     credentials: true,
   })
 );
-app.use("/", mockTrainReservationRouter);
+app.use("/", mockTrainReservedTicketRouter);
 app.use("/", generalRouter);
 app.use("/", pincodeRouter);
 app.use("/", userRouter);

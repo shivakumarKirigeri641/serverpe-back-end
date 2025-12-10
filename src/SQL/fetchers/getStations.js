@@ -1,4 +1,7 @@
 const getStations = async (client) => {
-  return await client.query(`select *from stations order by station_name`);
+  const result = await client.query(
+    `select *from stations order by station_name`
+  );
+  return result.rows;
 };
 module.exports = getStations;
