@@ -47,6 +47,7 @@ userRouter.get(
     try {
       client = await getPostgreClient(poolMain);
       const historyResult = await fetchApiHistory(client, req.mobile_number);
+
       return res.status(historyResult.statuscode).json(historyResult);
     } catch (err) {
       console.error(err);

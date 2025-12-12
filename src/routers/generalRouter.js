@@ -8,12 +8,14 @@ const generateToken = require("../utils/generateToken");
 const getPostgreClient = require("../SQL/getPostgreClient");
 const { connectMainDB } = require("../database/connectDB");
 const insertotpentry = require("../SQL/main/insertotpentry");
+const getStatesAndTerritories = require("../SQL/main/getStatesAndTerritories");
 const validateotp = require("../SQL/main/validateotp");
 const validateverifyOtp = require("../validations/main/validateverifyOtp");
 const generalRouter = express.Router();
 const securityMiddleware = require("../middleware/securityMiddleware");
 require("dotenv").config();
 const Redis = require("ioredis");
+const getApiEndPoints = require("../SQL/main/getApiEndPoints");
 
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -200,6 +202,65 @@ generalRouter.get(
       });
     } finally {
       if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                get all endpoints sets in array and send to ui
+// ======================================================
+generalRouter.get(
+  "/mockapis/serverpeuser/all-endpoints",
+  securityMiddleware(redis, {
+    rateLimit: 1, // 1 req/sec
+    scraperLimit: 5, // 50 req/10 sec
+    windowSeconds: 1, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
+  async (req, res) => {
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      const apiendpoints = await getApiEndPoints(client);
+      return res.status(apiendpoints.statuscode).json(apiendpoints);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                api get state list (unchargeable)
+// ======================================================
+generalRouter.get(
+  "/mockapis/serverpeuser/states",
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
+  async (req, res) => {
+    let clientMain;
+    try {
+      clientMain = await getPostgreClient(poolMain);
+      // 2️⃣ Business Logic
+      const result = await getStatesAndTerritories(clientMain);
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
+    } finally {
+      if (clientMain) clientMain.release();
     }
   }
 );
