@@ -16,13 +16,31 @@ const insertFeedbacks = require("../SQL/main/insertFeedbacks");
 const fetchApiHistory = require("../SQL/main/fetchApiHistory");
 const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const userRouter = express.Router();
+const securityMiddleware = require("../middleware/securityMiddleware");
+require("dotenv").config();
+const Redis = require("ioredis");
 
+const redis = new Redis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  reconnectOnError: () => true,
+  retryStrategy(times) {
+    return Math.min(times * 50, 2000);
+  },
+  tls: {}, // IMPORTANT for redis.io URLs with TLS (rediss://)
+});
 const poolMain = connectMainDB();
 // ======================================================
 //                API USAGE
 // ======================================================
 userRouter.get(
   "/mockapis/serverpeuser/loggedinuser/api-usage",
+  securityMiddleware(redis, {
+    rateLimit: 1, // 1 req/sec
+    scraperLimit: 5, // 50 req/10 sec
+    windowSeconds: 1, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -45,6 +63,12 @@ userRouter.get(
 // ======================================================
 userRouter.get(
   "/mockapis/serverpeuser/loggedinuser/api-plans-premium",
+  securityMiddleware(redis, {
+    rateLimit: 1, // 1 req/sec
+    scraperLimit: 5, // 50 req/10 sec
+    windowSeconds: 1, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -67,6 +91,12 @@ userRouter.get(
 // ======================================================
 userRouter.post(
   "/mockapis/serverpeuser/loggedinuser/feedback",
+  securityMiddleware(redis, {
+    rateLimit: 1, // 1 req/sec
+    scraperLimit: 5, // 50 req/10 sec
+    windowSeconds: 1, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkServerPeUser,
   async (req, res) => {
     let client;

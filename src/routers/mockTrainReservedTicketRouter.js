@@ -33,13 +33,30 @@ const validateForLiveTrainRunningStatus = require("../validations/mocktrainreser
 const validateForLiveStation = require("../validations/mocktrainreservations/validateForLiveStation");
 const poolMain = connectMainDB();
 const poolMockTrain = connectMockTrainTicketsDb();
+const securityMiddleware = require("../middleware/securityMiddleware");
+require("dotenv").config();
+const Redis = require("ioredis");
+const redis = new Redis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  reconnectOnError: () => true,
+  retryStrategy(times) {
+    return Math.min(times * 50, 2000);
+  },
+  tls: {}, // IMPORTANT for redis.io URLs with TLS (rediss://)
+});
 let usageStatus = {};
 // ======================================================
 //                api get stations list (unchargeable)
 // ======================================================
 mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/stations",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -78,7 +95,12 @@ mockTrainReservedTicketRouter.get(
 // ======================================================
 mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/reservation-type",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -117,7 +139,12 @@ mockTrainReservedTicketRouter.get(
 // ======================================================
 mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/coach-type",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -156,7 +183,12 @@ mockTrainReservedTicketRouter.get(
 // ======================================================
 mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/train-schedule",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -195,7 +227,12 @@ mockTrainReservedTicketRouter.post(
 // ======================================================
 mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/search-trains",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   async (req, res, next) => {
     let clientMain;
     let clientMockTrain;
@@ -242,7 +279,12 @@ mockTrainReservedTicketRouter.post(
 // ======================================================
 mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/trains-between-two-stations",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -291,7 +333,12 @@ mockTrainReservedTicketRouter.post(
 // ======================================================
 mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/proceed-booking",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -334,7 +381,12 @@ mockTrainReservedTicketRouter.post(
 // ======================================================
 mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/confirm-ticket",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -381,7 +433,12 @@ mockTrainReservedTicketRouter.post(
 // ======================================================
 mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/cancel-ticket",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -424,7 +481,12 @@ mockTrainReservedTicketRouter.post(
 // ======================================================
 mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/pnr-status",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -468,7 +530,12 @@ mockTrainReservedTicketRouter.post(
 // ======================================================
 mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/booking-history",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -514,7 +581,12 @@ mockTrainReservedTicketRouter.post(
 // ======================================================
 mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/train-live-running-status",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -560,7 +632,12 @@ mockTrainReservedTicketRouter.post(
 // ======================================================
 mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/live-station",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;

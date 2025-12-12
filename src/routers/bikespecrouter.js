@@ -20,13 +20,30 @@ const validateForCategory = require("../validations/bikespecs/validateForCategor
 const validateForbikeList = require("../validations/bikespecs/validateForbikeList");
 const validateForbikeSpecs = require("../validations/bikespecs/validateForbikeSpecs");
 const validateForSearchbikes = require("../validations/bikespecs/validateForSearchbikes");
+const securityMiddleware = require("../middleware/securityMiddleware");
+require("dotenv").config();
+const Redis = require("ioredis");
+const redis = new Redis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  reconnectOnError: () => true,
+  retryStrategy(times) {
+    return Math.min(times * 50, 2000);
+  },
+  tls: {}, // IMPORTANT for redis.io URLs with TLS (rediss://)
+});
 let usageStatus = {};
 // ======================================================
 //                api get reservation type (unchargeable)
 // ======================================================
 bikespecrouter.get(
   "/mockapis/serverpeuser/api/bikespecs/bike-makes",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -64,7 +81,12 @@ bikespecrouter.get(
 // ======================================================
 bikespecrouter.post(
   "/mockapis/serverpeuser/api/bikespecs/bike-models",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -105,7 +127,12 @@ bikespecrouter.post(
 // ======================================================
 bikespecrouter.post(
   "/mockapis/serverpeuser/api/bikespecs/bike-type",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -150,7 +177,12 @@ bikespecrouter.post(
 // ======================================================
 bikespecrouter.post(
   "/mockapis/serverpeuser/api/bikespecs/bike-category",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -196,7 +228,12 @@ bikespecrouter.post(
 // ======================================================
 bikespecrouter.post(
   "/mockapis/serverpeuser/api/bikespecs/bike-list",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -243,7 +280,12 @@ bikespecrouter.post(
 // ======================================================
 bikespecrouter.post(
   "/mockapis/serverpeuser/api/bikespecs/bike-specs",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -284,7 +326,12 @@ bikespecrouter.post(
 // ======================================================
 bikespecrouter.post(
   "/mockapis/serverpeuser/api/bikespecs/search-bikes",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;

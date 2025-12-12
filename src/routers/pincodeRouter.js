@@ -29,13 +29,32 @@ const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const pincodeRouter = express.Router();
 const poolMain = connectMainDB();
 const poolPin = connectPinCodeDB();
+const securityMiddleware = require("../middleware/securityMiddleware");
+require("dotenv").config();
+const Redis = require("ioredis");
+
+const redis = new Redis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  reconnectOnError: () => true,
+  retryStrategy(times) {
+    return Math.min(times * 50, 2000);
+  },
+  tls: {}, // IMPORTANT for redis.io URLs with TLS (rediss://)
+});
+
 let usageStatus = {};
 // ======================================================
 //                PINCODE details
 // ======================================================
 pincodeRouter.post(
   "/mockapis/serverpeuser/api/pincode-details",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -80,7 +99,12 @@ pincodeRouter.post(
 // ======================================================
 pincodeRouter.get(
   "/mockapis/serverpeuser/api/pincodes",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -120,7 +144,12 @@ pincodeRouter.get(
 // ======================================================
 pincodeRouter.get(
   "/mockapis/serverpeuser/api/pincodes/states",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -160,7 +189,12 @@ pincodeRouter.get(
 // ======================================================
 pincodeRouter.post(
   "/mockapis/serverpeuser/api/pincodes/districts",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -213,7 +247,12 @@ pincodeRouter.post(
 // ======================================================
 pincodeRouter.post(
   "/mockapis/serverpeuser/api/pincodes/blocks",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -262,7 +301,12 @@ pincodeRouter.post(
 // ======================================================
 pincodeRouter.post(
   "/mockapis/serverpeuser/api/pincodes/branchtypes",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -312,7 +356,12 @@ pincodeRouter.post(
 // ======================================================
 pincodeRouter.post(
   "/mockapis/serverpeuser/api/pincodes/pincode-list",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
