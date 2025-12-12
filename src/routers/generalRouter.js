@@ -1,5 +1,7 @@
 const express = require("express");
 const getTestimonials = require("../SQL/main/getTestimonials");
+const insertContactMeData = require("../SQL/main/insertContactMeData");
+const validateForAddingContactMeData = require("../validations/main/validateForAddingContactMeData");
 const getAllFeedbackCategories = require("../SQL/main/getAllFeedbackCategories");
 const validateSendOtp = require("../validations/main/validateSendOtp");
 const generateToken = require("../utils/generateToken");
@@ -88,6 +90,34 @@ generalRouter.get("/mockapis/serverpeuser/testimonials", async (req, res) => {
     return res.status(500).json({
       error: "Internal Server Error",
       message: err.message,
+      message: err.message,
+    });
+  } finally {
+    if (client) client.release();
+  }
+});
+// ======================================================
+//                add to contact me
+// ======================================================
+generalRouter.post("/mockapis/serverpeuser/testimonials", async (req, res) => {
+  let client;
+  try {
+    client = await getPostgreClient(poolMain);
+    let resultcontactme = validateForAddingContactMeData(req);
+    if (resultcontactme.successstatus) {
+      resultcontactme = await insertContactMeData(
+        client,
+        req.body.user_name,
+        req.body.email,
+        req.body.category,
+        req.body.message
+      );
+    }
+    return res.status(resultcontactme.statuscode).json(resultcontactme);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      error: "Internal Server Error",
       message: err.message,
     });
   } finally {
