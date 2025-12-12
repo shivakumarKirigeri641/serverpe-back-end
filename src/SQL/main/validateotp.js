@@ -57,6 +57,7 @@ const validateotp = async (client, mobile_number, otp) => {
         `insert into serverpe_user_apikeywallet (fk_user, outstanding_apikey_count, outstanding_apikey_count_free) values ($1,0,50);`,
         [result_user.rows[0].id]
       );
+      //alert notifification to me with SMS when user logins
     }
     return {
       statuscode: 200,
