@@ -3,6 +3,13 @@ const validateSendOtp = (bodyjson) => {
     return {
       statuscode: 404,
       successstatus: false,
+      message: "Request body information not found!",
+    };
+  }
+  if (!bodyjson) {
+    return {
+      statuscode: 404,
+      successstatus: false,
       message: "No body information present!",
     };
   }

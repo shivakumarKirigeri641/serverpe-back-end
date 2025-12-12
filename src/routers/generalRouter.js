@@ -1,20 +1,13 @@
 const express = require("express");
-const getStatesAndTerritories = require("../SQL/PINCODES/getStatesAndTerritories");
+const getTestimonials = require("../SQL/main/getTestimonials");
+const getAllFeedbackCategories = require("../SQL/main/getAllFeedbackCategories");
 const validateSendOtp = require("../validations/main/validateSendOtp");
-const generateOtp = require("../utils/generateOtp");
 const generateToken = require("../utils/generateToken");
 const getPostgreClient = require("../SQL/getPostgreClient");
 const { connectMainDB } = require("../database/connectDB");
 const insertotpentry = require("../SQL/main/insertotpentry");
-const rateLimitPerApiKey = require("../middleware/rateLimitPerApiKey");
 const validateotp = require("../SQL/main/validateotp");
 const validateverifyOtp = require("../validations/main/validateverifyOtp");
-const checkServerPeUser = require("../middleware/checkServerPeUser");
-const checkApiKey = require("../middleware/checkApiKey");
-const updateApiUsage = require("../SQL/main/updateApiUsage"); // NEW ATOMIC VERSION
-
-const fetchApiHistory = require("../SQL/main/fetchApiHistory");
-const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const generalRouter = express.Router();
 // 🚀 CREATE DB POOLS ONCE (CRITICAL FIX)
 const poolMain = connectMainDB();
@@ -35,7 +28,9 @@ generalRouter.post("/mockapis/serverpeuser/send-otp", async (req, res) => {
     return res.status(validationresult.statuscode).json(validationresult);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res
+      .status(500)
+      .json({ error: "Internal Server Error", message: err.message });
   } finally {
     if (client) client.release();
   }
@@ -72,9 +67,54 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
       .json(validateforverifyotpresult);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res
+      .status(500)
+      .json({ error: "Internal Server Error", message: err.message });
   } finally {
     if (client) client.release();
   }
 });
+// ======================================================
+//                testimonials
+// ======================================================
+generalRouter.get("/mockapis/serverpeuser/testimonials", async (req, res) => {
+  let client;
+  try {
+    client = await getPostgreClient(poolMain);
+    const testimonialsdata = await getTestimonials(client);
+    return res.status(testimonialsdata.statuscode).json(testimonialsdata);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      error: "Internal Server Error",
+      message: err.message,
+      message: err.message,
+    });
+  } finally {
+    if (client) client.release();
+  }
+});
+// ======================================================
+//                feedback catagories
+// ======================================================
+generalRouter.get(
+  "/mockapis/serverpeuser/feedback-categories",
+  async (req, res) => {
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      const feedbackcategories = await getAllFeedbackCategories(client);
+      return res.status(feedbackcategories.statuscode).json(feedbackcategories);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
 module.exports = generalRouter;

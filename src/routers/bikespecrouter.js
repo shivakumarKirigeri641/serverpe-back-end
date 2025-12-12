@@ -50,7 +50,9 @@ bikespecrouter.get(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientbikeSpecs) clientbikeSpecs.release();
@@ -89,7 +91,9 @@ bikespecrouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientbikeSpecs) clientbikeSpecs.release();
@@ -132,7 +136,9 @@ bikespecrouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientbikeSpecs) clientbikeSpecs.release();
@@ -176,7 +182,9 @@ bikespecrouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientbikeSpecs) clientbikeSpecs.release();
@@ -221,7 +229,9 @@ bikespecrouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientbikeSpecs) clientbikeSpecs.release();
@@ -260,7 +270,9 @@ bikespecrouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientbikeSpecs) clientbikeSpecs.release();
@@ -307,7 +319,9 @@ bikespecrouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientbikeSpecs) clientbikeSpecs.release();

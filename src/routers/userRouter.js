@@ -11,8 +11,8 @@ const validateotp = require("../SQL/main/validateotp");
 const validateverifyOtp = require("../validations/main/validateverifyOtp");
 const checkServerPeUser = require("../middleware/checkServerPeUser");
 const checkApiKey = require("../middleware/checkApiKey");
-const updateApiUsage = require("../SQL/main/updateApiUsage"); // NEW ATOMIC VERSION
-
+const validateForFeedbackInsert = require("../validations/main/validateForInsertFeedback"); // NEW ATOMIC VERSION
+const insertFeedbacks = require("../SQL/main/insertFeedbacks");
 const fetchApiHistory = require("../SQL/main/fetchApiHistory");
 const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const userRouter = express.Router();
@@ -32,7 +32,9 @@ userRouter.get(
       return res.status(historyResult.statuscode).json(historyResult);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (client) client.release();
     }
@@ -52,7 +54,34 @@ userRouter.get(
       return res.status(plansResult.statuscode).json(plansResult);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                feedbacks
+// ======================================================
+userRouter.post(
+  "/mockapis/serverpeuser/loggedinuser/feedback",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      let result = validateForFeedbackInsert(req);
+      if (result.successstatus) {
+        result = await insertFeedbacks(client, req.mobile_number, req.body);
+      }
+      return res.status(result.statuscode).json(result);
+    } catch (err) {
+      console.error(err);
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (client) client.release();
     }

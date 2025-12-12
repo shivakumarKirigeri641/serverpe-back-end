@@ -1,4 +1,11 @@
 const validateforverifyotp = (data) => {
+  if (!data) {
+    return {
+      statuscode: 404,
+      successstatus: false,
+      message: "Request body information not found!",
+    };
+  }
   if (!data.mobile_number) {
     return {
       statuscode: 404,
