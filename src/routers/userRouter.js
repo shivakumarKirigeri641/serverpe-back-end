@@ -35,12 +35,6 @@ const poolMain = connectMainDB();
 // ======================================================
 userRouter.get(
   "/mockapis/serverpeuser/loggedinuser/api-usage",
-  securityMiddleware(redis, {
-    rateLimit: 1, // 1 req/sec
-    scraperLimit: 5, // 50 req/10 sec
-    windowSeconds: 1, // detect scraping in 10 sec window
-    blockDuration: 3600, // block for 1 hour
-  }),
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -64,12 +58,6 @@ userRouter.get(
 // ======================================================
 userRouter.get(
   "/mockapis/serverpeuser/loggedinuser/api-plans-premium",
-  securityMiddleware(redis, {
-    rateLimit: 1, // 1 req/sec
-    scraperLimit: 5, // 50 req/10 sec
-    windowSeconds: 1, // detect scraping in 10 sec window
-    blockDuration: 3600, // block for 1 hour
-  }),
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -92,12 +80,6 @@ userRouter.get(
 // ======================================================
 userRouter.post(
   "/mockapis/serverpeuser/loggedinuser/feedback",
-  securityMiddleware(redis, {
-    rateLimit: 1, // 1 req/sec
-    scraperLimit: 5, // 50 req/10 sec
-    windowSeconds: 1, // detect scraping in 10 sec window
-    blockDuration: 3600, // block for 1 hour
-  }),
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -113,6 +95,29 @@ userRouter.post(
       return res
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                get all endpoints sets in array and send to ui
+// ======================================================
+userRouter.get(
+  "/mockapis/serverpeuser/loggedinuser/all-endpoints",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      const apiendpoints = await getApiEndPoints(client);
+      return res.status(apiendpoints.statuscode).json(apiendpoints);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
       if (client) client.release();
     }
