@@ -19,14 +19,14 @@ const carspecrouter = require("./routers/carspecrouter");
 const bikespecrouter = require("./routers/bikespecrouter");
 const checkApiKey = require("./middleware/checkApiKey");
 require("dotenv").config();
-app.use(cookieParser());
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:1234", "http://192.168.10.63:5173"],
+    origin: "http://localhost:1234",
     credentials: true,
   })
 );
+app.use(cookieParser());
 app.use("/images", express.static(path.join(__dirname, "images")));
 app.use("/", mockTrainReservedTicketRouter);
 app.use("/", generalRouter);

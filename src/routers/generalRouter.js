@@ -68,11 +68,11 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
         req.body.otp
       );
       if (validateforverifyotpresult.successstatus) {
-        const serverpe_user_token = await generateToken(req.body.mobile_number);
-        res.cookie("serverpe_user_token", serverpe_user_token, {
+        const token = generateToken(req.body.mobile_number);
+        res.cookie("token", token, {
           httpOnly: true,
-          secure: false,
-          sameSite: "lax",
+          secure: false, // must be false because you're not using HTTPS
+          sameSite: "lax", // must be lax or strict on localhost
           maxAge: 10 * 60 * 1000,
         });
       }
@@ -113,7 +113,7 @@ generalRouter.get("/mockapis/serverpeuser/testimonials", async (req, res) => {
 // ======================================================
 //                add to contact me
 // ======================================================
-generalRouter.post("/mockapis/serverpeuser/testimonials", async (req, res) => {
+generalRouter.post("/mockapis/serverpeuser/contact-me", async (req, res) => {
   let client;
   try {
     client = await getPostgreClient(poolMain);

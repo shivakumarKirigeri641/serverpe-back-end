@@ -1,5 +1,6 @@
 const express = require("express");
 const getStatesAndTerritories = require("../SQL/PINCODES/getStatesAndTerritories");
+const validateMobileNumber = require("../SQL/main/validateMobileNumber");
 const validateSendOtp = require("../validations/main/validateSendOtp");
 const generateOtp = require("../utils/generateOtp");
 const generateToken = require("../utils/generateToken");
@@ -19,6 +20,7 @@ const userRouter = express.Router();
 const securityMiddleware = require("../middleware/securityMiddleware");
 require("dotenv").config();
 const Redis = require("ioredis");
+const getApiEndPoints = require("../SQL/main/getApiEndPoints");
 
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -85,6 +87,13 @@ userRouter.post(
     let client;
     try {
       client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(client, req.mobile_number)) {
+        res.status(401).json({
+          status: "Failed",
+          successstatus: false,
+          message: "Unauthorized user!",
+        });
+      }
       let result = validateForFeedbackInsert(req);
       if (result.successstatus) {
         result = await insertFeedbacks(client, req.mobile_number, req.body);
@@ -110,6 +119,13 @@ userRouter.get(
     let client;
     try {
       client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(client, req.mobile_number)) {
+        res.status(401).json({
+          status: "Failed",
+          successstatus: false,
+          message: "Unauthorized user!",
+        });
+      }
       const apiendpoints = await getApiEndPoints(client);
       return res.status(apiendpoints.statuscode).json(apiendpoints);
     } catch (err) {
