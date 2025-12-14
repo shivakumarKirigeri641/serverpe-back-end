@@ -12,10 +12,11 @@ const getStatesAndTerritories = require("../SQL/main/getStatesAndTerritories");
 const validateotp = require("../SQL/main/validateotp");
 const validateverifyOtp = require("../validations/main/validateverifyOtp");
 const generalRouter = express.Router();
+const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const securityMiddleware = require("../middleware/securityMiddleware");
+const getApiEndPoints = require("../SQL/main/getApiEndPoints");
 require("dotenv").config();
 const Redis = require("ioredis");
-const getApiEndPoints = require("../SQL/main/getApiEndPoints");
 
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -181,6 +182,43 @@ generalRouter.get("/mockapis/serverpeuser/states", async (req, res) => {
       .json({ error: "Internal Server Error", message: err.message });
   } finally {
     if (clientMain) clientMain.release();
+  }
+});
+// ======================================================
+//                API plans
+// ======================================================
+generalRouter.get("/mockapis/serverpeuser/api-plans", async (req, res) => {
+  let client;
+  try {
+    client = await getPostgreClient(poolMain);
+    const plansResult = await fetchApiPlans(client, true);
+    return res.status(plansResult.statuscode).json(plansResult);
+  } catch (err) {
+    console.error(err);
+    return res
+      .status(500)
+      .json({ error: "Internal Server Error", message: err.message });
+  } finally {
+    if (client) client.release();
+  }
+});
+// ======================================================
+//                API all endpionts
+// ======================================================
+generalRouter.get("/mockapis/serverpeuser/all-endpoints", async (req, res) => {
+  let client;
+  try {
+    client = await getPostgreClient(poolMain);
+    const apiendpoints = await getApiEndPoints(client);
+    return res.status(apiendpoints.statuscode).json(apiendpoints);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      error: "Internal Server Error",
+      message: err.message,
+    });
+  } finally {
+    if (client) client.release();
   }
 });
 module.exports = generalRouter;

@@ -18,9 +18,11 @@ const fetchApiHistory = require("../SQL/main/fetchApiHistory");
 const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const userRouter = express.Router();
 const securityMiddleware = require("../middleware/securityMiddleware");
+const getUsageAnalytics = require("../SQL/main/getUsageAnalytics");
 require("dotenv").config();
 const Redis = require("ioredis");
 const getApiEndPoints = require("../SQL/main/getApiEndPoints");
+const getWalletAndRechargeInformation = require("../SQL/main/getWalletAndRechargeInformation");
 
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -128,6 +130,73 @@ userRouter.get(
       }
       const apiendpoints = await getApiEndPoints(client);
       return res.status(apiendpoints.statuscode).json(apiendpoints);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                get wallet & recharges
+// ======================================================
+userRouter.get(
+  "/mockapis/serverpeuser/loggedinuser/wallet-recharges",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(client, req.mobile_number)) {
+        res.status(401).json({
+          status: "Failed",
+          successstatus: false,
+          message: "Unauthorized user!",
+        });
+      }
+      const result_walletrecharge = await getWalletAndRechargeInformation(
+        client,
+        req
+      );
+      return res
+        .status(result_walletrecharge.statuscode)
+        .json(result_walletrecharge);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                usage analytics
+// ======================================================
+userRouter.get(
+  "/mockapis/serverpeuser/loggedinuser/usage-analytics",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(client, req.mobile_number)) {
+        res.status(401).json({
+          status: "Failed",
+          successstatus: false,
+          message: "Unauthorized user!",
+        });
+      }
+      const result_usageanalytics = await getUsageAnalytics(client, req);
+      return res
+        .status(result_usageanalytics.statuscode)
+        .json(result_usageanalytics);
     } catch (err) {
       console.error(err);
       return res.status(500).json({

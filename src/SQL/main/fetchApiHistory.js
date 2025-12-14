@@ -51,7 +51,8 @@ ORDER BY wd.day_order;
         response_status AS status,
         latency,
         TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS time,
-        ip_address AS ip
+        ip_address AS ip,
+        api_call_deduction
       FROM serverpe_apihistory
       WHERE user_id = $1
       ORDER BY created_at DESC
