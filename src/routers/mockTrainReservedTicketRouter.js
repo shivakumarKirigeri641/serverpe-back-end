@@ -194,12 +194,13 @@ mockTrainReservedTicketRouter.post(
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       const result = await getTrainSchedule(clientMockTrain);
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -237,6 +238,7 @@ mockTrainReservedTicketRouter.post(
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       // Validate request
@@ -254,7 +256,7 @@ mockTrainReservedTicketRouter.post(
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -290,6 +292,7 @@ mockTrainReservedTicketRouter.post(
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       //validation later
@@ -304,7 +307,7 @@ mockTrainReservedTicketRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -344,6 +347,7 @@ mockTrainReservedTicketRouter.post(
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
 
@@ -353,7 +357,7 @@ mockTrainReservedTicketRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -392,6 +396,7 @@ mockTrainReservedTicketRouter.post(
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForConfirmBooking(req);
@@ -405,7 +410,7 @@ mockTrainReservedTicketRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -444,6 +449,7 @@ mockTrainReservedTicketRouter.post(
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForCancelTicket(req);
@@ -453,7 +459,7 @@ mockTrainReservedTicketRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -492,6 +498,7 @@ mockTrainReservedTicketRouter.post(
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForPNRStatus(req);
@@ -501,7 +508,7 @@ mockTrainReservedTicketRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -541,6 +548,7 @@ mockTrainReservedTicketRouter.post(
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForBookingHistory(req);
@@ -553,7 +561,7 @@ mockTrainReservedTicketRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -592,6 +600,7 @@ mockTrainReservedTicketRouter.post(
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForLiveTrainRunningStatus(req);
@@ -604,7 +613,7 @@ mockTrainReservedTicketRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -644,6 +653,7 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     let usageStatus = {};
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForLiveStation(req);
@@ -657,7 +667,7 @@ mockTrainReservedTicketRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,

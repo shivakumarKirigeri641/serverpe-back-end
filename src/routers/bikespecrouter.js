@@ -92,6 +92,7 @@ bikespecrouter.post(
     let clientMain;
     let clientbikeSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
       let result = validateForModels(req);
@@ -99,7 +100,7 @@ bikespecrouter.post(
         result = await getModels(clientbikeSpecs, req.body.brand);
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -138,6 +139,7 @@ bikespecrouter.post(
     let clientMain;
     let clientbikeSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
       let result = validateForBikeType(req);
@@ -149,7 +151,7 @@ bikespecrouter.post(
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -188,6 +190,7 @@ bikespecrouter.post(
     let clientMain;
     let clientbikeSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
       let result = validateForCategory(req);
@@ -200,7 +203,7 @@ bikespecrouter.post(
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -239,6 +242,7 @@ bikespecrouter.post(
     let clientMain;
     let clientbikeSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
       let result = validateForbikeList(req);
@@ -252,7 +256,7 @@ bikespecrouter.post(
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -291,6 +295,7 @@ bikespecrouter.post(
     let clientMain;
     let clientbikeSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
       let result = validateForbikeSpecs(req);
@@ -298,7 +303,7 @@ bikespecrouter.post(
         result = await getbikeSpecs(clientbikeSpecs, req.body.id);
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -337,6 +342,7 @@ bikespecrouter.post(
     let clientMain;
     let clientbikeSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientbikeSpecs = await getPostgreClient(poolbikeSpecs);
       let result = validateForSearchbikes(req);
@@ -352,7 +358,7 @@ bikespecrouter.post(
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,

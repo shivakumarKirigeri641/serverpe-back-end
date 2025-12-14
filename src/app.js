@@ -19,6 +19,13 @@ const carspecrouter = require("./routers/carspecrouter");
 const bikespecrouter = require("./routers/bikespecrouter");
 const checkApiKey = require("./middleware/checkApiKey");
 require("dotenv").config();
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    req.latency = Date.now() - start; // store latency in ms
+  });
+  next();
+});
 app.use(express.json());
 app.use(
   cors({

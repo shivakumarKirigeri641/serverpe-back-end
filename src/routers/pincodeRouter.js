@@ -200,17 +200,9 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
-
-      // 1️⃣ Atomic usage deduction (fixed)
-      usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
       let result = validateState(req);
       if (result.successstatus) {
@@ -218,7 +210,7 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -258,6 +250,7 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
@@ -272,7 +265,7 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -312,6 +305,7 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
@@ -327,7 +321,7 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -367,6 +361,7 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
@@ -383,7 +378,7 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,

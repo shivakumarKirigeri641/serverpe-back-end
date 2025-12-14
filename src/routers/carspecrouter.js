@@ -92,6 +92,7 @@ carspecrouter.post(
     let clientMain;
     let clientCarSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForModels(req);
@@ -99,7 +100,7 @@ carspecrouter.post(
         result = await getModels(clientCarSpecs, req.body.brand);
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -138,6 +139,7 @@ carspecrouter.post(
     let clientMain;
     let clientCarSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForSeries(req);
@@ -149,7 +151,7 @@ carspecrouter.post(
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -188,6 +190,7 @@ carspecrouter.post(
     let clientMain;
     let clientCarSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForGrades(req);
@@ -200,7 +203,7 @@ carspecrouter.post(
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -239,6 +242,7 @@ carspecrouter.post(
     let clientMain;
     let clientCarSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForCarList(req);
@@ -252,7 +256,7 @@ carspecrouter.post(
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -291,6 +295,7 @@ carspecrouter.post(
     let clientMain;
     let clientCarSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForCarSpecs(req);
@@ -298,7 +303,7 @@ carspecrouter.post(
         result = await getCarSpecs(clientCarSpecs, req.body.id);
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -337,6 +342,7 @@ carspecrouter.post(
     let clientMain;
     let clientCarSpecs;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForSearchCars(req);
@@ -352,7 +358,7 @@ carspecrouter.post(
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,

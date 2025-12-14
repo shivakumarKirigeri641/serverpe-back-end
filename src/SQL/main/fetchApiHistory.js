@@ -49,7 +49,7 @@ ORDER BY wd.day_order;
         method,
         endpoint,
         response_status AS status,
-        (EXTRACT(MILLISECOND FROM (created_at)) || 'ms') AS latency,
+        latency,
         TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS time,
         ip_address AS ip
       FROM serverpe_apihistory
@@ -64,7 +64,7 @@ ORDER BY wd.day_order;
       method: r.method,
       endpoint: r.endpoint,
       status: r.status,
-      latency: r.latency,
+      latency: r.latency + "ms",
       time: r.time,
       ip: r.ip,
     }));
