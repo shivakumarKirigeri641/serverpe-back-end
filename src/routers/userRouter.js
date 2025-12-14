@@ -23,7 +23,8 @@ require("dotenv").config();
 const Redis = require("ioredis");
 const getApiEndPoints = require("../SQL/main/getApiEndPoints");
 const getWalletAndRechargeInformation = require("../SQL/main/getWalletAndRechargeInformation");
-
+const getUserDashboardData = require("../SQL/main/getUserDashboardData");
+const getUserProfile = require("../SQL/main/getUserProfile");
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -197,6 +198,68 @@ userRouter.get(
       return res
         .status(result_usageanalytics.statuscode)
         .json(result_usageanalytics);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                user dashboard data
+// ======================================================
+userRouter.get(
+  "/mockapis/serverpeuser/loggedinuser/user-dashboard-data",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(client, req.mobile_number)) {
+        res.status(401).json({
+          status: "Failed",
+          successstatus: false,
+          message: "Unauthorized user!",
+        });
+      }
+      const result_usageanalytics = await getUserDashboardData(client, req);
+      return res
+        .status(result_usageanalytics.statuscode)
+        .json(result_usageanalytics);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                user profile
+// ======================================================
+userRouter.get(
+  "/mockapis/serverpeuser/loggedinuser/user-profile",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(client, req.mobile_number)) {
+        res.status(401).json({
+          status: "Failed",
+          successstatus: false,
+          message: "Unauthorized user!",
+        });
+      }
+      const result_userprofile = await getUserProfile(client, req);
+      return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
       console.error(err);
       return res.status(500).json({
