@@ -32,6 +32,8 @@ const getUserProfile = require("../SQL/main/getUserProfile");
 const validateForUserProfile = require("../validations/main/validateForUserProfile");
 const { default: axios } = require("axios");
 const { resourceLimits } = require("worker_threads");
+const insertTransactionDetails = require("../SQL/main/insertTransactionDetails");
+const updateMockAPICredits = require("../SQL/main/updateMockAPICredits");
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -388,8 +390,16 @@ userRouter.post(
   async (req, res) => {
     let client;
     try {
+      client = await getPostgreClient(poolMain);
       const { razorpay_payment_id } = req.body;
-      const result = await razorpay.payments.fetch(razorpay_payment_id);
+      let result = await razorpay.payments.fetch(razorpay_payment_id);
+      result = await insertTransactionDetails(
+        client,
+        result,
+        req.mobile_number
+      );
+
+      //send greetings sms & to your self alert when user recharges
       res.status(200).json({ successstatus: true, data: result });
     } catch (err) {
       console.error(err);
