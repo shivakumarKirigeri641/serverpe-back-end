@@ -1,4 +1,7 @@
+const validateForAmount = require("../validations/main/validateForAmount");
+const crypto = require("crypto");
 const express = require("express");
+const razorpay = require("../utils/razorpay");
 const getStatesAndTerritories = require("../SQL/PINCODES/getStatesAndTerritories");
 const validateMobileNumber = require("../SQL/main/validateMobileNumber");
 const validateSendOtp = require("../validations/main/validateSendOtp");
@@ -27,6 +30,7 @@ const getWalletAndRechargeInformation = require("../SQL/main/getWalletAndRecharg
 const getUserDashboardData = require("../SQL/main/getUserDashboardData");
 const getUserProfile = require("../SQL/main/getUserProfile");
 const validateForUserProfile = require("../validations/main/validateForUserProfile");
+const { default: axios } = require("axios");
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -295,6 +299,98 @@ userRouter.put(
         result_userprofile = await updateUserProfile(client, req);
       }
       return res.status(result_userprofile.statuscode).json(result_userprofile);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                razorpay order
+// ======================================================
+userRouter.post(
+  "/mockapis/serverpeuser/loggedinuser/razorpay/order",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      const { amount } = req.body; // amount in INR
+      let result_order = validateForAmount(req);
+      if (result_order.successstatus) {
+        result_order = await razorpay.orders.create({
+          amount: amount * 100, // INR → paise
+          currency: "INR",
+          receipt: `serverpe_${Date.now()}`,
+          payment_capture: 1,
+        });
+      }
+      result_order.statuscode = 200;
+      return res.status(result_order.statuscode).json(result_order);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                razorpay verify
+// ======================================================
+userRouter.post(
+  "/mockapis/serverpeuser/loggedinuser/razorpay/verify",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+        req.body;
+
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+      const expectedSignature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(body)
+        .digest("hex");
+
+      if (expectedSignature === razorpay_signature) {
+        // ✅ Payment verified
+        return res.json({ statuscode: 200, successstatus: true });
+      } else {
+        return res.status(400).json({ success: false });
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                razorpay order-status
+// ======================================================
+userRouter.post(
+  "/mockapis/serverpeuser/loggedinuser/razorpay/status",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      const { razorpay_payment_id } = req.body;
+      const result = await razorpay.payments.fetch(razorpay_payment_id);
+      console.log(result);
+      res.send("test");
     } catch (err) {
       console.error(err);
       return res.status(500).json({
