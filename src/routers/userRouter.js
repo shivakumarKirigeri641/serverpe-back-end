@@ -8,6 +8,7 @@ const getPostgreClient = require("../SQL/getPostgreClient");
 const { connectMainDB } = require("../database/connectDB");
 const insertotpentry = require("../SQL/main/insertotpentry");
 const rateLimitPerApiKey = require("../middleware/rateLimitPerApiKey");
+const updateUserProfile = require("../SQL/main/updateUserProfile");
 const validateotp = require("../SQL/main/validateotp");
 const validateverifyOtp = require("../validations/main/validateverifyOtp");
 const checkServerPeUser = require("../middleware/checkServerPeUser");
@@ -25,6 +26,7 @@ const getApiEndPoints = require("../SQL/main/getApiEndPoints");
 const getWalletAndRechargeInformation = require("../SQL/main/getWalletAndRechargeInformation");
 const getUserDashboardData = require("../SQL/main/getUserDashboardData");
 const getUserProfile = require("../SQL/main/getUserProfile");
+const validateForUserProfile = require("../validations/main/validateForUserProfile");
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -259,6 +261,39 @@ userRouter.get(
         });
       }
       const result_userprofile = await getUserProfile(client, req);
+      return res.status(result_userprofile.statuscode).json(result_userprofile);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                user profileupdate
+// ======================================================
+userRouter.put(
+  "/mockapis/serverpeuser/loggedinuser/user-profile-update",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(client, req.mobile_number)) {
+        res.status(401).json({
+          status: "Failed",
+          successstatus: false,
+          message: "Unauthorized user!",
+        });
+      }
+      let result_userprofile = validateForUserProfile(req);
+      if (!result_userprofile.successstatus) {
+        result_userprofile = await updateUserProfile(client, req);
+      }
       return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
       console.error(err);
