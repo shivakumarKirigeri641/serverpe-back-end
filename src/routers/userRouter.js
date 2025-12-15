@@ -31,6 +31,7 @@ const getUserDashboardData = require("../SQL/main/getUserDashboardData");
 const getUserProfile = require("../SQL/main/getUserProfile");
 const validateForUserProfile = require("../validations/main/validateForUserProfile");
 const { default: axios } = require("axios");
+const { resourceLimits } = require("worker_threads");
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -389,8 +390,7 @@ userRouter.post(
     try {
       const { razorpay_payment_id } = req.body;
       const result = await razorpay.payments.fetch(razorpay_payment_id);
-      console.log(result);
-      res.send("test");
+      res.status(200).json({ successstatus: true, data: result });
     } catch (err) {
       console.error(err);
       return res.status(500).json({
