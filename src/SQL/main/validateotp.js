@@ -1,5 +1,6 @@
 const generateapikey = require("../../utils/generateapikey");
 const generateSecretKey = require("../../utils/generateSecretKey");
+const sendLoggedInUserSMS = require("../../utils/sendLoggedInUserSMS");
 const validateotp = async (client, mobile_number, otp) => {
   let result_apikey = null;
   let secretkey = null;
@@ -57,8 +58,12 @@ const validateotp = async (client, mobile_number, otp) => {
         `insert into serverpe_user_apikeywallet (fk_user, outstanding_apikey_count, outstanding_apikey_count_free) values ($1,0,50);`,
         [result_user.rows[0].id]
       );
-      //alert notifification to me with SMS when user logins
     }
+    //alert notifification to me with SMS when user logins
+    /*sendLoggedInUserSMS(
+      result_user.rows[0].user_name,
+      result_user.rows[0].mobile_number
+    );*/
     return {
       statuscode: 200,
       successstatus: true,

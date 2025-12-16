@@ -1,3 +1,5 @@
+const sendRechargeConfirmationSMS = require("../../utils/sendRechargeConfirmationSMS");
+const sendAlertForRechargeConfirmationSMS = require("../../utils/sendAlertForRechargeConfirmationSMS");
 const insertTransactionDetails = async (
   client,
   transaction_data,
@@ -5,7 +7,7 @@ const insertTransactionDetails = async (
 ) => {
   // 1️⃣ Get user
   const result_user = await client.query(
-    `SELECT id FROM serverpe_user WHERE mobile_number = $1`,
+    `SELECT id, user_name, mobile_number FROM serverpe_user WHERE mobile_number = $1`,
     [mobile_number]
   );
 
@@ -114,6 +116,19 @@ const insertTransactionDetails = async (
       result_transaction.rows[0].id,
     ]
   );
+  //user sms
+  /*sendRechargeConfirmationSMS(
+    result_user.rows[0].mobile_number,
+    transaction_data.amount / 100,
+    result_api.rows[0].api_calls_count,
+    transaction_data.order_id
+  );*/
+  //alert sms
+  /*sendAlertForRechargeConfirmationSMS(
+    result_user.rows[0].user_name,
+    result_user.rows[0].mobile_number,
+    transaction_data.amount / 100
+  );*/
   return {
     status: 200,
     successstatus: true,

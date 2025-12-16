@@ -1,3 +1,4 @@
+const sendAlertForContactRequestSMS = require("../../utils/sendAlertForContactRequestSMS");
 const insertContactMeData = async (
   client,
   user_name,
@@ -19,6 +20,7 @@ const insertContactMeData = async (
     [user_name, email, result_category.rows[0].id, message]
   );
   //alert notifification to me with SMS when user gives contact form
+  //sendAlertForContactRequestSMS(user_name, email, category);
   return {
     statuscode: 200,
     successstatus: true,

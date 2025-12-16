@@ -1,3 +1,5 @@
+const sendAlertForFeedbackSMS = require("../../utils/sendAlertForFeedbackSMS");
+
 const insertFeedbacks = async (client, mobile_number, jsondata) => {
   const result_user = await client.query(
     `select *from serverpe_user where mobile_number= $1`,
@@ -22,6 +24,11 @@ const insertFeedbacks = async (client, mobile_number, jsondata) => {
     ]
   );
   //alert notifification to me with SMS when user feedback gives
+  /*sendAlertForFeedbackSMS(
+    result_user.rows[0].mobile_number,
+    jsondata.category,
+    jsondata.rating
+  );*/
   return {
     statuscode: 200,
     successstatus: true,
