@@ -40,11 +40,9 @@ ORDER BY apihistory.created_at DESC;
   const result_credits = await client.query(
     `SELECT
     credit.id AS credit_id,
-    credit.transactionid,
     credit.created_at AS credited_on,
-    credit.transaction_type,
-    credit.transaction_status,
     pricing.price,
+    pricing.api_calls_count,
     pricing.price_name    
 FROM serverpe_user suser
 JOIN serverpe_user_apikeywallet_credit credit
