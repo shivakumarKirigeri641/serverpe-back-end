@@ -7,7 +7,7 @@ const validateForAddingContactMeData = (req) => {
       message: "Request body information not found!",
     };
   }
-  if (!req.body.category) {
+  if (!req.body.category_name) {
     return {
       statuscode: 404,
       successstatus: false,

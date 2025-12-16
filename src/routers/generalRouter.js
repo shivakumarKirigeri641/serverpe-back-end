@@ -124,7 +124,7 @@ generalRouter.post("/mockapis/serverpeuser/contact-me", async (req, res) => {
         client,
         req.body.user_name,
         req.body.email,
-        req.body.category,
+        req.body.category_name,
         req.body.message
       );
     }
