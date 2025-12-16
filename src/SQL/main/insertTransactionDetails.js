@@ -94,10 +94,17 @@ const insertTransactionDetails = async (
     `select id, price_name, api_calls_count from serverpe_apipricing where price=$1`,
     [transaction_data.amount / 100]
   );
-  //pricing
+  const result_wallet_available = await client.query(
+    `select outstanding_apikey_count from serverpe_user_apikeywallet where fk_user=$1`,
+    [result_user.rows[0].id]
+  );
   const result_wallet = await client.query(
-    `update serverpe_user_apikeywallet set outstanding_apikey_count=$1 where fk_user=$2 returning *`,
-    [result_api.rows[0].api_calls_count, result_user.rows[0].id]
+    `update serverpe_user_apikeywallet set outstanding_apikey_count = $1 where fk_user=$2 returning *`,
+    [
+      result_api.rows[0].api_calls_count +
+        result_wallet_available.rows[0].outstanding_apikey_count,
+      result_user.rows[0].id,
+    ]
   );
   const result_credit = await client.query(
     `insert into serverpe_user_apikeywallet_credit (fk_user, fk_pricing, fktransaction_details) values ($1,$2,$3) returning *`,
