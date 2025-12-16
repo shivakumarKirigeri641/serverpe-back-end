@@ -117,18 +117,18 @@ const insertTransactionDetails = async (
     ]
   );
   //user sms
-  /*sendRechargeConfirmationSMS(
+  await sendRechargeConfirmationSMS(
     result_user.rows[0].mobile_number,
     transaction_data.amount / 100,
     result_api.rows[0].api_calls_count,
     transaction_data.order_id
-  );*/
+  );
   //alert sms
-  /*sendAlertForRechargeConfirmationSMS(
+  await sendAlertForRechargeConfirmationSMS(
     result_user.rows[0].user_name,
     result_user.rows[0].mobile_number,
     transaction_data.amount / 100
-  );*/
+  );
   return {
     status: 200,
     successstatus: true,

@@ -15,6 +15,7 @@ const generalRouter = express.Router();
 const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const securityMiddleware = require("../middleware/securityMiddleware");
 const getApiEndPoints = require("../SQL/main/getApiEndPoints");
+const generateOtp = require("../utils/generateOtp");
 require("dotenv").config();
 const Redis = require("ioredis");
 
@@ -38,7 +39,8 @@ generalRouter.post("/mockapis/serverpeuser/send-otp", async (req, res) => {
     let validationresult = validateSendOtp(req.body);
 
     if (validationresult.successstatus) {
-      const result_otp = "1234"; // static for now
+      //const result_otp = "1234"; // static for now
+      const result_otp = generateOtp();
       validationresult = await insertotpentry(client, req.body, result_otp);
     }
 
