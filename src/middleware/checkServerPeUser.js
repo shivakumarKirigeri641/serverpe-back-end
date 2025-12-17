@@ -3,8 +3,6 @@ require("dotenv").config();
 
 const checkServerPeUser = async (req, res, next) => {
   try {
-    console.log("Incoming cookies:", req.cookies);
-
     const token = req.cookies.token; // or serverpe_user_token
 
     if (!token) {
@@ -20,9 +18,6 @@ const checkServerPeUser = async (req, res, next) => {
 
     // Attach decoded data
     req.mobile_number = decoded.mobile_number;
-
-    console.log("Authenticated user:", req.mobile_number);
-
     next();
   } catch (err) {
     console.error("Auth Error:", err.message);
