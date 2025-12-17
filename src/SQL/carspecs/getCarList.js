@@ -13,7 +13,7 @@ const getCarList = async (
     return result.rows;
   } else {
     return {
-      statuscode: 204,
+      statuscode: 422,
       successstatus: false,
       message: "cars information not found!",
     };

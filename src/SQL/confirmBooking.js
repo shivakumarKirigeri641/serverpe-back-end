@@ -31,9 +31,10 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and b.proceed_status=
     );
     if (0 === booking_details.rows.length) {
       return {
-        statuscode: 204,
+        statuscode: 422,
         successstatus: false,
-        message: "booking details not found!",
+        message:
+          "booking details not found! Please run the end-point 'Proceed_booking' before running this end-point.",
       };
     }
     //overall valiations
@@ -74,7 +75,7 @@ join coachtype ct on ct.id = b.fkcoach_type where b.id= $1 and b.proceed_status=
         break;
       default:
         return {
-          statuscode: 204,
+          statuscode: 422,
           successstatus: false,
           message: "Invalid coach type for booking!",
         };

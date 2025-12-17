@@ -17,7 +17,7 @@ ORDER BY sc.id, sh.id;`,
     return result;
   } else {
     return {
-      statuscode: 204,
+      statuscode: 422,
       successstatus: false,
       message: "Vehicle details not found!",
     };

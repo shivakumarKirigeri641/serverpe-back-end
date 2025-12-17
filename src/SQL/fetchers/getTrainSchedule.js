@@ -11,7 +11,7 @@ const getTrainSchedule = async (
   );
   if (0 === result_train_schedule_details.rows.length) {
     return {
-      statuscode: 204,
+      statuscode: 422,
       successstatus: false,
       message: "Train number not found!",
     };

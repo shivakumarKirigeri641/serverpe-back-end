@@ -7,7 +7,7 @@ const getBikeTypes = async (client, makename, modelname) => {
     return result.rows;
   } else {
     return {
-      statuscode: 204,
+      statuscode: 422,
       successstatus: false,
       message: "Bike types information not found!",
     };

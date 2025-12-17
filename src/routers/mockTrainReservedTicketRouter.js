@@ -522,7 +522,6 @@ mockTrainReservedTicketRouter.post(
       return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
-        //usageStatus not found if returns with 204/404/422
         data: result,
       });
     } catch (err) {
