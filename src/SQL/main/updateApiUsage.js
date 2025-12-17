@@ -1,7 +1,7 @@
 // Atomic + Wallet-based updateApiUsage.js
 // Safe for concurrency and rapid clicking
 
-const updateApiUsage = async (client, req) => {
+const updateApiUsage = async (client, req, start) => {
   const apiKey = req.headers["x-api-key"];
   const secretKey = req.headers["x-secret-key"];
 
@@ -55,7 +55,6 @@ const updateApiUsage = async (client, req) => {
     if (freeUpdateRes.rows.length > 0) {
       remainingAfterUpdate = freeUpdateRes.rows[0].remaining;
     } else {
-      // fallout to paid
       outstanding_apikey_count_free = 0;
     }
   }
@@ -86,7 +85,7 @@ const updateApiUsage = async (client, req) => {
 
   // ------------------------------
   // 5️⃣ SAFE HISTORY INSERT
-  // (non-blocking, never breaks API)
+  // with latency_ms added
   // ------------------------------
   const endpoint = req.protocol + "://" + req.get("host") + req.originalUrl;
   const method = req.method;
@@ -98,13 +97,23 @@ const updateApiUsage = async (client, req) => {
     req.socket?.remoteAddress ||
     null;
 
+  const latency = Date.now() - start;
+
   (async () => {
     try {
       await client.query(
         `INSERT INTO serverpe_apihistory
-        (user_id, endpoint, method, request_body, response_status, ip_address, user_agent)
-        VALUES ($1,$2,$3,$4,200,$5,$6)`,
-        [userId, endpoint, method, requestBody, ipAddress, userAgent]
+        (user_id, endpoint, method, request_body, response_status, ip_address, user_agent, latency)
+        VALUES ($1,$2,$3,$4,200,$5,$6,$7)`,
+        [
+          userId,
+          endpoint,
+          method,
+          requestBody,
+          ipAddress,
+          userAgent,
+          latency, // ⬅️ ADD latency here
+        ]
       );
     } catch (err) {
       console.error("API History Insert Failed:", err.message);

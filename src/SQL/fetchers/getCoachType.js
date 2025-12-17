@@ -1,4 +1,7 @@
 const getCoachType = async (client) => {
-  return await client.query(`select coach_code, coach_name from coachtype`);
+  const result = await client.query(
+    `select coach_code, coach_name from coachtype`
+  );
+  return result.rows;
 };
 module.exports = getCoachType;

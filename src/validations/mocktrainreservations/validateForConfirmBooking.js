@@ -13,6 +13,14 @@ const validateForConfirmBooking = (req) => {
       message: "booking_id not found!",
     };
   }
+  //can_send_mock_ticket_sms
+  if (!req.body.can_send_mock_ticket_sms) {
+    return {
+      statuscode: 404,
+      successstatus: false,
+      message: "can_send_mock_ticket_sms not found!",
+    };
+  }
   return { statuscode: 200, successstatus: true, message: "success" };
 };
 module.exports = validateForConfirmBooking;

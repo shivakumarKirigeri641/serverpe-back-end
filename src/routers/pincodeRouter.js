@@ -29,12 +29,32 @@ const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const pincodeRouter = express.Router();
 const poolMain = connectMainDB();
 const poolPin = connectPinCodeDB();
+const securityMiddleware = require("../middleware/securityMiddleware");
+require("dotenv").config();
+const Redis = require("ioredis");
+
+const redis = new Redis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  reconnectOnError: () => true,
+  retryStrategy(times) {
+    return Math.min(times * 50, 2000);
+  },
+  tls: {}, // IMPORTANT for redis.io URLs with TLS (rediss://)
+});
+
+let usageStatus = {};
 // ======================================================
 //                PINCODE details
 // ======================================================
 pincodeRouter.post(
   "/mockapis/serverpeuser/api/pincode-details",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -43,31 +63,31 @@ pincodeRouter.post(
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
       //validate
-      let validatedetails = validatePinCode(req.body);
-      if (validatedetails.successstatus) {
-        validatedetails = await getDetailsFromPinCode(
-          clientPin,
-          req.body.pincode
-        );
+      let result = validatePinCode(req.body);
+      if (result.successstatus) {
+        result = await getDetailsFromPinCode(clientPin, req.body.pincode);
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: validatedetails,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientPin) clientPin.release();
@@ -79,7 +99,12 @@ pincodeRouter.post(
 // ======================================================
 pincodeRouter.get(
   "/mockapis/serverpeuser/api/pincodes",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -87,25 +112,27 @@ pincodeRouter.get(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
-
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
       const result = await getAllPinCodes(clientPin);
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientPin) clientPin.release();
@@ -113,11 +140,16 @@ pincodeRouter.get(
   }
 );
 // ======================================================
-//                api get state list
+//                api get state list (unchargeable)
 // ======================================================
 pincodeRouter.get(
   "/mockapis/serverpeuser/api/pincodes/states",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -126,24 +158,26 @@ pincodeRouter.get(
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
       const result = await getStatesAndTerritories(clientPin);
-      return res.json({
+      /*if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }*/
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
-        remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientPin) clientPin.release();
@@ -155,40 +189,45 @@ pincodeRouter.get(
 // ======================================================
 pincodeRouter.post(
   "/mockapis/serverpeuser/api/pincodes/districts",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientPin;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
-
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
-      let result_for_data = validateState(req);
-      if (result_for_data.successstatus) {
-        result_for_data.data = await getDistrictFromState(
-          clientPin,
-          req.body.selectedState
-        );
+      let result = validateState(req);
+      if (result.successstatus) {
+        result = await getDistrictFromState(clientPin, req.body.selectedState);
       }
-      return res.status(result_for_data.statuscode).json({
-        success: result_for_data.successstatus,
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        success: result.successstatus,
         remaining_calls: usageStatus.remaining,
-        message: result_for_data.message,
-        data: result_for_data?.data,
+        message: result.message,
+        data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientPin) clientPin.release();
@@ -200,41 +239,50 @@ pincodeRouter.post(
 // ======================================================
 pincodeRouter.post(
   "/mockapis/serverpeuser/api/pincodes/blocks",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientPin;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
-      let result_for_data = validateDistrictAndState(req);
-      if (result_for_data.successstatus) {
-        result_for_data.data = await getBlockFromDistrict(
+      let result = validateDistrictAndState(req);
+      if (result.successstatus) {
+        result = await getBlockFromDistrict(
           clientPin,
           req.body.selectedState,
           req.body.selectedDistrict
         );
       }
-      return res.status(result_for_data.statuscode).json({
-        success: result_for_data.successstatus,
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        success: result.successstatus,
         remaining_calls: usageStatus.remaining,
-        message: result_for_data.message,
-        data: result_for_data?.data,
+        message: result.message,
+        data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientPin) clientPin.release();
@@ -246,42 +294,51 @@ pincodeRouter.post(
 // ======================================================
 pincodeRouter.post(
   "/mockapis/serverpeuser/api/pincodes/branchtypes",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientPin;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
-      let result_for_data = validateBlockDistrictAndState(req);
-      if (result_for_data.successstatus) {
-        result_for_data.data = await getBranchTypeFromBlock(
+      let result = validateBlockDistrictAndState(req);
+      if (result.successstatus) {
+        result = await getBranchTypeFromBlock(
           clientPin,
           req.body.selectedState,
           req.body.selectedDistrict,
           req.body.selectedBlock
         );
       }
-      return res.status(result_for_data.statuscode).json({
-        success: result_for_data.successstatus,
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        success: result.successstatus,
         remaining_calls: usageStatus.remaining,
-        message: result_for_data.message,
-        data: result_for_data?.data,
+        message: result.message,
+        data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientPin) clientPin.release();
@@ -293,27 +350,25 @@ pincodeRouter.post(
 // ======================================================
 pincodeRouter.post(
   "/mockapis/serverpeuser/api/pincodes/pincode-list",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientPin;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientPin = await getPostgreClient(poolPin);
 
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
-
       // 2️⃣ Business Logic
-      let result_for_data = validateBranchTypeBlockDistrictAndState(req);
-      if (result_for_data.successstatus) {
-        result_for_data.data = await getFullDetailsFromBranchType(
+      let result = validateBranchTypeBlockDistrictAndState(req);
+      if (result.successstatus) {
+        result = await getFullDetailsFromBranchType(
           clientPin,
           req.body.selectedState,
           req.body.selectedDistrict,
@@ -321,15 +376,26 @@ pincodeRouter.post(
           req.body.selectedBranchType
         );
       }
-      return res.status(result_for_data.statuscode).json({
-        success: result_for_data.successstatus,
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        success: result.successstatus,
         remaining_calls: usageStatus.remaining,
-        message: result_for_data.message,
-        data: result_for_data?.data,
+        message: result.message,
+        data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientPin) clientPin.release();

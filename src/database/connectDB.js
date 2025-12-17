@@ -7,7 +7,8 @@ types.setTypeParser(1082, (val) => val);
 // Global pools (created only once)
 let pool = null;
 let poolpincode = null;
-let poolifsc = null;
+let poolcaspecs = null;
+let poolbikepecs = null;
 let poolmain = null;
 
 // 🔥 Common function to test pool connection once
@@ -43,8 +44,8 @@ const connectMockTrainTicketsDb = () => {
    DEFAULT DB (CARSPECS)
 ============================================ */
 const connectCarSpecsDB = () => {
-  if (!pool) {
-    pool = new Pool({
+  if (!poolcaspecs) {
+    poolcaspecs = new Pool({
       host: process.env.PGHOST,
       database: process.env.PGDATABASECARSPECS,
       user: process.env.PGUSER,
@@ -56,9 +57,30 @@ const connectCarSpecsDB = () => {
       keepAlive: true,
     });
 
-    testConnection(pool, "DEFAULT DB");
+    testConnection(poolcaspecs, "CARSPECS DB");
   }
-  return pool;
+  return poolcaspecs;
+};
+/* ============================================
+   DEFAULT DB (BIKESPEC)
+============================================ */
+const connectBikeSpecsDB = () => {
+  if (!poolbikepecs) {
+    poolbikepecs = new Pool({
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASEBIKESPECS,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      port: process.env.PGPORT,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+      keepAlive: true,
+    });
+
+    testConnection(poolbikepecs, "BIKESPECS DB");
+  }
+  return poolbikepecs;
 };
 
 /* ============================================
@@ -81,28 +103,6 @@ const connectPinCodeDB = () => {
     testConnection(poolpincode, "PINCODE DB");
   }
   return poolpincode;
-};
-
-/* ============================================
-   IFSC DB (PGDATABASEIFSC)
-============================================ */
-const connectIFSCDB = () => {
-  if (!poolifsc) {
-    poolifsc = new Pool({
-      host: process.env.PGHOST,
-      database: process.env.PGDATABASEIFSC,
-      user: process.env.PGUSER,
-      password: process.env.PGPASSWORD,
-      port: process.env.PGPORT,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-      keepAlive: true,
-    });
-
-    testConnection(poolifsc, "IFSC DB");
-  }
-  return poolifsc;
 };
 
 /* ============================================
@@ -130,6 +130,7 @@ const connectMainDB = () => {
 module.exports = {
   connectMockTrainTicketsDb,
   connectPinCodeDB,
-  connectIFSCDB,
+  connectCarSpecsDB,
   connectMainDB,
+  connectBikeSpecsDB,
 };

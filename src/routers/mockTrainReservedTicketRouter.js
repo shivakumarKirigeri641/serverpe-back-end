@@ -11,7 +11,7 @@ const {
   connectMockTrainTicketsDb,
   connectMainDB,
 } = require("../database/connectDB");
-const dummyRouter = express.Router();
+const mockTrainReservedTicketRouter = express.Router();
 const getPostgreClient = require("../SQL/getPostgreClient");
 const getTrainSchedule = require("../SQL/fetchers/getTrainSchedule");
 const confirmBooking = require("../SQL/confirmBooking");
@@ -33,12 +33,30 @@ const validateForLiveTrainRunningStatus = require("../validations/mocktrainreser
 const validateForLiveStation = require("../validations/mocktrainreservations/validateForLiveStation");
 const poolMain = connectMainDB();
 const poolMockTrain = connectMockTrainTicketsDb();
+const securityMiddleware = require("../middleware/securityMiddleware");
+require("dotenv").config();
+const Redis = require("ioredis");
+const redis = new Redis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  reconnectOnError: () => true,
+  retryStrategy(times) {
+    return Math.min(times * 50, 2000);
+  },
+  tls: {}, // IMPORTANT for redis.io URLs with TLS (rediss://)
+});
+let usageStatus = {};
 // ======================================================
-//                api get stations list
+//                api get stations list (unchargeable)
 // ======================================================
-dummyRouter.get(
+mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/stations",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -46,22 +64,26 @@ dummyRouter.get(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
       const result = await getStations(clientMockTrain);
-      return res.json({
+      /*if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }*/
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -69,11 +91,16 @@ dummyRouter.get(
   }
 );
 // ======================================================
-//                api get reservation type
+//                api get reservation type (unchargeable)
 // ======================================================
-dummyRouter.get(
+mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/reservation-type",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -81,22 +108,26 @@ dummyRouter.get(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
       const result = await getReservationType(clientMockTrain);
-      return res.json({
+      /*if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }*/
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -104,11 +135,16 @@ dummyRouter.get(
   }
 );
 // ======================================================
-//                api get coach type
+//                api get coach type (unchargeable)
 // ======================================================
-dummyRouter.get(
+mockTrainReservedTicketRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/coach-type",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
@@ -116,22 +152,26 @@ dummyRouter.get(
     try {
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
       const result = await getCoachType(clientMockTrain);
-      return res.json({
+      /*if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }*/
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -141,32 +181,42 @@ dummyRouter.get(
 // ======================================================
 //                api get train-schedule
 // ======================================================
-dummyRouter.get(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/train-schedule",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      // 1️⃣ Atomic usage deduction (fixed)
-      const usageStatus = await updateApiUsage(clientMain, req);
-      if (!usageStatus.ok) {
-        return res.status(429).json({
-          error: usageStatus.message,
-        });
-      }
       const result = await getTrainSchedule(clientMockTrain);
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -176,34 +226,50 @@ dummyRouter.get(
 // ======================================================
 //                api post search-trains
 // ======================================================
-dummyRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/search-trains",
-  rateLimitPerApiKey(3, 1000),
-  checkApiKey,
-  async (req, res) => {
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
+  async (req, res, next) => {
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      //validation later
+      // Validate request
       let result = validateForSearchTrains(req);
+      //repair
+
+      // 200 → auto usage deduct middleware will run
+      // 1️⃣ Atomic usage deduction (fixed)
       if (result.successstatus) {
         result = await searchTrains(
           clientMockTrain,
-          source_code.toUpperCase(),
-          destination_code.toUpperCase(),
-          doj
+          req.body.source_code.toUpperCase(),
+          req.body.destination_code.toUpperCase(),
+          req.body.doj
         );
       }
-      return res.json({
+      if (!result.statuscode) {
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
-      console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      next(err);
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -213,34 +279,51 @@ dummyRouter.post(
 // ======================================================
 //                api post trains between two stations
 // ======================================================
-dummyRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/trains-between-two-stations",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
       //validation later
       let result = validateForTrainsBetweenTwostations(req);
       if (result.successstatus) {
-        result = await await searchTrainsBetweenSatations(
+        result = await searchTrainsBetweenSatations(
           clientMockTrain,
-          req.source_code.toUpperCase(),
-          req.destination_code.toUpperCase(),
-          via_code
+          req.body.source_code.toUpperCase(),
+          req.body.destination_code.toUpperCase(),
+          req.body.via_code
         );
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -251,14 +334,20 @@ dummyRouter.post(
 // ======================================================
 //                api post proceed-booking
 // ======================================================
-dummyRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/proceed-booking",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
 
@@ -266,14 +355,25 @@ dummyRouter.post(
       if (result.successstatus) {
         result = await proceedBooking(clientMockTrain, req.body);
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -283,30 +383,50 @@ dummyRouter.post(
 // ======================================================
 //                api post confirm-ticket
 // ======================================================
-dummyRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/confirm-ticket",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForConfirmBooking(req);
       //handle throw
       if (result.successstatus) {
-        result = await confirmBooking(clientMockTrain, req.body.booking_id);
+        result = await confirmBooking(
+          clientMockTrain,
+          req.body.booking_id,
+          req.body.can_send_mock_ticket_sms
+        );
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -316,30 +436,46 @@ dummyRouter.post(
 // ======================================================
 //                api post cancel-ticket
 // ======================================================
-dummyRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/cancel-ticket",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForCancelTicket(req);
       //handle throw
       if (result.successstatus) {
         result = await cancel_ticket(clientMockTrain, req.body);
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -349,30 +485,47 @@ dummyRouter.post(
 // ======================================================
 //                api post pnr-status
 // ======================================================
-dummyRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/pnr-status",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForPNRStatus(req);
       //handle throw
       if (result.successstatus) {
         result = await getPnrStatus(clientMockTrain, req.body.pnr);
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
+        //usageStatus not found if returns with 204/404/422
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -382,17 +535,22 @@ dummyRouter.post(
 // ======================================================
 //                api post booking-history
 // ======================================================
-dummyRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/booking-history",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForBookingHistory(req);
       //handle throw
       if (result.successstatus) {
@@ -401,14 +559,25 @@ dummyRouter.post(
           req.body.mobile_number
         );
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -418,17 +587,22 @@ dummyRouter.post(
 // ======================================================
 //                api post live-train-running-status
 // ======================================================
-dummyRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/train-live-running-status",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientMockTrain;
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForLiveTrainRunningStatus(req);
       //handle throw
       if (result.successstatus) {
@@ -437,14 +611,25 @@ dummyRouter.post(
           req.body.train_number
         );
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
@@ -454,17 +639,23 @@ dummyRouter.post(
 // ======================================================
 //                api post live station->get list of trains which are arrivign/departing from given station
 // ======================================================
-dummyRouter.post(
+mockTrainReservedTicketRouter.post(
   "/mockapis/serverpeuser/api/mocktrain/reserved/live-station",
-  rateLimitPerApiKey(3, 1000),
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
   checkApiKey,
   async (req, res) => {
     let clientMain;
     let clientMockTrain;
+    let usageStatus = {};
     try {
+      const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-
       let result = validateForLiveStation(req);
       //handle throw
       if (result.successstatus) {
@@ -474,18 +665,29 @@ dummyRouter.post(
           req.body.next_hours
         );
       }
-      return res.json({
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(clientMain, req, start);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: err.message });
     } finally {
       if (clientMain) clientMain.release();
       if (clientMockTrain) clientMockTrain.release();
     }
   }
 );
-module.exports = dummyRouter;
+module.exports = mockTrainReservedTicketRouter;
