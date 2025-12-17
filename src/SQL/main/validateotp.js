@@ -60,10 +60,10 @@ const validateotp = async (client, mobile_number, otp) => {
       );
     }
     //alert notifification to me with SMS when user logins
-    await sendLoggedInUserSMS(
+    /*await sendLoggedInUserSMS(
       result_user.rows[0].user_name,
       result_user.rows[0].mobile_number
-    );
+    );*/
     return {
       statuscode: 200,
       successstatus: true,

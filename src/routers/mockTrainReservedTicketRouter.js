@@ -7,6 +7,7 @@ const searchTrainsBetweenSatations = require("../SQL/fetchers/searchTrainsBetwee
 const getPnrStatus = require("../SQL/fetchers/getPnrStatus");
 const getReservationType = require("../SQL/fetchers/getReservationType");
 const getCoachType = require("../SQL/fetchers/getCoachType");
+const validateForTrainNumber = require("../validations/mocktrainreservations/validateForTrainNumber");
 const {
   connectMockTrainTicketsDb,
   connectMainDB,
@@ -197,7 +198,10 @@ mockTrainReservedTicketRouter.post(
       const start = Date.now();
       clientMain = await getPostgreClient(poolMain);
       clientMockTrain = await getPostgreClient(poolMockTrain);
-      const result = await getTrainSchedule(clientMockTrain);
+      let result = validateForTrainNumber(req);
+      if (result.successstatus) {
+        result = await getTrainSchedule(clientMockTrain, req.body.train_number);
+      }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
         usageStatus = await updateApiUsage(clientMain, req, start);

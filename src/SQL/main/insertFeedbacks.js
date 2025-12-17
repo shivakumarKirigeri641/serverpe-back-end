@@ -24,11 +24,11 @@ const insertFeedbacks = async (client, mobile_number, jsondata) => {
     ]
   );
   //alert notifification to me with SMS when user feedback gives
-  await sendAlertForFeedbackSMS(
+  /*await sendAlertForFeedbackSMS(
     result_user.rows[0].mobile_number,
     jsondata.category,
     jsondata.rating
-  );
+  );*/
   return {
     statuscode: 200,
     successstatus: true,
