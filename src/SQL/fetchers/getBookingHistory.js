@@ -26,7 +26,7 @@ ORDER BY b.date_of_journey DESC;`,
     );
     if (0 === result.rows.length) {
       return {
-        status: 200,
+        status: 422,
         success: true,
         data: {},
         message: "No results found!",

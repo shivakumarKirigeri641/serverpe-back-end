@@ -1,0 +1,628 @@
+{
+	"info": {
+		"_postman_id": "00697eba-3e37-469f-a61d-3dd44b7974bd",
+		"name": "serverpe_train_reserved",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23347977"
+	},
+	"item": [
+		{
+			"name": "test",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"SRI\":{\"fromCityID\":1,\"toCityID\":2318,\"fromCityName\":\"Ahmedabad\",\"toCityName\":\"Bangalore\",\"jdate\":\"08-11-2025\",\"jdateR\":\"\",\"isBindReturnRoute\":0,\"redirectUrl\":\"\",\"msg\":\"\",\"fromCityID1\":0,\"toCityID1\":0,\"fromCityName1\":\"\",\"toCityName1\":\"\",\"journeyDate1\":\"\",\"tripType\":0,\"fromCityID2\":0,\"toCityID2\":0,\"fromCityName2\":\"\",\"toCityName2\":\"\",\"journeyDate2\":\"\",\"PickupID\":0,\"DropID\":0}}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://www.vrlbus.in/DataBinding.aspx/Bind_AvailableRoutes",
+					"protocol": "https",
+					"host": [
+						"www",
+						"vrlbus",
+						"in"
+					],
+					"path": [
+						"DataBinding.aspx",
+						"Bind_AvailableRoutes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_reservation_type",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/reservation-type",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"reservation-type"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/stations",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"stations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_coach_type",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/coach-type",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"coach-type"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_stations",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/stations",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"stations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_confirm_booking",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"booking_id\":58,\r\n    \"can_send_mock_ticket_sms\":true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/confirm-ticket",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"confirm-ticket"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_pnr_status",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"pnr\":\"PNR001514\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/pnr-status",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"pnr-status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_booking_history",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"mobile_number\":\"9886122415\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/booking-history",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"booking-history"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_search_trains",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{        \r\n    \"source_code\": \"ypr\",\r\n    \"destination_code\": \"hvr\",\r\n    \"doj\": \"2025-12-23\",\r\n    \"coach_type\":null,\r\n    \"reservation_type\":null    \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/search-trains",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"search-trains"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_proceed_booking",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"train_number\": \"17391\",\r\n    \"doj\": \"2025-12-23\",\r\n    \"coach_type\": \"sl\",\r\n    \"source_code\": \"ypr\",\r\n    \"destination_code\": \"hvr\",\r\n    \"mobile_number\": \"9886122415\",\r\n    \"reservation_type\": \"gen\",\r\n    \"passenger_details\": [\r\n        {\r\n            \"passenger_name\":\"Amruta\",\r\n            \"passenger_gender\":\"F\",\r\n            \"passenger_age\":36,\r\n            \"passenger_ischild\": false,\r\n            \"passenger_issenior\": false\r\n        }\r\n\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/proceed-booking",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"proceed-booking"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_train_schedule",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"train_number\": \"12614\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/train-schedule",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"train-schedule"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_cancel_ticket",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"pnr\": \"PNR001521\",\r\n    \"passengerids\":[\r\n        1071674\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/cancel-ticket",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"cancel-ticket"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_trains_between_two_stations",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"source_code\":\"YPR\",\r\n    \"destination_code\":\"UBL\"    \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/trains-between-two-stations",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"trains-between-two-stations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_live_station",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"station_code\":\"MYS\",\r\n    \"next_hours\":2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/live-station",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"live-station"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_train_live_running_status",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"train_number\":\"12080\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/mocktrain/reserved/train-live-running-status",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"mocktrain",
+						"reserved",
+						"train-live-running-status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}

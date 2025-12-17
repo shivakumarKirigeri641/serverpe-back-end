@@ -136,13 +136,13 @@ WHERE b.id = $1;
     await client.query("COMMIT");
     //send mock sms if enabled
     if (can_send_mock_ticket_sms === true) {
-      sendMockTicketSMS(
+      /*sendMockTicketSMS(
         booking_details.rows[0].mobile_number,
         updated_booked_details.rows[0].pnr,
         booking_details.rows[0].train_number,
         train_details.rows[0].train_name,
         updated_booked_details.rows[0].scheduled_departure
-      );
+      );*/
     }
     return booking_summary;
   } catch (err) {

@@ -15,6 +15,8 @@ const groupEndpointsByCategory = (rows) => {
       id: row.id,
       endpoint: row.endpoint,
       method: row.method,
+      api_doc_path: row.api_doc_path,
+      api_postman_collection_path: row.api_postman_collection_path,
       title: row.title,
       description: row.description,
       sample_request: row.sample_request ?? null,

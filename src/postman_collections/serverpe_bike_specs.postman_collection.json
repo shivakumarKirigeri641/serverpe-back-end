@@ -1,0 +1,309 @@
+{
+	"info": {
+		"_postman_id": "d27bee57-110e-459f-92b0-78855c487201",
+		"name": "serverpe_bike_specs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23347977"
+	},
+	"item": [
+		{
+			"name": "test_makes",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/bikespecs/bike-makes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"bikespecs",
+						"bike-makes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_bike_models",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"brand\":\"triumph\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/bikespecs/bike-models",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"bikespecs",
+						"bike-models"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_bike_bike_type",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"brand\":\"triumph\",\r\n    \"model\":\"3ta\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/bikespecs/bike-type",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"bikespecs",
+						"bike-type"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_bike_category",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"brand\":\"triumph\",\r\n    \"model\":\"3ta\",\r\n    \"bike_type\":\"sport\"    \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/bikespecs/bike-category",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"bikespecs",
+						"bike-category"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_bike_list",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"brand\":\"triumph\",\r\n    \"model\":\"3ta\",\r\n    \"bike_type\":\"sport\",\r\n    \"category\":\"std\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/bikespecs/bike-list",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"bikespecs",
+						"bike-list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_bike_spec",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\":38041\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/bikespecs/bike-specs",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"bikespecs",
+						"bike-specs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_search_bikes",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"query\":\"triumph\",\r\n    \"limit\":10,\r\n    \"skip\":0\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/bikespecs/search-bikes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"bikespecs",
+						"search-bikes"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
