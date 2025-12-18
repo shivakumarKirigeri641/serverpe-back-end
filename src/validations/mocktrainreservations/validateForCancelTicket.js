@@ -1,3 +1,4 @@
+const isNumeric = require("../../validations/main/isNumeric");
 const validateForCancelTicket = (req) => {
   if (!req.body) {
     return {
@@ -38,8 +39,8 @@ const validateForCancelTicket = (req) => {
   let stopstatus = false;
   let errormsg = "";
   let statuscode = 404;
-  for (let i = 0; i < req.passengerids.length; i++) {
-    if (!isNumeric(req.passengerids[i])) {
+  for (let i = 0; i < req.body.passengerids.length; i++) {
+    if (!isNumeric(req.body.passengerids[i])) {
       errormsg = "Inavlid passenger_id!";
       stopstatus = true;
       statuscode = 400;

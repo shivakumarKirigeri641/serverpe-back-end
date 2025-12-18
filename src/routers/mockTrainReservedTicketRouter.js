@@ -459,7 +459,11 @@ mockTrainReservedTicketRouter.post(
       let result = validateForCancelTicket(req);
       //handle throw
       if (result.successstatus) {
-        result = await cancel_ticket(clientMockTrain, req.body);
+        result = await cancel_ticket(
+          clientMockTrain,
+          req.body.pnr,
+          req.body.passengerids
+        );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
