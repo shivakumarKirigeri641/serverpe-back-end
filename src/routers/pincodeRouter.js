@@ -81,7 +81,7 @@ pincodeRouter.post(
       return res.status(result.statuscode ? result.statuscode : 200).json({
         success: true,
         remaining_calls: usageStatus.remaining,
-        data: validatedetails,
+        data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
