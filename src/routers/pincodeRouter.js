@@ -212,7 +212,7 @@ pincodeRouter.post(
         // 1️⃣ Atomic usage deduction (fixed)
         usageStatus = await updateApiUsage(clientMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
+          return res.status(422).json({
             error: usageStatus.message,
           });
         }

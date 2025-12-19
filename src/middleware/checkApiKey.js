@@ -1,5 +1,6 @@
 const { connectMainDB } = require("../database/connectDB");
 const getPostgreClient = require("../SQL/getPostgreClient");
+const demoCorsMiddleware = require("./demoCorsMiddleware");
 
 // middleware/apiKey.js
 const checkApiKey = async (req, res, next) => {
@@ -23,11 +24,14 @@ const checkApiKey = async (req, res, next) => {
       `select *from serverpe_user where apikey_text = $1 and secret_key=$2`,
       [apiKey, secretKey]
     );
+    //if demo key & all good say next();
+    return demoCorsMiddleware(req, res, next);
+    //normal paid api or demo api
     if (0 < result.rows.length) {
       next();
     } else {
       res
-        .status(401)
+        .status(422)
         .json({ status: "Failed", message: "Invalid api key or secret key" });
     }
   } catch (err) {

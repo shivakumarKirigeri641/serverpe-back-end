@@ -18,6 +18,7 @@ const pincodeRouter = require("./routers/pincodeRouter");
 const carspecrouter = require("./routers/carspecrouter");
 const bikespecrouter = require("./routers/bikespecrouter");
 const checkApiKey = require("./middleware/checkApiKey");
+const demoCorsMiddleware = require("./middleware/demoCorsMiddleware");
 require("dotenv").config();
 app.use((req, res, next) => {
   const start = Date.now();
@@ -33,6 +34,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(demoCorsMiddleware);
 app.use(cookieParser());
 app.use("/images", express.static(path.join(__dirname, "images")));
 app.use("/", mockTrainReservedTicketRouter);
