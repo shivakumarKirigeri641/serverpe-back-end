@@ -227,7 +227,7 @@ generalRouter.get("/mockapis/serverpeuser/all-endpoints", async (req, res) => {
   }
 });
 // ======================================================
-//                download api-doc
+//                download api-doc-zips
 // ======================================================
 generalRouter.get(
   "/mockapis/serverpeuser/download/apidoc/:id",
@@ -243,8 +243,21 @@ generalRouter.get(
       }
       client = await getPostgreClient(poolMain);
       const result = await getMockApiCategoryDownloadPaths(client, id);
+      console.log(result.data[0].api_doc_path);
       if (result.successtatus) {
-        convertDocxToPdf(req, res, result.data[0].api_doc_path);
+        const filePath = path.join(
+          path.resolve(__dirname, "..", ".."),
+          result.data[0].api_doc_path
+        );
+        res.download(filePath, (err) => {
+          if (err) {
+            console.error("File download error:", err);
+            res.status(500).json({
+              success: false,
+              message: "Unable to download file",
+            });
+          }
+        });
       }
     } catch (err) {
       console.error(err);
@@ -276,9 +289,8 @@ generalRouter.get(
       client = await getPostgreClient(poolMain);
       const result = await getMockApiCategoryDownloadPaths(client, id);
       if (result.successtatus) {
-        console.log(result?.data[0]);
         const filePath = path.join(
-          __dirname,
+          path.resolve(__dirname, "..", ".."),
           result.data[0].api_postman_collection_path
         );
         res.download(filePath, (err) => {
