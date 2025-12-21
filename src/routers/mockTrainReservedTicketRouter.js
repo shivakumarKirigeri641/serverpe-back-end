@@ -461,7 +461,7 @@ mockTrainReservedTicketRouter.post(
       if (result.successstatus) {
         result = await cancel_ticket(
           poolMockTrain,
-          req.body.pnr,
+          req.body.pnr.toUpperCase(),
           req.body.passengerids
         );
       }
