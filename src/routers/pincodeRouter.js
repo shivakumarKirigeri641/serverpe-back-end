@@ -60,14 +60,14 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
 
       // 2️⃣ Business Logic
       //validate
       let result = validatePinCode(req.body);
       if (result.successstatus) {
-        result = await getDetailsFromPinCode(clientPin, req.body.pincode);
+        result = await getDetailsFromPinCode(poolPin, req.body.pincode);
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
@@ -89,8 +89,8 @@ pincodeRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -110,10 +110,10 @@ pincodeRouter.get(
     let clientMain;
     let clientPin;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
       // 2️⃣ Business Logic
-      const result = await getAllPinCodes(clientPin);
+      const result = await getAllPinCodes(poolPin);
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
         usageStatus = await updateApiUsage(clientMain, req);
@@ -134,8 +134,8 @@ pincodeRouter.get(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -155,11 +155,11 @@ pincodeRouter.get(
     let clientMain;
     let clientPin;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
 
       // 2️⃣ Business Logic
-      const result = await getStatesAndTerritories(clientPin);
+      const result = await getStatesAndTerritories(poolPin);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
         usageStatus = await updateApiUsage(clientMain, req);
@@ -179,8 +179,8 @@ pincodeRouter.get(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -201,12 +201,12 @@ pincodeRouter.post(
     let clientPin;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
       // 2️⃣ Business Logic
       let result = validateState(req);
       if (result.successstatus) {
-        result = await getDistrictFromState(clientPin, req.body.selectedState);
+        result = await getDistrictFromState(poolPin, req.body.selectedState);
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
@@ -217,6 +217,7 @@ pincodeRouter.post(
           });
         }
       }
+      console.log("bkend test");
       return res.status(result.statuscode ? result.statuscode : 200).json({
         success: result.successstatus,
         remaining_calls: usageStatus.remaining,
@@ -229,8 +230,8 @@ pincodeRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -251,14 +252,14 @@ pincodeRouter.post(
     let clientPin;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
 
       // 2️⃣ Business Logic
       let result = validateDistrictAndState(req);
       if (result.successstatus) {
         result = await getBlockFromDistrict(
-          clientPin,
+          poolPin,
           req.body.selectedState,
           req.body.selectedDistrict
         );
@@ -284,8 +285,8 @@ pincodeRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -306,14 +307,14 @@ pincodeRouter.post(
     let clientPin;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
 
       // 2️⃣ Business Logic
       let result = validateBlockDistrictAndState(req);
       if (result.successstatus) {
         result = await getBranchTypeFromBlock(
-          clientPin,
+          poolPin,
           req.body.selectedState,
           req.body.selectedDistrict,
           req.body.selectedBlock
@@ -340,8 +341,8 @@ pincodeRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -362,14 +363,14 @@ pincodeRouter.post(
     let clientPin;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
 
       // 2️⃣ Business Logic
       let result = validateBranchTypeBlockDistrictAndState(req);
       if (result.successstatus) {
         result = await getFullDetailsFromBranchType(
-          clientPin,
+          poolPin,
           req.body.selectedState,
           req.body.selectedDistrict,
           req.body.selectedBlock,
@@ -397,8 +398,8 @@ pincodeRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );

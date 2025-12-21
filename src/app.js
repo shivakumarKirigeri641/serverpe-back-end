@@ -43,11 +43,11 @@ app.use("/", carspecrouter);
 app.use("/", bikespecrouter);
 app.use("/", pincodeRouter);
 app.use("/", userRouter);
+connectMainDB();
 connectMockTrainTicketsDb();
 connectPinCodeDB();
 connectCarSpecsDB();
 connectBikeSpecsDB();
-connectMainDB();
 app.listen(8888, "0.0.0.0", () => {
   console.log("Server is listening now.");
 });

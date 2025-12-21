@@ -53,8 +53,8 @@ userRouter.get(
   async (req, res) => {
     let client;
     try {
-      client = await getPostgreClient(poolMain);
-      const historyResult = await fetchApiHistory(client, req.mobile_number);
+      //client = await getPostgreClient(poolMain);
+      const historyResult = await fetchApiHistory(poolMain, req.mobile_number);
 
       return res.status(historyResult.statuscode).json(historyResult);
     } catch (err) {
@@ -63,7 +63,7 @@ userRouter.get(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -76,8 +76,8 @@ userRouter.get(
   async (req, res) => {
     let client;
     try {
-      client = await getPostgreClient(poolMain);
-      const plansResult = await fetchApiPlans(client, false);
+      //client = await getPostgreClient(poolMain);
+      const plansResult = await fetchApiPlans(poolMain, false);
       return res.status(plansResult.statuscode).json(plansResult);
     } catch (err) {
       console.error(err);
@@ -85,7 +85,7 @@ userRouter.get(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -98,8 +98,8 @@ userRouter.post(
   async (req, res) => {
     let client;
     try {
-      client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(client, req.mobile_number)) {
+      //client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(poolMain, req.mobile_number)) {
         res.status(401).json({
           status: "Failed",
           successstatus: false,
@@ -108,7 +108,7 @@ userRouter.post(
       }
       let result = validateForFeedbackInsert(req);
       if (result.successstatus) {
-        result = await insertFeedbacks(client, req.mobile_number, req.body);
+        result = await insertFeedbacks(poolMain, req.mobile_number, req.body);
       }
       return res.status(result.statuscode).json(result);
     } catch (err) {
@@ -117,7 +117,7 @@ userRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -130,15 +130,15 @@ userRouter.get(
   async (req, res) => {
     let client;
     try {
-      client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(client, req.mobile_number)) {
+      //client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(poolMain, req.mobile_number)) {
         res.status(401).json({
           status: "Failed",
           successstatus: false,
           message: "Unauthorized user!",
         });
       }
-      const apiendpoints = await getApiEndPoints(client);
+      const apiendpoints = await getApiEndPoints(poolMain);
       return res.status(apiendpoints.statuscode).json(apiendpoints);
     } catch (err) {
       console.error(err);
@@ -147,7 +147,7 @@ userRouter.get(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -160,8 +160,8 @@ userRouter.get(
   async (req, res) => {
     let client;
     try {
-      client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(client, req.mobile_number)) {
+      //client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(poolMain, req.mobile_number)) {
         res.status(401).json({
           status: "Failed",
           successstatus: false,
@@ -182,7 +182,7 @@ userRouter.get(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -195,15 +195,15 @@ userRouter.get(
   async (req, res) => {
     let client;
     try {
-      client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(client, req.mobile_number)) {
+      //client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(poolMain, req.mobile_number)) {
         res.status(401).json({
           status: "Failed",
           successstatus: false,
           message: "Unauthorized user!",
         });
       }
-      const result_usageanalytics = await getUsageAnalytics(client, req);
+      const result_usageanalytics = await getUsageAnalytics(poolMain, req);
       return res
         .status(result_usageanalytics.statuscode)
         .json(result_usageanalytics);
@@ -214,7 +214,7 @@ userRouter.get(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -227,15 +227,15 @@ userRouter.get(
   async (req, res) => {
     let client;
     try {
-      client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(client, req.mobile_number)) {
+      //client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(poolMain, req.mobile_number)) {
         res.status(401).json({
           status: "Failed",
           successstatus: false,
           message: "Unauthorized user!",
         });
       }
-      const result_usageanalytics = await getUserDashboardData(client, req);
+      const result_usageanalytics = await getUserDashboardData(poolMain, req);
       return res
         .status(result_usageanalytics.statuscode)
         .json(result_usageanalytics);
@@ -246,7 +246,7 @@ userRouter.get(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -259,15 +259,15 @@ userRouter.get(
   async (req, res) => {
     let client;
     try {
-      client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(client, req.mobile_number)) {
+      //client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(poolMain, req.mobile_number)) {
         res.status(401).json({
           status: "Failed",
           successstatus: false,
           message: "Unauthorized user!",
         });
       }
-      const result_userprofile = await getUserProfile(client, req);
+      const result_userprofile = await getUserProfile(poolMain, req);
       return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
       console.error(err);
@@ -276,7 +276,7 @@ userRouter.get(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -289,8 +289,8 @@ userRouter.put(
   async (req, res) => {
     let client;
     try {
-      client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(client, req.mobile_number)) {
+      //client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(poolMain, req.mobile_number)) {
         res.status(401).json({
           status: "Failed",
           successstatus: false,
@@ -299,7 +299,7 @@ userRouter.put(
       }
       let result_userprofile = validateForUserProfile(req);
       if (!result_userprofile.successstatus) {
-        result_userprofile = await updateUserProfile(client, req);
+        result_userprofile = await updateUserProfile(poolMain, req);
       }
       return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
@@ -309,7 +309,7 @@ userRouter.put(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -341,7 +341,7 @@ userRouter.post(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -377,7 +377,7 @@ userRouter.post(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
@@ -390,7 +390,7 @@ userRouter.post(
   async (req, res) => {
     let client;
     try {
-      client = await getPostgreClient(poolMain);
+      //client = await getPostgreClient(poolMain);
       const { razorpay_payment_id } = req.body;
       let result = await razorpay.payments.fetch(razorpay_payment_id);
       result = await insertTransactionDetails(
@@ -408,7 +408,7 @@ userRouter.post(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
+      //if (poolMain) client.release();
     }
   }
 );
