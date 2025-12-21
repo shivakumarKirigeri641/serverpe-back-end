@@ -14,7 +14,7 @@ const validateForConfirmBooking = (req) => {
     };
   }
   //can_send_mock_ticket_sms
-  if (!req.body.can_send_mock_ticket_sms) {
+  if (null === req.body.can_send_mock_ticket_sms) {
     return {
       statuscode: 404,
       successstatus: false,

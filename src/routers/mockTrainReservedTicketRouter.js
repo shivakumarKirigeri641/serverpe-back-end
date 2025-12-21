@@ -63,12 +63,12 @@ mockTrainReservedTicketRouter.get(
     let clientMain;
     let clientMockTrain;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
-      const result = await getStations(clientMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
+      const result = await getStations(poolMockTrain);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -86,8 +86,8 @@ mockTrainReservedTicketRouter.get(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -107,12 +107,12 @@ mockTrainReservedTicketRouter.get(
     let clientMain;
     let clientMockTrain;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
-      const result = await getReservationType(clientMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
+      const result = await getReservationType(poolMockTrain);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -130,8 +130,8 @@ mockTrainReservedTicketRouter.get(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -151,12 +151,12 @@ mockTrainReservedTicketRouter.get(
     let clientMain;
     let clientMockTrain;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
-      const result = await getCoachType(clientMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
+      const result = await getCoachType(poolMockTrain);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -174,8 +174,8 @@ mockTrainReservedTicketRouter.get(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -196,15 +196,15 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForTrainNumber(req);
       if (result.successstatus) {
-        result = await getTrainSchedule(clientMockTrain, req.body.train_number);
+        result = await getTrainSchedule(poolMockTrain, req.body.train_number);
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -222,8 +222,8 @@ mockTrainReservedTicketRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -243,8 +243,8 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       // Validate request
       let result = validateForSearchTrains(req);
       //repair
@@ -253,14 +253,14 @@ mockTrainReservedTicketRouter.post(
       // 1️⃣ Atomic usage deduction (fixed)
       if (result.successstatus) {
         result = await searchTrains(
-          clientMockTrain,
+          poolMockTrain,
           req.body.source_code.toUpperCase(),
           req.body.destination_code.toUpperCase(),
           req.body.doj
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -275,8 +275,8 @@ mockTrainReservedTicketRouter.post(
     } catch (err) {
       next(err);
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -297,13 +297,13 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       //validation later
       let result = validateForTrainsBetweenTwostations(req);
       if (result.successstatus) {
         result = await searchTrainsBetweenSatations(
-          clientMockTrain,
+          poolMockTrain,
           req.body.source_code.toUpperCase(),
           req.body.destination_code.toUpperCase(),
           req.body.via_code
@@ -311,7 +311,7 @@ mockTrainReservedTicketRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -329,8 +329,8 @@ mockTrainReservedTicketRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -352,16 +352,16 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
 
       let result = validateForProceedBooking(req);
       if (result.successstatus) {
-        result = await proceedBooking(clientMockTrain, req.body);
+        result = await proceedBooking(poolMockTrain, req.body);
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -379,8 +379,8 @@ mockTrainReservedTicketRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -401,20 +401,20 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForConfirmBooking(req);
       //handle throw
       if (result.successstatus) {
         result = await confirmBooking(
-          clientMockTrain,
+          poolMockTrain,
           req.body.booking_id,
           req.body.can_send_mock_ticket_sms
         );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -432,8 +432,8 @@ mockTrainReservedTicketRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -454,20 +454,20 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForCancelTicket(req);
       //handle throw
       if (result.successstatus) {
         result = await cancel_ticket(
-          clientMockTrain,
+          poolMockTrain,
           req.body.pnr,
           req.body.passengerids
         );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -485,8 +485,8 @@ mockTrainReservedTicketRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -507,16 +507,16 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForPNRStatus(req);
       //handle throw
       if (result.successstatus) {
-        result = await getPnrStatus(clientMockTrain, req.body.pnr);
+        result = await getPnrStatus(poolMockTrain, req.body.pnr.toUpperCase());
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -534,8 +534,8 @@ mockTrainReservedTicketRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -556,19 +556,16 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForBookingHistory(req);
       //handle throw
       if (result.successstatus) {
-        result = await getBookingHistory(
-          clientMockTrain,
-          req.body.mobile_number
-        );
+        result = await getBookingHistory(poolMockTrain, req.body.mobile_number);
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -586,8 +583,8 @@ mockTrainReservedTicketRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -608,19 +605,19 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForLiveTrainRunningStatus(req);
       //handle throw
       if (result.successstatus) {
         result = await getLiveTrainRunningInformation(
-          clientMockTrain,
+          poolMockTrain,
           req.body.train_number
         );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -638,8 +635,8 @@ mockTrainReservedTicketRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -661,20 +658,20 @@ mockTrainReservedTicketRouter.post(
     let usageStatus = {};
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForLiveStation(req);
       //handle throw
       if (result.successstatus) {
         result = await getLiveStation(
-          clientMockTrain,
+          poolMockTrain,
           req.body.station_code,
           req.body.next_hours
         );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -692,8 +689,8 @@ mockTrainReservedTicketRouter.post(
         .status(500)
         .json({ error: "Internal Server Error", message: err.message });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
