@@ -243,7 +243,7 @@ generalRouter.get(
       }
       client = await getPostgreClient(poolMain);
       const result = await getMockApiCategoryDownloadPaths(client, id);
-      console.log(result.data[0].api_doc_path);
+      console.log("result from apidoc:", result.data[0].api_doc_path);
       if (result.successtatus) {
         const filePath = path.join(
           path.resolve(__dirname, "..", ".."),

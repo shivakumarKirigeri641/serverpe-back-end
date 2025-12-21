@@ -36,7 +36,7 @@ const searchBikes = async (client, query, limit, skip) => {
     return {
       statuscode: 422,
       successstatus: false,
-      message: "cars information not found!",
+      message: "bikes information not found!",
     };
   }
 };

@@ -48,7 +48,7 @@ let usageStatus = {};
 //                PINCODE details
 // ======================================================
 pincodeRouter.post(
-  "/mockapis/serverpeuser/api/pincode-details",
+  "/mockapis/serverpeuser/api/pincodes/pincode-details",
   securityMiddleware(redis, {
     rateLimit: 3, // 3 req/sec
     scraperLimit: 50, // 50 req/10 sec
@@ -71,7 +71,7 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -97,8 +97,8 @@ pincodeRouter.post(
 // ======================================================
 //                PINCODE API (FIXED)
 // ======================================================
-pincodeRouter.get(
-  "/mockapis/serverpeuser/api/pincodes",
+pincodeRouter.post(
+  "/mockapis/serverpeuser/api/pincodes/search-keyword",
   securityMiddleware(redis, {
     rateLimit: 3, // 3 req/sec
     scraperLimit: 50, // 50 req/10 sec
@@ -113,10 +113,23 @@ pincodeRouter.get(
       //clientMain = await getPostgreClient(poolMain);
       //clientPin = await getPostgreClient(poolPin);
       // 2️⃣ Business Logic
-      const result = await getAllPinCodes(poolPin);
+      //const result = await getAllPinCodes(poolPin);
+      const q = req.body.query?.trim() || "";
+      const limit = parseInt(req.body.limit) || 20;
+      const skip = parseInt(req.body.skip) || 0;
+      const canSearchByContent = parseInt(req.body.canSearchByContent) || false;
+      const canSearchByWholeWord = canSearchByWholeWord || true;
+      result = await getAllPinCodes(
+        poolPin,
+        q,
+        limit,
+        skip,
+        canSearchByContent,
+        canSearchByWholeWord
+      );
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -155,6 +168,7 @@ pincodeRouter.get(
     let clientMain;
     let clientPin;
     try {
+      console.log("calling state");
       //clientMain = await getPostgreClient(poolMain);
       //clientPin = await getPostgreClient(poolPin);
 
@@ -162,7 +176,7 @@ pincodeRouter.get(
       const result = await getStatesAndTerritories(poolPin);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -200,6 +214,7 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
+      console.log("calling district");
       const start = Date.now();
       //clientMain = await getPostgreClient(poolMain);
       //clientPin = await getPostgreClient(poolPin);
@@ -210,14 +225,13 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(422).json({
             error: usageStatus.message,
           });
         }
       }
-      console.log("bkend test");
       return res.status(result.statuscode ? result.statuscode : 200).json({
         success: result.successstatus,
         remaining_calls: usageStatus.remaining,
@@ -251,6 +265,7 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
+      console.log("calling block");
       const start = Date.now();
       //clientMain = await getPostgreClient(poolMain);
       //clientPin = await getPostgreClient(poolPin);
@@ -266,7 +281,7 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -306,6 +321,7 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
+      console.log("calling branchgype");
       const start = Date.now();
       //clientMain = await getPostgreClient(poolMain);
       //clientPin = await getPostgreClient(poolPin);
@@ -322,7 +338,7 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
@@ -379,7 +395,7 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
             error: usageStatus.message,
