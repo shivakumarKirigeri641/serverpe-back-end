@@ -169,7 +169,7 @@ userRouter.get(
         });
       }
       const result_walletrecharge = await getWalletAndRechargeInformation(
-        client,
+        poolMain,
         req
       );
       return res
@@ -394,7 +394,7 @@ userRouter.post(
       const { razorpay_payment_id } = req.body;
       let result = await razorpay.payments.fetch(razorpay_payment_id);
       result = await insertTransactionDetails(
-        client,
+        poolMain,
         result,
         req.mobile_number
       );
