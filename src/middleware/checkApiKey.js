@@ -10,12 +10,20 @@ const checkApiKey = async (req, res, next) => {
     const secretKey = req.headers["x-secret-key"];
     // 1️⃣ Validate API Key
     if (!apiKey) {
-      return res.status(401).json({ error: "API key missing" });
+      return res.status(401).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "API key missing",
+      });
     }
 
     // 2️⃣ Validate Secret Key
     if (!secretKey) {
-      return res.status(401).json({ error: "Secret key missing" });
+      return res.status(401).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Secret key missing",
+      });
     }
 
     //check now
@@ -29,9 +37,12 @@ const checkApiKey = async (req, res, next) => {
     if (0 < result.rows.length) {
       next();
     } else {
-      res
-        .status(422)
-        .json({ status: "Failed", message: "Invalid api key or secret key" });
+      res.status(422).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        status: "Failed",
+        message: "Invalid api key or secret key",
+      });
     }
   } catch (err) {
     console.log("check api key err:", err.message);

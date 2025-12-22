@@ -74,20 +74,27 @@ pincodeRouter.post(
         usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
           return res.status(429).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
       //if (clientMain) clientMain.release();
       //if (poolPin) clientPin.release();
@@ -117,8 +124,8 @@ pincodeRouter.post(
       const q = req.body.query?.trim() || "";
       const limit = parseInt(req.body.limit) || 20;
       const skip = parseInt(req.body.skip) || 0;
-      const canSearchByContent = parseInt(req.body.canSearchByContent) || false;
-      const canSearchByWholeWord = canSearchByWholeWord || true;
+      const canSearchByContent = req.body.canSearchByContent || false;
+      const canSearchByWholeWord = req.body.canSearchByWholeWord || true;
       result = await getAllPinCodes(
         poolPin,
         q,
@@ -132,20 +139,27 @@ pincodeRouter.post(
         usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
           return res.status(429).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
       //if (clientMain) clientMain.release();
       //if (poolPin) clientPin.release();
@@ -178,20 +192,25 @@ pincodeRouter.get(
         // 1️⃣ Atomic usage deduction (fixed)
         usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
-          return res.status(429).json({
+          return res.status(429).json({poweredby:'serverpe.in', mock_data:true, 
             error: usageStatus.message,
           });
         }
       }*/
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: true,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
       //if (clientMain) clientMain.release();
       //if (poolPin) clientPin.release();
@@ -228,11 +247,15 @@ pincodeRouter.post(
         usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(422).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: result.successstatus,
         remaining_calls: usageStatus.remaining,
         message: result.message,
@@ -240,9 +263,12 @@ pincodeRouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
       //if (clientMain) clientMain.release();
       //if (poolPin) clientPin.release();
@@ -284,11 +310,15 @@ pincodeRouter.post(
         usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: result.successstatus,
         remaining_calls: usageStatus.remaining,
         message: result.message,
@@ -296,9 +326,12 @@ pincodeRouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
       //if (clientMain) clientMain.release();
       //if (poolPin) clientPin.release();
@@ -341,11 +374,15 @@ pincodeRouter.post(
         usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: result.successstatus,
         remaining_calls: usageStatus.remaining,
         message: result.message,
@@ -353,9 +390,12 @@ pincodeRouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
       //if (clientMain) clientMain.release();
       //if (poolPin) clientPin.release();
@@ -398,11 +438,15 @@ pincodeRouter.post(
         usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: result.successstatus,
         remaining_calls: usageStatus.remaining,
         message: result.message,
@@ -410,9 +454,12 @@ pincodeRouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
       //if (clientMain) clientMain.release();
       //if (poolPin) clientPin.release();

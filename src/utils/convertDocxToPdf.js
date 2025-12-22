@@ -24,7 +24,13 @@ const convertDocxToPdf = async (req, res, fetchedpath) => {
     res.download(pdfPath, "ServerPe_API_Documentation.pdf");
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "PDF conversion failed" });
+    res
+      .status(500)
+      .json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "PDF conversion failed",
+      });
   }
 };
 

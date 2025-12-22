@@ -20,10 +20,14 @@ module.exports = function securityMiddleware(redis, options = {}) {
       // 1️⃣ CHECK IF BLOCKED
       const isBlocked = await redis.get(blockKey);
       if (isBlocked) {
-        return res.status(403).json({
-          success: false,
-          error: "You are temporarily blocked due to suspicious activity.",
-        });
+        return res
+          .status(403)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            success: false,
+            error: "You are temporarily blocked due to suspicious activity.",
+          });
       }
 
       // 2️⃣ RATE LIMIT – BASIC API USAGE CONTROL
@@ -33,10 +37,14 @@ module.exports = function securityMiddleware(redis, options = {}) {
       }
 
       if (currentRate > rateLimit) {
-        return res.status(429).json({
-          success: false,
-          error: "Rate limit exceeded. Slow down.",
-        });
+        return res
+          .status(429)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            success: false,
+            error: "Rate limit exceeded. Slow down.",
+          });
       }
 
       // 3️⃣ SCRAPER / LOOP DETECTION (AGGRESSIVE)
@@ -47,10 +55,14 @@ module.exports = function securityMiddleware(redis, options = {}) {
 
       if (scrapeCount > scraperLimit) {
         await redis.set(blockKey, "1", "EX", blockDuration);
-        return res.status(403).json({
-          success: false,
-          error: "You have been blocked for excessive requests.",
-        });
+        return res
+          .status(403)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            success: false,
+            error: "You have been blocked for excessive requests.",
+          });
       }
 
       // 🚀 SUCCESS → safe to access API

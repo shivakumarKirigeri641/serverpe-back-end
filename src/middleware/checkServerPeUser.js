@@ -6,11 +6,15 @@ const checkServerPeUser = async (req, res, next) => {
     const token = req.cookies.token; // or serverpe_user_token
 
     if (!token) {
-      return res.status(401).json({
-        status: "Failed",
-        successstatus: false,
-        message: "Token not found!",
-      });
+      return res
+        .status(401)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          status: "Failed",
+          successstatus: false,
+          message: "Token not found!",
+        });
     }
 
     // Verify token
@@ -22,11 +26,15 @@ const checkServerPeUser = async (req, res, next) => {
   } catch (err) {
     console.error("Auth Error:", err.message);
 
-    return res.status(401).json({
-      status: "Failed",
-      successstatus: false,
-      message: "Invalid or expired token!",
-    });
+    return res
+      .status(401)
+      .json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        status: "Failed",
+        successstatus: false,
+        message: "Invalid or expired token!",
+      });
   }
 };
 

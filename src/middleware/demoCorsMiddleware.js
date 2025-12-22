@@ -28,10 +28,14 @@ module.exports = function demoCorsMiddleware(req, res, next) {
       );
 
       if (!allowed) {
-        return res.status(403).json({
-          error:
-            "Demo API access is allowed only from ServerPe sample UI domains",
-        });
+        return res
+          .status(403)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            error:
+              "Demo API access is allowed only from ServerPe sample UI domains",
+          });
       }
 
       // Block Postman / curl / non-browser
@@ -40,9 +44,13 @@ module.exports = function demoCorsMiddleware(req, res, next) {
         userAgent.includes("postman") ||
         userAgent.includes("curl")
       ) {
-        return res.status(403).json({
-          error: "Demo API keys are browser-only",
-        });
+        return res
+          .status(403)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            error: "Demo API keys are browser-only",
+          });
       }
 
       // Allow CORS only for valid origin

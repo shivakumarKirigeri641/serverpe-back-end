@@ -61,7 +61,12 @@ userRouter.get(
       console.error(err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -83,7 +88,12 @@ userRouter.get(
       console.error(err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -100,11 +110,15 @@ userRouter.post(
     try {
       //client = await getPostgreClient(poolMain);
       if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
+        res
+          .status(401)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            status: "Failed",
+            successstatus: false,
+            message: "Unauthorized user!",
+          });
       }
       let result = validateForFeedbackInsert(req);
       if (result.successstatus) {
@@ -115,7 +129,12 @@ userRouter.post(
       console.error(err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -132,20 +151,28 @@ userRouter.get(
     try {
       //client = await getPostgreClient(poolMain);
       if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
+        res
+          .status(401)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            status: "Failed",
+            successstatus: false,
+            message: "Unauthorized user!",
+          });
       }
       const apiendpoints = await getApiEndPoints(poolMain);
       return res.status(apiendpoints.statuscode).json(apiendpoints);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({
-        error: "Internal Server Error",
-        message: err.message,
-      });
+      return res
+        .status(500)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -162,11 +189,15 @@ userRouter.get(
     try {
       //client = await getPostgreClient(poolMain);
       if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
+        res
+          .status(401)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            status: "Failed",
+            successstatus: false,
+            message: "Unauthorized user!",
+          });
       }
       const result_walletrecharge = await getWalletAndRechargeInformation(
         poolMain,
@@ -177,10 +208,14 @@ userRouter.get(
         .json(result_walletrecharge);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({
-        error: "Internal Server Error",
-        message: err.message,
-      });
+      return res
+        .status(500)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -197,11 +232,15 @@ userRouter.get(
     try {
       //client = await getPostgreClient(poolMain);
       if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
+        res
+          .status(401)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            status: "Failed",
+            successstatus: false,
+            message: "Unauthorized user!",
+          });
       }
       const result_usageanalytics = await getUsageAnalytics(poolMain, req);
       return res
@@ -209,10 +248,14 @@ userRouter.get(
         .json(result_usageanalytics);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({
-        error: "Internal Server Error",
-        message: err.message,
-      });
+      return res
+        .status(500)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -229,11 +272,15 @@ userRouter.get(
     try {
       //client = await getPostgreClient(poolMain);
       if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
+        res
+          .status(401)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            status: "Failed",
+            successstatus: false,
+            message: "Unauthorized user!",
+          });
       }
       const result_usageanalytics = await getUserDashboardData(poolMain, req);
       return res
@@ -241,10 +288,14 @@ userRouter.get(
         .json(result_usageanalytics);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({
-        error: "Internal Server Error",
-        message: err.message,
-      });
+      return res
+        .status(500)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -261,20 +312,28 @@ userRouter.get(
     try {
       //client = await getPostgreClient(poolMain);
       if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
+        res
+          .status(401)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            status: "Failed",
+            successstatus: false,
+            message: "Unauthorized user!",
+          });
       }
       const result_userprofile = await getUserProfile(poolMain, req);
       return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({
-        error: "Internal Server Error",
-        message: err.message,
-      });
+      return res
+        .status(500)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -291,11 +350,15 @@ userRouter.put(
     try {
       //client = await getPostgreClient(poolMain);
       if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
+        res
+          .status(401)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            status: "Failed",
+            successstatus: false,
+            message: "Unauthorized user!",
+          });
       }
       let result_userprofile = validateForUserProfile(req);
       if (!result_userprofile.successstatus) {
@@ -304,10 +367,14 @@ userRouter.put(
       return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({
-        error: "Internal Server Error",
-        message: err.message,
-      });
+      return res
+        .status(500)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -336,10 +403,14 @@ userRouter.post(
       return res.status(result_order.statuscode).json(result_order);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({
-        error: "Internal Server Error",
-        message: err.message,
-      });
+      return res
+        .status(500)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -366,16 +437,27 @@ userRouter.post(
 
       if (expectedSignature === razorpay_signature) {
         // ✅ Payment verified
-        return res.json({ statuscode: 200, successstatus: true });
+        return res.json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          statuscode: 200,
+          successstatus: true,
+        });
       } else {
-        return res.status(400).json({ success: false });
+        return res
+          .status(400)
+          .json({ poweredby: "serverpe.in", mock_data: true, success: false });
       }
     } catch (err) {
       console.error(err);
-      return res.status(500).json({
-        error: "Internal Server Error",
-        message: err.message,
-      });
+      return res
+        .status(500)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
@@ -400,13 +482,24 @@ userRouter.post(
       );
 
       //send greetings sms & to your self alert when user recharges
-      res.status(200).json({ successstatus: true, data: result });
+      res
+        .status(200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          successstatus: true,
+          data: result,
+        });
     } catch (err) {
       console.error(err);
-      return res.status(500).json({
-        error: "Internal Server Error",
-        message: err.message,
-      });
+      return res
+        .status(500)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
       //if (poolMain) client.release();
     }
