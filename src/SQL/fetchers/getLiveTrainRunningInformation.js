@@ -131,8 +131,13 @@ ORDER BY so.station_sequence;
       message: "Train details not found!",
     };
   } else {
+    const result_train_details = await client.query(
+      `select train_number, train_name, train_type, zone, station_from, station_to, train_runs_on_mon, train_runs_on_tue, train_runs_on_wed, train_runs_on_thu, train_runs_on_fri, train_runs_on_sat, train_runs_on_sun from trains where train_number=$1`,
+      [train_number]
+    );
     return {
-      trains_list: result.rows,
+      train_details: result_train_details.rows[0],
+      live_list: result.rows,
       message: "Trains details fetched successfully!",
     };
   }
