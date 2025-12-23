@@ -3,6 +3,7 @@ const insertContactMeData = async (
   client,
   user_name,
   email,
+  rating,
   category,
   message = null
 ) => {
@@ -16,8 +17,8 @@ const insertContactMeData = async (
     );
   }
   const result = await client.query(
-    `insert into serverpe_contactme (user_name, emailid, fkcategory, message) values ($1,$2,$3,$4) returning *`,
-    [user_name, email, result_category.rows[0].id, message]
+    `insert into serverpe_contactme (user_name, emailid, fkcategory, rating, message) values ($1,$2,$3,$4,$5) returning *`,
+    [user_name, email, rating, result_category.rows[0].id, message]
   );
   //alert notifification to me with SMS when user gives contact form
   //await sendAlertForContactRequestSMS(user_name, email, category);

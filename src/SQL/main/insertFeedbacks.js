@@ -23,6 +23,18 @@ const insertFeedbacks = async (client, mobile_number, jsondata) => {
       jsondata.message,
     ]
   );
+  await client.query(
+    `insert into serverpe_contactme (user_name, emailid, fkcategory, rating, message) values ($1,$2,$3,$4,$5) returning *`,
+    [
+      result_user.rows[0].user_name,
+      result_user.rows[0].myemail
+        ? result_user.rows[0].myemail
+        : "dummy@gmail.com",
+      result_category.rows[0].id,
+      jsondata.rating,
+      jsondata.message,
+    ]
+  );
   //alert notifification to me with SMS when user feedback gives
   /*await sendAlertForFeedbackSMS(
     result_user.rows[0].mobile_number,

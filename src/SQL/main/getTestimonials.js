@@ -1,6 +1,6 @@
 const getTestimonials = async (client) => {
   const result = await client.query(
-    `select cm.user_name, cc.category_name, cm.message, cm.created_at from serverpe_contactme cm join serverpe_contactcategory cc on cc.id = cm.fkcategory order by cm.created_at`
+    `select cm.user_name, cc.category_name, cm.message, cm.rating, cm.created_at from serverpe_contactme cm join serverpe_contactcategory cc on cc.id = cm.fkcategory order by cm.created_at`
   );
   return {
     statuscode: 200,

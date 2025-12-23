@@ -15,9 +15,9 @@ where suser.mobile_number=$1`,
   );
   //plan details
   const result_plan = await client.query(
-    `select pricing.price, pricing.price_name from serverpe_apipricing pricing left join serverpe_user_apikeywallet_credit credit
+    `select credit.id, pricing.price, pricing.price_name from serverpe_apipricing pricing left join serverpe_user_apikeywallet_credit credit
 on credit.fk_pricing = pricing.id join serverpe_user suser on 
-suser.id=credit.fk_user where suser.mobile_number=$1
+suser.id=credit.fk_user where suser.mobile_number=$1 order by credit.id desc
     `,
     [req.mobile_number]
   );

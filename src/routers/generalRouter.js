@@ -50,14 +50,12 @@ generalRouter.post("/mockapis/serverpeuser/send-otp", async (req, res) => {
     return res.status(validationresult.statuscode).json(validationresult);
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
   } finally {
     if (client) client.release();
   }
@@ -94,14 +92,12 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
       .json(validateforverifyotpresult);
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
   } finally {
     if (client) client.release();
   }
@@ -117,15 +113,13 @@ generalRouter.get("/mockapis/serverpeuser/testimonials", async (req, res) => {
     return res.status(testimonialsdata.statuscode).json(testimonialsdata);
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-        message: err.message,
-      });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+      message: err.message,
+    });
   } finally {
     if (client) client.release();
   }
@@ -143,6 +137,7 @@ generalRouter.post("/mockapis/serverpeuser/contact-me", async (req, res) => {
         client,
         req.body.user_name,
         req.body.email,
+        req.body.rating ? req.body.rating : 5,
         req.body.category_name,
         req.body.message
       );
@@ -150,14 +145,12 @@ generalRouter.post("/mockapis/serverpeuser/contact-me", async (req, res) => {
     return res.status(resultcontactme.statuscode).json(resultcontactme);
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
   } finally {
     if (client) client.release();
   }
@@ -175,15 +168,13 @@ generalRouter.get(
       return res.status(feedbackcategories.statuscode).json(feedbackcategories);
     } catch (err) {
       console.error(err);
-      return res
-        .status(500)
-        .json({
-          poweredby: "serverpe.in",
-          mock_data: true,
-          error: "Internal Server Error",
-          message: err.message,
-          message: err.message,
-        });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+        message: err.message,
+      });
     } finally {
       if (client) client.release();
     }
@@ -198,24 +189,20 @@ generalRouter.get("/mockapis/serverpeuser/states", async (req, res) => {
     clientMain = await getPostgreClient(poolMain);
     // 2️⃣ Business Logic
     const result = await getStatesAndTerritories(clientMain);
-    return res
-      .status(result.statuscode ? result.statuscode : 200)
-      .json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        success: true,
-        data: result,
-      });
+    return res.status(result.statuscode ? result.statuscode : 200).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      success: true,
+      data: result,
+    });
   } catch (err) {
     console.error("API Error:", err);
-    return res
-      .status(500)
-      .json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
   } finally {
     if (clientMain) clientMain.release();
   }
@@ -231,14 +218,12 @@ generalRouter.get("/mockapis/serverpeuser/api-plans", async (req, res) => {
     return res.status(plansResult.statuscode).json(plansResult);
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
   } finally {
     if (client) client.release();
   }
@@ -254,14 +239,12 @@ generalRouter.get("/mockapis/serverpeuser/all-endpoints", async (req, res) => {
     return res.status(apiendpoints.statuscode).json(apiendpoints);
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
   } finally {
     if (client) client.release();
   }
@@ -292,28 +275,24 @@ generalRouter.get(
         res.download(filePath, (err) => {
           if (err) {
             console.error("File download error:", err);
-            res
-              .status(500)
-              .json({
-                poweredby: "serverpe.in",
-                mock_data: true,
-                success: false,
-                message: "Unable to download file",
-              });
+            res.status(500).json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              success: false,
+              message: "Unable to download file",
+            });
           }
         });
       }
     } catch (err) {
       console.error(err);
-      return res
-        .status(500)
-        .json({
-          poweredby: "serverpe.in",
-          mock_data: true,
-          error: "Internal Server Error",
-          message: err.message,
-          message: err.message,
-        });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+        message: err.message,
+      });
     } finally {
       if (client) client.release();
     }
@@ -344,28 +323,24 @@ generalRouter.get(
         res.download(filePath, (err) => {
           if (err) {
             console.error("File download error:", err);
-            res
-              .status(500)
-              .json({
-                poweredby: "serverpe.in",
-                mock_data: true,
-                success: false,
-                message: "Unable to download file",
-              });
+            res.status(500).json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              success: false,
+              message: "Unable to download file",
+            });
           }
         });
       }
     } catch (err) {
       console.error(err);
-      return res
-        .status(500)
-        .json({
-          poweredby: "serverpe.in",
-          mock_data: true,
-          error: "Internal Server Error",
-          message: err.message,
-          message: err.message,
-        });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+        message: err.message,
+      });
     } finally {
       if (client) client.release();
     }
