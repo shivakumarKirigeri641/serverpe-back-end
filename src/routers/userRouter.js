@@ -351,48 +351,6 @@ userRouter.put(
   }
 );
 // ======================================================
-//                user invoice profileupdate
-// ======================================================
-userRouter.put(
-  "/mockapis/serverpeuser/loggedinuser/user-invoice-profile-update",
-  checkServerPeUser,
-  async (req, res) => {
-    let client;
-    try {
-      //client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          poweredby: "serverpe.in",
-          mock_data: true,
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
-      }
-      let result_userinvoiceprofile = validateForInvoiceUserProfile(req?.body);
-      if (result_userinvoiceprofile.successstatus) {
-        result_userinvoiceprofile = await updateUserForInvoiceProfile(
-          poolMain,
-          req
-        );
-      }
-      return res
-        .status(result_userinvoiceprofile.statuscode)
-        .json(result_userinvoiceprofile);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
-    } finally {
-      //if (poolMain) client.release();
-    }
-  }
-);
-// ======================================================
 //                razorpay order
 // ======================================================
 userRouter.post(
@@ -481,12 +439,13 @@ userRouter.post(
     let client;
     try {
       //client = await getPostgreClient(poolMain);
-      const { razorpay_payment_id } = req.body;
+      const { razorpay_payment_id, summaryFormData } = req.body;
       let result = await razorpay.payments.fetch(razorpay_payment_id);
       result = await insertTransactionDetails(
         poolMain,
         result,
-        req.mobile_number
+        req.mobile_number,
+        summaryFormData
       );
 
       //send greetings sms & to your self alert when user recharges
