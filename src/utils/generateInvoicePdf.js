@@ -10,7 +10,7 @@ const generateInvoicePdf = (apiResponse) => {
     result_credit,
   } = apiResponse;
 
-  const invoiceNo = `SP-${result_transaction.id}`;
+  const invoiceNo = `SP-${result_credit.id}`;
   const fileName = `ServerPe_Invoice_${invoiceNo}.pdf`;
   const filePath = path.join(
     path.resolve(__dirname, "..", "docs", "invoices"),

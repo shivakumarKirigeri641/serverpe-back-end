@@ -1,4 +1,6 @@
 const validateForAmount = require("../validations/main/validateForAmount");
+const fs = require("fs");
+const path = require("path");
 const crypto = require("crypto");
 const generateInvoicePdf = require("../utils/generateInvoicePdf");
 const express = require("express");
@@ -456,6 +458,58 @@ userRouter.post(
         mock_data: true,
         successstatus: true,
         data: result,
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      //if (poolMain) client.release();
+    }
+  }
+);
+// ======================================================
+//                invoicd download
+// ======================================================
+userRouter.get(
+  "/mockapis/serverpeuser/loggedinuser/invoices/download/:id",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      const fileName = `ServerPe_Invoice_SP-${req.params.id.replace(
+        "CRD_",
+        ""
+      )}.pdf`;
+      const filePath = path.join(
+        path.resolve(__dirname, "..", "docs", "invoices"),
+        fileName
+      );
+      //check if file exists
+      fs.access(filePath, fs.constants.F_OK, (err) => {
+        if (err) {
+          return res.status(500).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            error: "Internal Server Error",
+            message: "Invoice not found!",
+          });
+        }
+      });
+      res.download(filePath, fileName, (err) => {
+        if (err) {
+          console.error("File download error:", err);
+          res.status(500).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            success: false,
+            message: "Unable to download file",
+          });
+        }
       });
     } catch (err) {
       console.error(err);
