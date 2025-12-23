@@ -30,6 +30,7 @@
     "mammoth": "^1.11.0",
     "node-cron": "^4.2.1",
     "nodemon": "^3.1.10",
+    "pdfkit": "^0.17.2",
     "pg": "^8.16.3",
     "puppeteer": "^24.33.0",
     "razorpay": "^2.9.6",

@@ -1,5 +1,6 @@
 const validateForAmount = require("../validations/main/validateForAmount");
 const crypto = require("crypto");
+const generateInvoicePdf = require("../utils/generateInvoicePdf");
 const express = require("express");
 const razorpay = require("../utils/razorpay");
 const getStatesAndTerritories = require("../SQL/PINCODES/getStatesAndTerritories");
@@ -447,7 +448,8 @@ userRouter.post(
         req.mobile_number,
         summaryFormData
       );
-
+      //create invoice pdf here and store it in docs/invoices.
+      const { filePath, fileName } = generateInvoicePdf(result);
       //send greetings sms & to your self alert when user recharges
       res.status(200).json({
         poweredby: "serverpe.in",
