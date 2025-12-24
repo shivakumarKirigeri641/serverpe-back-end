@@ -7,6 +7,7 @@ const {
   connectBikeSpecsDB,
   connectMainDB,
 } = require("./database/connectDB");
+const PORT = process.env.PORT || 8888;
 const path = require("path");
 const app = new express();
 const cors = require("cors");
@@ -48,6 +49,6 @@ connectMockTrainTicketsDb();
 connectPinCodeDB();
 connectCarSpecsDB();
 connectBikeSpecsDB();
-app.listen(process.env.PGOPTIONALPORT || 8888, () => {
-  console.log("Server is listening now.");
+app.listen(PORT, () => {
+  console.log(`Server is listening on port ${PORT}`);
 });
