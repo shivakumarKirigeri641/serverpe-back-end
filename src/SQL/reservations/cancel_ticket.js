@@ -21,7 +21,7 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1 for update`,
     );
     if (0 === result_booking_details.rows.length) {
       return {
-        statuscode: 204,
+        statuscode: 422,
         successstatus: false,
         message: `Passenger details not found for pnr ${pnr}`,
       };

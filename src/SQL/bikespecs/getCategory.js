@@ -7,7 +7,7 @@ const getCategory = async (client, makename, modelname, bike_type) => {
     return result.rows;
   } else {
     return {
-      statuscode: 204,
+      statuscode: 422,
       successstatus: false,
       message: "Grade information not found!",
     };

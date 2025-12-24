@@ -48,7 +48,7 @@ let usageStatus = {};
 //                PINCODE details
 // ======================================================
 pincodeRouter.post(
-  "/mockapis/serverpeuser/api/pincode-details",
+  "/mockapis/serverpeuser/api/pincodes/pincode-details",
   securityMiddleware(redis, {
     rateLimit: 3, // 3 req/sec
     scraperLimit: 50, // 50 req/10 sec
@@ -60,82 +60,109 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
 
       // 2️⃣ Business Logic
       //validate
       let result = validatePinCode(req.body);
       if (result.successstatus) {
-        result = await getDetailsFromPinCode(clientPin, req.body.pincode);
+        result = await getDetailsFromPinCode(poolPin, req.body.pincode);
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
           return res.status(429).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: validatedetails,
-      });
-    } catch (err) {
-      console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
-    } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
-    }
-  }
-);
-// ======================================================
-//                PINCODE API (FIXED)
-// ======================================================
-pincodeRouter.get(
-  "/mockapis/serverpeuser/api/pincodes",
-  securityMiddleware(redis, {
-    rateLimit: 3, // 3 req/sec
-    scraperLimit: 50, // 50 req/10 sec
-    windowSeconds: 10, // detect scraping in 10 sec window
-    blockDuration: 3600, // block for 1 hour
-  }),
-  checkApiKey,
-  async (req, res) => {
-    let clientMain;
-    let clientPin;
-    try {
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
-      // 2️⃣ Business Logic
-      const result = await getAllPinCodes(clientPin);
-      if (!result.statuscode) {
-        // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
-        if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
-        }
-      }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: true,
         remaining_calls: usageStatus.remaining,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
+    }
+  }
+);
+// ======================================================
+//                PINCODE API (FIXED)
+// ======================================================
+pincodeRouter.post(
+  "/mockapis/serverpeuser/api/pincodes/search-keyword",
+  securityMiddleware(redis, {
+    rateLimit: 3, // 3 req/sec
+    scraperLimit: 50, // 50 req/10 sec
+    windowSeconds: 10, // detect scraping in 10 sec window
+    blockDuration: 3600, // block for 1 hour
+  }),
+  checkApiKey,
+  async (req, res) => {
+    let clientMain;
+    let clientPin;
+    try {
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
+      // 2️⃣ Business Logic
+      //const result = await getAllPinCodes(poolPin);
+      const q = req.body.query?.trim() || "";
+      const limit = parseInt(req.body.limit) || 20;
+      const skip = parseInt(req.body.skip) || 0;
+      const canSearchByContent = req.body.canSearchByContent || false;
+      const canSearchByWholeWord = req.body.canSearchByWholeWord || true;
+      result = await getAllPinCodes(
+        poolPin,
+        q,
+        limit,
+        skip,
+        canSearchByContent,
+        canSearchByWholeWord
+      );
+      if (!result.statuscode) {
+        // 1️⃣ Atomic usage deduction (fixed)
+        usageStatus = await updateApiUsage(poolMain, req);
+        if (!usageStatus.ok) {
+          return res.status(429).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            error: usageStatus.message,
+          });
+        }
+      }
+      return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        success: true,
+        remaining_calls: usageStatus.remaining,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -155,32 +182,38 @@ pincodeRouter.get(
     let clientMain;
     let clientPin;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      console.log("calling state");
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
 
       // 2️⃣ Business Logic
-      const result = await getStatesAndTerritories(clientPin);
+      const result = await getStatesAndTerritories(poolPin);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
-          return res.status(429).json({
+          return res.status(429).json({poweredby:'serverpe.in', mock_data:true, 
             error: usageStatus.message,
           });
         }
       }*/
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: true,
         data: result,
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -200,24 +233,29 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
+      console.log("calling district");
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
       // 2️⃣ Business Logic
       let result = validateState(req);
       if (result.successstatus) {
-        result = await getDistrictFromState(clientPin, req.body.selectedState);
+        result = await getDistrictFromState(poolPin, req.body.selectedState);
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
+          return res.status(422).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: result.successstatus,
         remaining_calls: usageStatus.remaining,
         message: result.message,
@@ -225,12 +263,15 @@ pincodeRouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -250,29 +291,34 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
+      console.log("calling block");
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
 
       // 2️⃣ Business Logic
       let result = validateDistrictAndState(req);
       if (result.successstatus) {
         result = await getBlockFromDistrict(
-          clientPin,
+          poolPin,
           req.body.selectedState,
           req.body.selectedDistrict
         );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: result.successstatus,
         remaining_calls: usageStatus.remaining,
         message: result.message,
@@ -280,12 +326,15 @@ pincodeRouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -305,15 +354,16 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
+      console.log("calling branchgype");
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
 
       // 2️⃣ Business Logic
       let result = validateBlockDistrictAndState(req);
       if (result.successstatus) {
         result = await getBranchTypeFromBlock(
-          clientPin,
+          poolPin,
           req.body.selectedState,
           req.body.selectedDistrict,
           req.body.selectedBlock
@@ -321,14 +371,18 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: result.successstatus,
         remaining_calls: usageStatus.remaining,
         message: result.message,
@@ -336,12 +390,15 @@ pincodeRouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );
@@ -362,14 +419,14 @@ pincodeRouter.post(
     let clientPin;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientPin = await getPostgreClient(poolPin);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientPin = await getPostgreClient(poolPin);
 
       // 2️⃣ Business Logic
       let result = validateBranchTypeBlockDistrictAndState(req);
       if (result.successstatus) {
         result = await getFullDetailsFromBranchType(
-          clientPin,
+          poolPin,
           req.body.selectedState,
           req.body.selectedDistrict,
           req.body.selectedBlock,
@@ -378,14 +435,18 @@ pincodeRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
           return res.status(429).json({
+            poweredby: "serverpe.in",
+            mock_data: true,
             error: usageStatus.message,
           });
         }
       }
       return res.status(result.statuscode ? result.statuscode : 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         success: result.successstatus,
         remaining_calls: usageStatus.remaining,
         message: result.message,
@@ -393,12 +454,15 @@ pincodeRouter.post(
       });
     } catch (err) {
       console.error("API Error:", err);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientPin) clientPin.release();
+      //if (clientMain) clientMain.release();
+      //if (poolPin) clientPin.release();
     }
   }
 );

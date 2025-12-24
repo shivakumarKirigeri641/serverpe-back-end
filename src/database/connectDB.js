@@ -23,86 +23,102 @@ function testConnection(pool, label) {
    DEFAULT DB (PGDATABASE)
 ============================================ */
 const connectMockTrainTicketsDb = () => {
-  if (!pool) {
-    pool = new Pool({
-      host: process.env.PGHOST,
-      database: process.env.PGDATABASEMOCKTRAINTICKETS,
-      user: process.env.PGUSER,
-      password: process.env.PGPASSWORD,
-      port: process.env.PGPORT,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-      keepAlive: true,
-    });
+  try {
+    if (!pool) {
+      pool = new Pool({
+        host: process.env.PGHOST,
+        database: process.env.PGDATABASEMOCKTRAINTICKETS,
+        user: process.env.PGUSER,
+        password: process.env.PGPASSWORD,
+        port: process.env.PGPORT,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+        keepAlive: true,
+      });
 
-    testConnection(pool, "Mock train tickets DB");
+      testConnection(pool, "Mock train tickets DB");
+    }
+    return pool;
+  } catch (err) {
+    console.log("error in mocktrain db:", err.message);
   }
-  return pool;
 };
 /* ============================================
    DEFAULT DB (CARSPECS)
 ============================================ */
 const connectCarSpecsDB = () => {
-  if (!poolcaspecs) {
-    poolcaspecs = new Pool({
-      host: process.env.PGHOST,
-      database: process.env.PGDATABASECARSPECS,
-      user: process.env.PGUSER,
-      password: process.env.PGPASSWORD,
-      port: process.env.PGPORT,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-      keepAlive: true,
-    });
+  try {
+    if (!poolcaspecs) {
+      poolcaspecs = new Pool({
+        host: process.env.PGHOST,
+        database: process.env.PGDATABASECARSPECS,
+        user: process.env.PGUSER,
+        password: process.env.PGPASSWORD,
+        port: process.env.PGPORT,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+        keepAlive: true,
+      });
 
-    testConnection(poolcaspecs, "CARSPECS DB");
+      testConnection(poolcaspecs, "CARSPECS DB");
+    }
+    return poolcaspecs;
+  } catch (err) {
+    console.log("error in carspec db:", err.message);
   }
-  return poolcaspecs;
 };
 /* ============================================
    DEFAULT DB (BIKESPEC)
 ============================================ */
 const connectBikeSpecsDB = () => {
-  if (!poolbikepecs) {
-    poolbikepecs = new Pool({
-      host: process.env.PGHOST,
-      database: process.env.PGDATABASEBIKESPECS,
-      user: process.env.PGUSER,
-      password: process.env.PGPASSWORD,
-      port: process.env.PGPORT,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-      keepAlive: true,
-    });
+  try {
+    if (!poolbikepecs) {
+      poolbikepecs = new Pool({
+        host: process.env.PGHOST,
+        database: process.env.PGDATABASEBIKESPECS,
+        user: process.env.PGUSER,
+        password: process.env.PGPASSWORD,
+        port: process.env.PGPORT,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+        keepAlive: true,
+      });
 
-    testConnection(poolbikepecs, "BIKESPECS DB");
+      testConnection(poolbikepecs, "BIKESPECS DB");
+    }
+    return poolbikepecs;
+  } catch (err) {
+    console.log("error in bikespec db:", err.message);
   }
-  return poolbikepecs;
 };
 
 /* ============================================
    PINCODE DB (PGDATABASEPINCODES)
 ============================================ */
 const connectPinCodeDB = () => {
-  if (!poolpincode) {
-    poolpincode = new Pool({
-      host: process.env.PGHOST,
-      database: process.env.PGDATABASEPINCODES,
-      user: process.env.PGUSER,
-      password: process.env.PGPASSWORD,
-      port: process.env.PGPORT,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-      keepAlive: true,
-    });
+  try {
+    if (!poolpincode) {
+      poolpincode = new Pool({
+        host: process.env.PGHOST,
+        database: process.env.PGDATABASEPINCODES,
+        user: process.env.PGUSER,
+        password: process.env.PGPASSWORD,
+        port: process.env.PGPORT,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+        keepAlive: true,
+      });
 
-    testConnection(poolpincode, "PINCODE DB");
+      testConnection(poolpincode, "PINCODE DB");
+    }
+    return poolpincode;
+  } catch (err) {
+    console.log("error in mocktrain db:", err.message);
   }
-  return poolpincode;
 };
 
 /* ============================================

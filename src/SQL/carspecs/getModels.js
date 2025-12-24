@@ -7,7 +7,7 @@ const getModels = async (client, makename) => {
     return result.rows;
   } else {
     return {
-      statuscode: 204,
+      statuscode: 422,
       successstatus: false,
       message: "Model details not found!",
     };

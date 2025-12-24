@@ -13,7 +13,7 @@ const getBikeList = async (
     return result.rows;
   } else {
     return {
-      statuscode: 204,
+      statuscode: 422,
       successstatus: false,
       message: "bikes information not found!",
     };

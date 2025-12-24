@@ -19,7 +19,7 @@ const validateotp = async (client, mobile_number, otp) => {
       [mobile_number, otp]
     );
     //get user
-    const result_user = await client.query(
+    let result_user = await client.query(
       `select *from serverpe_user where mobile_number=$1`,
       [mobile_number]
     );
@@ -27,6 +27,11 @@ const validateotp = async (client, mobile_number, otp) => {
     if (result_user.rows[0].apikey_text) {
       result_apikey = result_user.rows[0].apikey_text;
       secretkey = result_user.rows[0].secret_key;
+      //update firsttime_subscription_status to false;
+      result_user = await client.query(
+        `update serverpe_user set firsttime_subscription_status=$1 where mobile_number=$2`,
+        [false, result_user.rows[0].mobile_number]
+      );
     } else {
       //generate api key & update
       result_apikey = await generateapikey(

@@ -18,6 +18,7 @@ const pincodeRouter = require("./routers/pincodeRouter");
 const carspecrouter = require("./routers/carspecrouter");
 const bikespecrouter = require("./routers/bikespecrouter");
 const checkApiKey = require("./middleware/checkApiKey");
+const demoCorsMiddleware = require("./middleware/demoCorsMiddleware");
 require("dotenv").config();
 app.use((req, res, next) => {
   const start = Date.now();
@@ -29,10 +30,11 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:1234",
+    origin: process.env.BASE_URL,
     credentials: true,
   })
 );
+app.use(demoCorsMiddleware);
 app.use(cookieParser());
 app.use("/images", express.static(path.join(__dirname, "images")));
 app.use("/", mockTrainReservedTicketRouter);
@@ -41,11 +43,11 @@ app.use("/", carspecrouter);
 app.use("/", bikespecrouter);
 app.use("/", pincodeRouter);
 app.use("/", userRouter);
+connectMainDB();
 connectMockTrainTicketsDb();
 connectPinCodeDB();
 connectCarSpecsDB();
 connectBikeSpecsDB();
-connectMainDB();
-app.listen(8888, "0.0.0.0", () => {
+app.listen(process.env.PGOPTIONALPORT || 8888, () => {
   console.log("Server is listening now.");
 });

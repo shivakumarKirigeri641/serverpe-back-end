@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const getTestimonials = require("../SQL/main/getTestimonials");
 const insertContactMeData = require("../SQL/main/insertContactMeData");
 const validateForAddingContactMeData = require("../validations/main/validateForAddingContactMeData");
@@ -6,6 +7,7 @@ const getAllFeedbackCategories = require("../SQL/main/getAllFeedbackCategories")
 const validateSendOtp = require("../validations/main/validateSendOtp");
 const generateToken = require("../utils/generateToken");
 const getPostgreClient = require("../SQL/getPostgreClient");
+const getMockApiCategoryDownloadPaths = require("../SQL/main/getMockApiCategoryDownloadPaths");
 const { connectMainDB } = require("../database/connectDB");
 const insertotpentry = require("../SQL/main/insertotpentry");
 const getStatesAndTerritories = require("../SQL/main/getStatesAndTerritories");
@@ -18,6 +20,7 @@ const getApiEndPoints = require("../SQL/main/getApiEndPoints");
 const generateOtp = require("../utils/generateOtp");
 require("dotenv").config();
 const Redis = require("ioredis");
+const convertDocxToPdf = require("../utils/convertDocxToPdf");
 
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -47,9 +50,12 @@ generalRouter.post("/mockapis/serverpeuser/send-otp", async (req, res) => {
     return res.status(validationresult.statuscode).json(validationresult);
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({ error: "Internal Server Error", message: err.message });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
   } finally {
     if (client) client.release();
   }
@@ -86,9 +92,12 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
       .json(validateforverifyotpresult);
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({ error: "Internal Server Error", message: err.message });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
   } finally {
     if (client) client.release();
   }
@@ -105,6 +114,8 @@ generalRouter.get("/mockapis/serverpeuser/testimonials", async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
       error: "Internal Server Error",
       message: err.message,
       message: err.message,
@@ -126,6 +137,7 @@ generalRouter.post("/mockapis/serverpeuser/contact-me", async (req, res) => {
         client,
         req.body.user_name,
         req.body.email,
+        req.body.rating ? req.body.rating : 5,
         req.body.category_name,
         req.body.message
       );
@@ -134,6 +146,8 @@ generalRouter.post("/mockapis/serverpeuser/contact-me", async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
       error: "Internal Server Error",
       message: err.message,
     });
@@ -155,6 +169,8 @@ generalRouter.get(
     } catch (err) {
       console.error(err);
       return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
         error: "Internal Server Error",
         message: err.message,
         message: err.message,
@@ -174,14 +190,19 @@ generalRouter.get("/mockapis/serverpeuser/states", async (req, res) => {
     // 2️⃣ Business Logic
     const result = await getStatesAndTerritories(clientMain);
     return res.status(result.statuscode ? result.statuscode : 200).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
       success: true,
       data: result,
     });
   } catch (err) {
     console.error("API Error:", err);
-    return res
-      .status(500)
-      .json({ error: "Internal Server Error", message: err.message });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
   } finally {
     if (clientMain) clientMain.release();
   }
@@ -197,9 +218,12 @@ generalRouter.get("/mockapis/serverpeuser/api-plans", async (req, res) => {
     return res.status(plansResult.statuscode).json(plansResult);
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({ error: "Internal Server Error", message: err.message });
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
   } finally {
     if (client) client.release();
   }
@@ -216,6 +240,8 @@ generalRouter.get("/mockapis/serverpeuser/all-endpoints", async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
       error: "Internal Server Error",
       message: err.message,
     });
@@ -223,4 +249,101 @@ generalRouter.get("/mockapis/serverpeuser/all-endpoints", async (req, res) => {
     if (client) client.release();
   }
 });
+// ======================================================
+//                download api-doc-zips
+// ======================================================
+generalRouter.get(
+  "/mockapis/serverpeuser/download/apidoc/:id",
+  async (req, res) => {
+    let client;
+    try {
+      const { id } = req?.params;
+      if (!id) {
+        throw {
+          error: "Internal Server Error",
+          message: "Invalid mock api caetgory id provided!",
+        };
+      }
+      client = await getPostgreClient(poolMain);
+      const result = await getMockApiCategoryDownloadPaths(client, id);
+      console.log("result from apidoc:", result.data[0].api_doc_path);
+      if (result.successtatus) {
+        const filePath = path.join(
+          path.resolve(__dirname, "..", ".."),
+          result.data[0].api_doc_path
+        );
+        res.download(filePath, (err) => {
+          if (err) {
+            console.error("File download error:", err);
+            res.status(500).json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              success: false,
+              message: "Unable to download file",
+            });
+          }
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
+// ======================================================
+//                download postman-collection
+// ======================================================
+generalRouter.get(
+  "/mockapis/serverpeuser/download/postmancollection/:id",
+  async (req, res) => {
+    let client;
+    try {
+      const { id } = req?.params;
+      if (!id) {
+        throw {
+          error: "Internal Server Error",
+          message: "Invalid mock api caetgory id provided!",
+        };
+      }
+      client = await getPostgreClient(poolMain);
+      const result = await getMockApiCategoryDownloadPaths(client, id);
+      if (result.successtatus) {
+        const filePath = path.join(
+          path.resolve(__dirname, "..", ".."),
+          result.data[0].api_postman_collection_path
+        );
+        res.download(filePath, (err) => {
+          if (err) {
+            console.error("File download error:", err);
+            res.status(500).json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              success: false,
+              message: "Unable to download file",
+            });
+          }
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+        message: err.message,
+      });
+    } finally {
+      if (client) client.release();
+    }
+  }
+);
 module.exports = generalRouter;

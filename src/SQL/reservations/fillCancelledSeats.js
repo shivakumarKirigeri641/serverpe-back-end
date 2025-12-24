@@ -137,31 +137,36 @@ where c.train_number = $1 and sl.seat_status='WTL' order by sl.id;`,
     else {
       for (let i = 0; i < result_confirmed_ticket_cancelled.rows.length; i++) {
         //confirm
-        await client.query(
-          `update seatallocation_${table_suffix} set fkpassengerdata = $1 where fkpassengerdata = $2`,
-          [
-            result_wtl_instead_of_rac_details.rows[i].fkpassengerdata,
-            result_confirmed_ticket_cancelled.rows[i].fkpassengerdata,
-          ]
-        );
+        //if no waiting list
+        if (0 < result_wtl_instead_of_rac_details.rows.length) {
+          await client.query(
+            `update seatallocation_${table_suffix} set fkpassengerdata = $1 where fkpassengerdata = $2`,
+            [
+              result_wtl_instead_of_rac_details.rows[i].fkpassengerdata,
+              result_confirmed_ticket_cancelled.rows[i].fkpassengerdata,
+            ]
+          );
+        }
         //delete that rac entries
-        await client.query(
-          `delete from seatallocation_${table_suffix} where id = $1`,
-          [result_wtl_instead_of_rac_details.rows[i].id]
-        );
-        //update passengerdata
-        await client.query(
-          `update passengerdata set seat_status=$1, updated_seat_status=$2 where id=$3`,
-          [
-            "CNF",
-            result_confirmed_ticket_cancelled.rows[i].coach +
-              "/" +
-              result_confirmed_ticket_cancelled.rows[i].seat_number +
-              "/" +
-              result_confirmed_ticket_cancelled.rows[i].berth,
-            result_wtl_instead_of_rac_details.rows[i].fkpassengerdata,
-          ]
-        );
+        if (0 < result_wtl_instead_of_rac_details.rows.length) {
+          await client.query(
+            `delete from seatallocation_${table_suffix} where id = $1`,
+            [result_wtl_instead_of_rac_details.rows[i].id]
+          );
+          //update passengerdata
+          await client.query(
+            `update passengerdata set seat_status=$1, updated_seat_status=$2 where id=$3`,
+            [
+              "CNF",
+              result_confirmed_ticket_cancelled.rows[i].coach +
+                "/" +
+                result_confirmed_ticket_cancelled.rows[i].seat_number +
+                "/" +
+                result_confirmed_ticket_cancelled.rows[i].berth,
+              result_wtl_instead_of_rac_details.rows[i].fkpassengerdata,
+            ]
+          );
+        }
       }
       //now again update sequence number in updated_seat_status wtl
       let result_wtl_details = await client.query(

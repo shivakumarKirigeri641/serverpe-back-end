@@ -1,0 +1,315 @@
+{
+	"info": {
+		"_postman_id": "fd8a2044-0e82-4f46-9739-553214084e1a",
+		"name": "serverpe_pincodes",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23347977"
+	},
+	"item": [
+		{
+			"name": "test_all_pincodes",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/pincodes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"pincodes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_states",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/pincodes/states",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"pincodes",
+						"states"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_districts",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"selectedState\":\"Karnataka\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/pincodes/districts",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"pincodes",
+						"districts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_blocks",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"selectedState\":\"Karnataka\",\r\n    \"selectedDistrict\":\"Uttara Kannada\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/pincodes/blocks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"pincodes",
+						"blocks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_branchtype",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"selectedState\":\"Karnataka\",\r\n    \"selectedDistrict\":\"Uttara Kannada\",\r\n    \"selectedBlock\":\"Sirsi\"   \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/pincodes/branchtypes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"pincodes",
+						"branchtypes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_pincode-list",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"selectedState\":\"Karnataka\",\r\n    \"selectedDistrict\":\"Uttara Kannada\",\r\n    \"selectedBlock\":\"Sirsi\",\r\n    \"selectedBranchType\":\"Sub Post Office\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/pincodes/pincode-list",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"pincodes",
+						"pincode-list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_pincode",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"pincode\":\"573133\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/pincode-details",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"pincode-details"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

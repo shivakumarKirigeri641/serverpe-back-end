@@ -7,6 +7,7 @@ const searchTrainsBetweenSatations = require("../SQL/fetchers/searchTrainsBetwee
 const getPnrStatus = require("../SQL/fetchers/getPnrStatus");
 const getReservationType = require("../SQL/fetchers/getReservationType");
 const getCoachType = require("../SQL/fetchers/getCoachType");
+const validateForTrainNumber = require("../validations/mocktrainreservations/validateForTrainNumber");
 const {
   connectMockTrainTicketsDb,
   connectMainDB,
@@ -62,31 +63,40 @@ mockTrainReservedTicketRouter.get(
     let clientMain;
     let clientMockTrain;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
-      const result = await getStations(clientMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
+      const result = await getStations(poolMockTrain);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
-          return res.status(429).json({
+          return res.status(429).json({poweredby:'serverpe.in', mock_data:true, 
             error: usageStatus.message,
           });
         }
       }*/
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -106,31 +116,40 @@ mockTrainReservedTicketRouter.get(
     let clientMain;
     let clientMockTrain;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
-      const result = await getReservationType(clientMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
+      const result = await getReservationType(poolMockTrain);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
-          return res.status(429).json({
+          return res.status(429).json({poweredby:'serverpe.in', mock_data:true, 
             error: usageStatus.message,
           });
         }
       }*/
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -150,31 +169,40 @@ mockTrainReservedTicketRouter.get(
     let clientMain;
     let clientMockTrain;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
-      const result = await getCoachType(clientMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
+      const result = await getCoachType(poolMockTrain);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
-          return res.status(429).json({
+          return res.status(429).json({poweredby:'serverpe.in', mock_data:true, 
             error: usageStatus.message,
           });
         }
       }*/
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -195,31 +223,47 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
-      const result = await getTrainSchedule(clientMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
+      let result = validateForTrainNumber(req);
+      if (result.successstatus) {
+        result = await getTrainSchedule(poolMockTrain, req.body.train_number);
+      }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -239,8 +283,8 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       // Validate request
       let result = validateForSearchTrains(req);
       //repair
@@ -249,30 +293,38 @@ mockTrainReservedTicketRouter.post(
       // 1️⃣ Atomic usage deduction (fixed)
       if (result.successstatus) {
         result = await searchTrains(
-          clientMockTrain,
+          poolMockTrain,
           req.body.source_code.toUpperCase(),
           req.body.destination_code.toUpperCase(),
           req.body.doj
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       next(err);
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -293,13 +345,13 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       //validation later
       let result = validateForTrainsBetweenTwostations(req);
       if (result.successstatus) {
         result = await searchTrainsBetweenSatations(
-          clientMockTrain,
+          poolMockTrain,
           req.body.source_code.toUpperCase(),
           req.body.destination_code.toUpperCase(),
           req.body.via_code
@@ -307,26 +359,39 @@ mockTrainReservedTicketRouter.post(
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -348,35 +413,48 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
 
       let result = validateForProceedBooking(req);
       if (result.successstatus) {
-        result = await proceedBooking(clientMockTrain, req.body);
+        result = await proceedBooking(poolMockTrain, req.body);
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -397,39 +475,52 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForConfirmBooking(req);
       //handle throw
       if (result.successstatus) {
         result = await confirmBooking(
-          clientMockTrain,
+          poolMockTrain,
           req.body.booking_id,
           req.body.can_send_mock_ticket_sms
         );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -450,35 +541,52 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForCancelTicket(req);
       //handle throw
       if (result.successstatus) {
-        result = await cancel_ticket(clientMockTrain, req.body);
+        result = await cancel_ticket(
+          poolMockTrain,
+          req.body.pnr.toUpperCase(),
+          req.body.passengerids
+        );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -499,36 +607,48 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForPNRStatus(req);
       //handle throw
       if (result.successstatus) {
-        result = await getPnrStatus(clientMockTrain, req.body.pnr);
+        result = await getPnrStatus(poolMockTrain, req.body.pnr.toUpperCase());
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        //usageStatus not found if returns with 204/404/422
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -549,38 +669,48 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForBookingHistory(req);
       //handle throw
       if (result.successstatus) {
-        result = await getBookingHistory(
-          clientMockTrain,
-          req.body.mobile_number
-        );
+        result = await getBookingHistory(poolMockTrain, req.body.mobile_number);
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -601,38 +731,51 @@ mockTrainReservedTicketRouter.post(
     let clientMockTrain;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForLiveTrainRunningStatus(req);
       //handle throw
       if (result.successstatus) {
         result = await getLiveTrainRunningInformation(
-          clientMockTrain,
+          poolMockTrain,
           req.body.train_number
         );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );
@@ -654,39 +797,52 @@ mockTrainReservedTicketRouter.post(
     let usageStatus = {};
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientMockTrain = await getPostgreClient(poolMockTrain);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientMockTrain = await getPostgreClient(poolMockTrain);
       let result = validateForLiveStation(req);
       //handle throw
       if (result.successstatus) {
         result = await getLiveStation(
-          clientMockTrain,
+          poolMockTrain,
           req.body.station_code,
           req.body.next_hours
         );
       }
       if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientMockTrain) clientMockTrain.release();
+      //if (clientMain) clientMain.release();
+      //if (poolMockTrain) clientMockTrain.release();
     }
   }
 );

@@ -3,11 +3,12 @@ const sendAlertForRechargeConfirmationSMS = require("../../utils/sendAlertForRec
 const insertTransactionDetails = async (
   client,
   transaction_data,
-  mobile_number
+  mobile_number,
+  summaryFormData
 ) => {
   // 1️⃣ Get user
   const result_user = await client.query(
-    `SELECT id, user_name, mobile_number FROM serverpe_user WHERE mobile_number = $1`,
+    `SELECT * FROM serverpe_user WHERE mobile_number = $1`,
     [mobile_number]
   );
 
@@ -109,11 +110,16 @@ const insertTransactionDetails = async (
     ]
   );
   const result_credit = await client.query(
-    `insert into serverpe_user_apikeywallet_credit (fk_user, fk_pricing, fktransaction_details) values ($1,$2,$3) returning *`,
+    `insert into serverpe_user_apikeywallet_credit (fk_user, fk_pricing, fktransaction_details, invoice_user_name, invoice_email, invoice_address, invoice_mobile_number, credit_reason) values ($1,$2,$3,$4,$5,$6,$7,$8) returning *`,
     [
       result_user.rows[0].id,
       result_api.rows[0].id,
       result_transaction.rows[0].id,
+      summaryFormData?.user_name,
+      summaryFormData?.myemail,
+      summaryFormData?.address,
+      summaryFormData?.mobile_number,
+      result_api.rows[0].price_name,
     ]
   );
   //user sms

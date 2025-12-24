@@ -17,7 +17,7 @@ const searchTrainsBetweenSatations = async (
     ]);
     if (0 === result_src.rows.length) {
       return {
-        statuscode: 204,
+        statuscode: 422,
         successstatus: false,
         message: `Source ${source_code} not found!`,
       };
@@ -28,7 +28,7 @@ const searchTrainsBetweenSatations = async (
     ]);
     if (0 === result_dest.rows.length) {
       return {
-        statuscode: 204,
+        statuscode: 422,
         successstatus: false,
         message: `Destination ${destination_code} not found!`,
       };
@@ -41,7 +41,7 @@ const searchTrainsBetweenSatations = async (
       );
       if (0 === result_dest.rows.length) {
         return {
-          statuscode: 204,
+          statuscode: 422,
           successstatus: false,
           message: `In-between station mentioned was not found!`,
         };

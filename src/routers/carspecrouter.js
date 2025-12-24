@@ -49,30 +49,39 @@ carspecrouter.get(
     let clientMain;
     let clientCarSpecs;
     try {
-      clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
-      const result = await getMakes(clientCarSpecs);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientCarSpecs = await getPostgreClient(poolCarSpecs);
+      const result = await getMakes(poolCarSpecs);
       /*if (!result.statuscode) {
         // 1️⃣ Atomic usage deduction (fixed)
-        usageStatus = await updateApiUsage(clientMain, req);
+        usageStatus = await updateApiUsage(poolMain, req);
         if (!usageStatus.ok) {
-          return res.status(429).json({
+          return res.status(429).json({poweredby:'serverpe.in', mock_data:true, 
             error: usageStatus.message,
           });
         }
       }*/
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      //if (clientMain) clientMain.release();
+      //if (poolCarSpecs) clientCarSpecs.release();
     }
   }
 );
@@ -93,33 +102,46 @@ carspecrouter.post(
     let clientCarSpecs;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForModels(req);
       if (result.successstatus) {
-        result = await getModels(clientCarSpecs, req.body.brand);
+        result = await getModels(poolCarSpecs, req.body.brand);
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus?.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus?.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      //if (clientMain) clientMain.release();
+      //if (poolCarSpecs) clientCarSpecs.release();
     }
   }
 );
@@ -140,37 +162,46 @@ carspecrouter.post(
     let clientCarSpecs;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForSeries(req);
       if (result.successstatus) {
-        result = await getSeries(
-          clientCarSpecs,
-          req.body.brand,
-          req.body.model
-        );
+        result = await getSeries(poolCarSpecs, req.body.brand, req.body.model);
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus?.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus?.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      //if (clientMain) clientMain.release();
+      //if (poolCarSpecs) clientCarSpecs.release();
     }
   }
 );
@@ -191,38 +222,51 @@ carspecrouter.post(
     let clientCarSpecs;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForGrades(req);
       if (result.successstatus) {
         result = await getGrades(
-          clientCarSpecs,
+          poolCarSpecs,
           req.body.brand,
           req.body.model,
           req.body.series
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus?.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus?.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      //if (clientMain) clientMain.release();
+      //if (poolCarSpecs) clientCarSpecs.release();
     }
   }
 );
@@ -243,12 +287,12 @@ carspecrouter.post(
     let clientCarSpecs;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForCarList(req);
       if (result.successstatus) {
         result = await getCarList(
-          clientCarSpecs,
+          poolCarSpecs,
           req.body.brand,
           req.body.model,
           req.body.series,
@@ -256,26 +300,39 @@ carspecrouter.post(
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus?.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus?.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      //if (clientMain) clientMain.release();
+      //if (poolCarSpecs) clientCarSpecs.release();
     }
   }
 );
@@ -296,33 +353,46 @@ carspecrouter.post(
     let clientCarSpecs;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForCarSpecs(req);
       if (result.successstatus) {
-        result = await getCarSpecs(clientCarSpecs, req.body.id);
+        result = await getCarSpecs(poolCarSpecs, req.body.id);
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus?.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus?.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      //if (clientMain) clientMain.release();
+      //if (poolCarSpecs) clientCarSpecs.release();
     }
   }
 );
@@ -343,41 +413,58 @@ carspecrouter.post(
     let clientCarSpecs;
     try {
       const start = Date.now();
-      clientMain = await getPostgreClient(poolMain);
-      clientCarSpecs = await getPostgreClient(poolCarSpecs);
+      //clientMain = await getPostgreClient(poolMain);
+      //clientCarSpecs = await getPostgreClient(poolCarSpecs);
       let result = validateForSearchCars(req);
       if (result.successstatus) {
         const q = req.body.query?.trim() || "";
         const limit = parseInt(req.body.limit) || 20;
         const skip = parseInt(req.body.skip) || 0;
+        const canSearchByWholeWord = req.body.canSearchByWholeWord || false;
+        const canSearchByContent = req.body.canSearchByContent || true;
         result = await searchCars(
-          clientCarSpecs,
-          req.body.query,
-          req.body.limit,
-          req.body.skip
+          poolCarSpecs,
+          q,
+          limit,
+          skip,
+          canSearchByWholeWord,
+          canSearchByContent
         );
       }
       if (!result.statuscode) {
-        usageStatus = await updateApiUsage(clientMain, req, start);
+        usageStatus = await updateApiUsage(poolMain, req, start);
         if (!usageStatus.ok) {
-          return res.status(429).json({
-            error: usageStatus.message,
-          });
+          return res
+            .status(429)
+            .json({
+              poweredby: "serverpe.in",
+              mock_data: true,
+              error: usageStatus.message,
+            });
         }
       }
-      return res.status(result.statuscode ? result.statuscode : 200).json({
-        success: true,
-        remaining_calls: usageStatus?.remaining,
-        data: result,
-      });
+      return res
+        .status(result.statuscode ? result.statuscode : 200)
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: true,
+          remaining_calls: usageStatus?.remaining,
+          data: result,
+        });
     } catch (err) {
       console.error("API Error:", err);
       return res
         .status(500)
-        .json({ error: "Internal Server Error", message: err.message });
+        .json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Internal Server Error",
+          message: err.message,
+        });
     } finally {
-      if (clientMain) clientMain.release();
-      if (clientCarSpecs) clientCarSpecs.release();
+      //if (clientMain) clientMain.release();
+      //if (poolCarSpecs) clientCarSpecs.release();
     }
   }
 );

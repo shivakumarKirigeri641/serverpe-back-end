@@ -8,7 +8,13 @@ const rateLimitPerApiKey = (limit = 3, windowMs = 1000) => {
 
     try {
       if (!apiKey) {
-        return res.status(401).json({ error: "API key required" });
+        return res
+          .status(401)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            error: "API key required",
+          });
       }
 
       const now = Date.now();
@@ -29,9 +35,13 @@ const rateLimitPerApiKey = (limit = 3, windowMs = 1000) => {
 
       // Still in the same 1-second window → check limit
       if (entry.count >= limit) {
-        return res.status(429).json({
-          error: "Too many requests. Slow down.",
-        });
+        return res
+          .status(429)
+          .json({
+            poweredby: "serverpe.in",
+            mock_data: true,
+            error: "Too many requests. Slow down.",
+          });
       }
 
       entry.count++;

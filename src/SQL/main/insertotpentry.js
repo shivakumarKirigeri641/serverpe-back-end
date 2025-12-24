@@ -21,7 +21,7 @@ const insertotpentry = async (client, data, otp) => {
         [data.user_name, data.mobile_number, data.stateid]
       );
     }
-    //here call fast2sms otp sms api
+    //alert here call fast2sms otp sms api
     await sendOTPSMS(data.mobile_number, otp, 3);
     await client.query(
       `insert into serverpe_otpstore (mobile_number, otp, expires_at) values ($1,$2, NOW() + INTERVAL '3 minutes') returning *`,

@@ -1,0 +1,309 @@
+{
+	"info": {
+		"_postman_id": "17dbd48e-9dd5-4b30-9b5c-97692cb768da",
+		"name": "serverpe_cars_specs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23347977"
+	},
+	"item": [
+		{
+			"name": "test_makes",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/carspecs/car-makes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"carspecs",
+						"car-makes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_car_models",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"brand\":\"tata\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/carspecs/car-models",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"carspecs",
+						"car-models"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_car_series",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"brand\":\"tata\",\r\n    \"model\":\"curvv\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/carspecs/car-series",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"carspecs",
+						"car-series"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_car_grades",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"brand\":\"tata\",\r\n    \"model\":\"curvv\",\r\n    \"series\":\"curvv\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/carspecs/car-grades",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"carspecs",
+						"car-grades"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_car_list",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"brand\":\"tata\",\r\n    \"model\":\"curvv\",\r\n    \"series\":\"curvv\",\r\n    \"grade\":\"EV 45 kWh (150 Hp)\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/carspecs/car-list",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"carspecs",
+						"car-list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_car_spec",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\":51406\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/carspecs/car-specs",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"carspecs",
+						"car-specs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "test_search_cars",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-api-key",
+						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
+						"type": "text"
+					},
+					{
+						"key": "x-secret-key",
+						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"query\":\"tata\",\r\n    \"limit\":10,\r\n    \"skip\":0\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8888/mockapis/serverpeuser/api/carspecs/search-cars",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"mockapis",
+						"serverpeuser",
+						"api",
+						"carspecs",
+						"search-cars"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

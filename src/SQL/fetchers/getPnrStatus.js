@@ -5,7 +5,7 @@ const getPnrStatus = async (client, pnr) => {
   );
   if (0 === result_pnr.rows.length) {
     return {
-      statuscode: 204,
+      statuscode: 422,
       successstatus: false,
       message: "PNR details not found!",
     };
@@ -27,7 +27,7 @@ join coachtype ct on ct.id = b.fkcoach_type where b.pnr= $1`,
   );
   if (0 === result_pnr.rows.length) {
     return {
-      statuscode: 204,
+      statuscode: 422,
       successstatus: false,
       message: `pnr not found!`,
     };

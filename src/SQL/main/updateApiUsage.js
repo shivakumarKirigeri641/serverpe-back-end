@@ -5,6 +5,17 @@ const updateApiUsage = async (client, req, start) => {
   const apiKey = req.headers["x-api-key"];
   const secretKey = req.headers["x-secret-key"];
 
+  //check if demo key, then return ok
+  const isDemoKey =
+    apiKey === process.env.DEMO_API_KEY &&
+    secretKey === process.env.DEMO_SECRET_KEY;
+  if (isDemoKey) {
+    return {
+      ok: true,
+      remaining: null,
+      userId: null,
+    };
+  }
   if (!apiKey || !secretKey) {
     return { ok: false, message: "API key and secret key required" };
   }
