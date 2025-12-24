@@ -1,5 +1,5 @@
 const axios = require("axios");
-const allocateSeat_2a = require("../../utils/allocateSeat_2a");
+const allocateSeat_2a = require("../../utils/allocateSeat_2A");
 require("dotenv").config();
 const getPnrNumber = require("../../utils/getPnrNumber");
 const book_2a = async (
