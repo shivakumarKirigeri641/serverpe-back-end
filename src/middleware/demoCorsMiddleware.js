@@ -1,11 +1,5 @@
-const DEMO_ALLOWED_ORIGINS = [
-  "https://pincodes.serverpe.in",
-  "https://carspec.serverpe.in",
-  "https://bikespec.serverpe.in",
-  "https://mocktrainreserve.serverpe.in",
-  "http://localhost:1234",
-];
-
+require("dotenv").config();
+const DEMO_ALLOWED_ORIGINS = process.env.BASE_UI_URLS.split(",");
 module.exports = function demoCorsMiddleware(req, res, next) {
   try {
     const apiKey = req.headers["x-api-key"];
@@ -28,14 +22,12 @@ module.exports = function demoCorsMiddleware(req, res, next) {
       );
 
       if (!allowed) {
-        return res
-          .status(403)
-          .json({
-            poweredby: "serverpe.in",
-            mock_data: true,
-            error:
-              "Demo API access is allowed only from ServerPe sample UI domains",
-          });
+        return res.status(403).json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error:
+            "Demo API access is allowed only from ServerPe sample UI domains",
+        });
       }
 
       // Block Postman / curl / non-browser
@@ -44,13 +36,11 @@ module.exports = function demoCorsMiddleware(req, res, next) {
         userAgent.includes("postman") ||
         userAgent.includes("curl")
       ) {
-        return res
-          .status(403)
-          .json({
-            poweredby: "serverpe.in",
-            mock_data: true,
-            error: "Demo API keys are browser-only",
-          });
+        return res.status(403).json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          error: "Demo API keys are browser-only",
+        });
       }
 
       // Allow CORS only for valid origin

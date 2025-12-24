@@ -452,7 +452,6 @@ userRouter.post(
       );
       //create invoice pdf here and store it in docs/invoices.
       const { filePath, fileName } = generateInvoicePdf(result);
-      //send greetings sms & to your self alert when user recharges
       res.status(200).json({
         poweredby: "serverpe.in",
         mock_data: true,

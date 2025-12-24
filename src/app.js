@@ -30,7 +30,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:1234",
+    origin: process.env.BASE_URL,
     credentials: true,
   })
 );
@@ -48,6 +48,6 @@ connectMockTrainTicketsDb();
 connectPinCodeDB();
 connectCarSpecsDB();
 connectBikeSpecsDB();
-app.listen(8888, "0.0.0.0", () => {
+app.listen(process.env.PGOPTIONALPORT || 8888, () => {
   console.log("Server is listening now.");
 });

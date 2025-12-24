@@ -123,7 +123,7 @@ const insertTransactionDetails = async (
     ]
   );
   //user sms
-  /*await sendRechargeConfirmationSMS(
+  await sendRechargeConfirmationSMS(
     result_user.rows[0].mobile_number,
     transaction_data.amount / 100,
     result_api.rows[0].api_calls_count,
@@ -134,7 +134,7 @@ const insertTransactionDetails = async (
     result_user.rows[0].user_name,
     result_user.rows[0].mobile_number,
     transaction_data.amount / 100
-  );*/
+  );
   return {
     status: 200,
     successstatus: true,
