@@ -1,4 +1,4 @@
-const book_e3 = require("../reservations/book_e3");
+const book_e3 = require("../reservations/booK_e3");
 const insertticketdata_e3 = async (client, booking_id) => {
   let confirm_details = {};
   const result_details = await client.query(
