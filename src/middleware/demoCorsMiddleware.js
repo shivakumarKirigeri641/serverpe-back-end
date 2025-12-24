@@ -1,5 +1,5 @@
 require("dotenv").config();
-const DEMO_ALLOWED_ORIGINS = process.env.BASE_UI_URLS.split(",");
+const DEMO_ALLOWED_ORIGINS = process.env.BASE_UI_URLS?.split(",");
 module.exports = function demoCorsMiddleware(req, res, next) {
   try {
     const apiKey = req.headers["x-api-key"];
