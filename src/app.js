@@ -37,6 +37,14 @@ app.use(
 );
 app.use(demoCorsMiddleware);
 app.use(cookieParser());
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    service: "ServerPe API",
+    message: "API is running successfully 🚀",
+  });
+});
+
 app.use("/images", express.static(path.join(__dirname, "images")));
 app.use("/", mockTrainReservedTicketRouter);
 app.use("/", generalRouter);
