@@ -346,4 +346,24 @@ generalRouter.get(
     }
   }
 );
+// ======================================================
+//health check
+// ======================================================
+generalRouter.get("/mockapis/health/check", async (req, res) => {
+  let client;
+  try {
+    res.status(200).json({ status: "ok" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+      message: err.message,
+    });
+  } finally {
+    if (client) client.release();
+  }
+});
 module.exports = generalRouter;
