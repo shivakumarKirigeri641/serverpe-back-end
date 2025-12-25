@@ -29,7 +29,7 @@ const validateotp = async (client, mobile_number, otp) => {
       secretkey = result_user.rows[0].secret_key;
       //update firsttime_subscription_status to false;
       result_user = await client.query(
-        `update serverpe_user set firsttime_subscription_status=$1 where mobile_number=$2`,
+        `update serverpe_user set firsttime_subscription_status=$1 where mobile_number=$2 returning *`,
         [false, result_user.rows[0].mobile_number]
       );
     } else {
