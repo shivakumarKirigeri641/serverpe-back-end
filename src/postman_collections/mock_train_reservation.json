@@ -282,7 +282,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"mobile_number\":\"9886122415\"\r\n}",
+					"raw": "{\r\n    \"mobile_number\":\"9*********\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -370,7 +370,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"train_number\": \"17391\",\r\n    \"doj\": \"2025-12-23\",\r\n    \"coach_type\": \"sl\",\r\n    \"source_code\": \"ypr\",\r\n    \"destination_code\": \"hvr\",\r\n    \"mobile_number\": \"9886122415\",\r\n    \"reservation_type\": \"gen\",\r\n    \"passenger_details\": [\r\n        {\r\n            \"passenger_name\":\"Amruta\",\r\n            \"passenger_gender\":\"F\",\r\n            \"passenger_age\":36,\r\n            \"passenger_ischild\": false,\r\n            \"passenger_issenior\": false\r\n        }\r\n\r\n    ]\r\n}",
+					"raw": "{\r\n    \"train_number\": \"17391\",\r\n    \"doj\": \"2025-12-23\",\r\n    \"coach_type\": \"sl\",\r\n    \"source_code\": \"ypr\",\r\n    \"destination_code\": \"hvr\",\r\n    \"mobile_number\": \"9*********\",\r\n    \"reservation_type\": \"gen\",\r\n    \"passenger_details\": [\r\n        {\r\n            \"passenger_name\":\"Amruta\",\r\n            \"passenger_gender\":\"F\",\r\n            \"passenger_age\":36,\r\n            \"passenger_ischild\": false,\r\n            \"passenger_issenior\": false\r\n        }\r\n\r\n    ]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

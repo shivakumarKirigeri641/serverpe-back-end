@@ -6,7 +6,7 @@ const sendAlertForContactRequestSMS = async (
   feedback_category
 ) => {
   const fast2smsResp = await axios.get(
-    `https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.FAST2SMSAPIKEY}&route=dlt&sender_id=SRVRPE&message=205286&variables_values=${user_name}|${email}|${feedback_category}&numbers=9886122415`
+    `https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.FAST2SMSAPIKEY}&route=dlt&sender_id=SRVRPE&message=205286&variables_values=${user_name}|${email}|${feedback_category}&numbers=${process.env.MYOWNNUMBER}`
   );
 
   if (fast2smsResp.data && fast2smsResp.data.return) {
