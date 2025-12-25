@@ -1,5 +1,9 @@
 const express = require("express");
-//require("./crons/mock_Train_Scheduler");
+const path = require("path");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+require("dotenv").config();
+
 const {
   connectMockTrainTicketsDb,
   connectPinCodeDB,
@@ -7,36 +11,48 @@ const {
   connectBikeSpecsDB,
   connectMainDB,
 } = require("./database/connectDB");
-const PORT = process.env.PORT || 8888;
-const path = require("path");
-const app = new express();
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
+
 const mockTrainReservedTicketRouter = require("./routers/mockTrainReservedTicketRouter");
 const generalRouter = require("./routers/generalRouter");
 const userRouter = require("./routers/userRouter");
 const pincodeRouter = require("./routers/pincodeRouter");
 const carspecrouter = require("./routers/carspecrouter");
 const bikespecrouter = require("./routers/bikespecrouter");
-const checkApiKey = require("./middleware/checkApiKey");
 const demoCorsMiddleware = require("./middleware/demoCorsMiddleware");
-require("dotenv").config();
+
+const PORT = process.env.PORT || 8888;
+const app = express();
+
+/* 🔐 MUST be before CORS & cookies */
+app.set("trust proxy", 1);
+
+/* Measure latency */
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
-    req.latency = Date.now() - start; // store latency in ms
+    req.latency = Date.now() - start;
   });
   next();
 });
+
 app.use(express.json());
+
+/* ✅ CORS for cross-subdomain cookies */
 app.use(
   cors({
-    origin: process.env.BASE_URL,
+    origin: [
+      "https://serverpe.in",
+      "https://admin.serverpe.in",
+      "https://carspecs.serverpe.in",
+    ],
     credentials: true,
   })
 );
-app.use(demoCorsMiddleware);
+
 app.use(cookieParser());
+app.use(demoCorsMiddleware);
+
+/* Health check */
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "OK",
@@ -45,18 +61,24 @@ app.get("/", (req, res) => {
   });
 });
 
+/* Static files */
 app.use("/images", express.static(path.join(__dirname, "images")));
+
+/* Routes */
 app.use("/", mockTrainReservedTicketRouter);
 app.use("/", generalRouter);
 app.use("/", carspecrouter);
 app.use("/", bikespecrouter);
 app.use("/", pincodeRouter);
 app.use("/", userRouter);
+
+/* DB connections */
 connectMainDB();
 connectMockTrainTicketsDb();
 connectPinCodeDB();
 connectCarSpecsDB();
 connectBikeSpecsDB();
+
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
