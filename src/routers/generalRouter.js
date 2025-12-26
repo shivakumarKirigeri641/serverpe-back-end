@@ -68,13 +68,18 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
   let client;
   try {
     client = await getPostgreClient(poolMain);
-
+    const ipAddress =
+      (req.headers["x-forwarded-for"] &&
+        req.headers["x-forwarded-for"].split(",")[0]) ||
+      req.socket?.remoteAddress ||
+      null;
     let validateforverifyotpresult = validateverifyOtp(req.body);
     if (validateforverifyotpresult.successstatus) {
       validateforverifyotpresult = await validateotp(
         client,
         req.body.mobile_number,
-        req.body.otp
+        req.body.otp,
+        ipAddress
       );
       if (validateforverifyotpresult.successstatus) {
         const token = generateToken(req.body.mobile_number);

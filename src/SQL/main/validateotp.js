@@ -1,7 +1,7 @@
 const generateapikey = require("../../utils/generateapikey");
 const generateSecretKey = require("../../utils/generateSecretKey");
 const sendLoggedInUserSMS = require("../../utils/sendLoggedInUserSMS");
-const validateotp = async (client, mobile_number, otp) => {
+const validateotp = async (client, mobile_number, otp, ipAddress) => {
   let result_apikey = null;
   //first delete if entry has expired!
   await client.query(`delete from serverpe_otpstore where expires_at < NOW()`);
@@ -63,7 +63,7 @@ const validateotp = async (client, mobile_number, otp) => {
     }
     //alert notifification to me with SMS when user logins
     /*await sendLoggedInUserSMS(
-      result_user.rows[0].user_name,
+      ipAddress,
       result_user.rows[0].mobile_number
     );*/
     return {

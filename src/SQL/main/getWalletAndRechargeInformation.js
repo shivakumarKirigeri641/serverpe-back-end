@@ -5,10 +5,9 @@ const getWalletAndRechargeInformation = async (client, req) => {
   );
   //credit details
   const result_latestdetails = await client.query(
-    `select suser.user_name, suser.mobile_number, s.state_name, suser.created_at as member_since, suser.updated_at as last_login, wallet.outstanding_apikey_count_free, wallet.outstanding_apikey_count, plan.price, plan.price_name from serverpe_apipricing plan 
+    `select suser.mobile_number, suser.created_at as member_since, suser.updated_at as last_login, wallet.outstanding_apikey_count_free, wallet.outstanding_apikey_count, plan.price, plan.price_name from serverpe_apipricing plan 
     left join serverpe_user_apikeywallet_credit credit on credit.fk_pricing = plan.id
-    join serverpe_user suser on suser.id = credit.fk_user
-    left join states s on s.id = suser.fk_state
+    join serverpe_user suser on suser.id = credit.fk_user    
     join serverpe_user_apikeywallet wallet on wallet.fk_user = suser.id
     where suser.mobile_number=$1 order by credit.created_at desc limit 1;`,
     [req.mobile_number]
@@ -28,8 +27,6 @@ const getWalletAndRechargeInformation = async (client, req) => {
 FROM serverpe_user suser
 JOIN serverpe_apihistory apihistory
     ON apihistory.user_id = suser.id
-JOIN states s
-    ON s.id = suser.fk_state
 
 WHERE suser.mobile_number = $1
 ORDER BY apihistory.created_at DESC;
@@ -51,9 +48,6 @@ LEFT JOIN serverpe_apipricing pricing
     ON pricing.id = credit.fk_pricing
 JOIN serverpe_user_apikeywallet wallet
     ON wallet.fk_user = suser.id
-JOIN states s
-    ON s.id = suser.fk_state
-
 WHERE suser.mobile_number = $1
 ORDER BY credit.created_at DESC;
 `,
