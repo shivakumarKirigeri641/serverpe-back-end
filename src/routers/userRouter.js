@@ -31,7 +31,6 @@ const getApiEndPoints = require("../SQL/main/getApiEndPoints");
 const getWalletAndRechargeInformation = require("../SQL/main/getWalletAndRechargeInformation");
 const getUserDashboardData = require("../SQL/main/getUserDashboardData");
 const getUserProfile = require("../SQL/main/getUserProfile");
-const validateForUserProfile = require("../validations/main/validateForUserProfile");
 const validateForInvoiceUserProfile = require("../validations/main/validateForInvoiceUserProfile");
 const { default: axios } = require("axios");
 const { resourceLimits } = require("worker_threads");
