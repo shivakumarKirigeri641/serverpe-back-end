@@ -13,6 +13,10 @@ const generateInvoicePdf = (apiResponse) => {
   }`;
   const invoiceNo = `SP-${result_credit?.id}`;
   const fileName = `ServerPe_Invoice_${invoiceNo}.pdf`;
+  const dirPath = path.resolve(__dirname, "..", "docs", "invoices");
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
   const filePath = path.join(
     path.resolve(__dirname, "..", "docs", "invoices"),
     fileName
