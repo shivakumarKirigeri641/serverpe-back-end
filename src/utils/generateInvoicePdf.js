@@ -34,8 +34,8 @@ const generateInvoicePdf = (apiResponse) => {
 
   // --- WATERMARK ---
   doc.save();
-  doc.opacity(0.25);
-  doc.fontSize(100).font("Helvetica-Bold");
+  doc.opacity(0.35);
+  doc.fontSize(120).font("Helvetica-Bold");
   doc.fillColor("#4f46e5");
   doc.rotate(-45, { origin: [300, 400] });
   doc.text("ServerPe", 100, 400, { align: "center" });
@@ -67,13 +67,13 @@ const generateInvoicePdf = (apiResponse) => {
     .fillColor("#1e293b")
     .fontSize(36)
     .font("Helvetica-Bold")
-    .text("INVOICE", 300, 50, { align: "center" });
+    .text("INVOICE", 50, 110, { align: "center", width: 500 });
 
   doc
     .fillColor("#6366f1")
     .fontSize(10)
     .font("Helvetica")
-    .text("Official Tax Invoice", 300, 80, { align: "center" });
+    .text("Official Tax Invoice", 50, 138, { align: "center", width: 500 });
 
   // --- COMPANY DETAILS ---
   doc.fontSize(11).fillColor("#1e293b").font("Helvetica-Bold");
@@ -185,11 +185,11 @@ const generateInvoicePdf = (apiResponse) => {
   doc.rect(290, summaryY + 78, 210, 1).fill("#e2e8f0");
 
   // Grand Total highlight with shadow effect
-  doc.rect(290, summaryY + 82, 210, 32).fill("#4f46e5");
+  doc.rect(280, summaryY + 82, 270, 32).fill("#4f46e5");
   doc.fontSize(11).font("Helvetica-Bold").fillColor("#ffffff");
-  doc.text("GRAND TOTAL", 300, summaryY + 93);
+  doc.text("GRAND TOTAL", 290, summaryY + 93);
   doc.fontSize(13).font("Helvetica-Bold").fillColor("#fbbf24");
-  doc.text(`₹${totalPaid.toFixed(2)}`, 485, summaryY + 93, { align: "right" });
+  doc.text(`₹${totalPaid.toFixed(2)}`, 530, summaryY + 93, { align: "right" });
 
   // --- TERMS & CONDITIONS ---
   doc.fontSize(8).fillColor("#64748b").font("Helvetica-Bold");
