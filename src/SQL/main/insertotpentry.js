@@ -17,8 +17,8 @@ const insertotpentry = async (client, data, otp) => {
     if (0 < result_user.rows.length) {
     } else {
       await client.query(
-        `insert into serverpe_user (user_name, mobile_number, fk_state) values ($1,$2,$3) returning *;`,
-        [data.user_name, data.mobile_number, data.stateid]
+        `insert into serverpe_user (mobile_number) values ($1) returning *;`,
+        [data.mobile_number]
       );
     }
     //alert here call fast2sms otp sms api

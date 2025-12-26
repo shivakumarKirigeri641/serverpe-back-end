@@ -38,11 +38,10 @@ const validateotp = async (client, mobile_number, otp) => {
         mobile_number,
         result_user.rows[0].fk_state
       );
-      secretkey = await generateSecretKey();
       //update user
       await client.query(
-        `update serverpe_user set apikey_text = $1, secret_key=$2 where mobile_number = $3`,
-        [result_apikey, secretkey, mobile_number]
+        `update serverpe_user set apikey_text = $1 where mobile_number = $2`,
+        [result_apikey, mobile_number]
       );
       //getpricing
       const result_free_Price = await client.query(
