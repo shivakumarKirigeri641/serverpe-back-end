@@ -4,7 +4,13 @@ const path = require("path");
 
 const generateInvoicePdf = (apiResponse) => {
   const { result_transaction, result_credit } = apiResponse;
-
+  const currentData = new Date();
+  const year = currentData.getFullYear();
+  const month = currentData.getMonth() + 1;
+  const day = currentData.getDate();
+  const invoice_id = `${
+    result_credit?.invoice_prefix + year + month + day + result_credit?.id
+  }`;
   const invoiceNo = `SP-${result_credit?.id}`;
   const fileName = `ServerPe_Invoice_${invoiceNo}.pdf`;
   const filePath = path.join(
@@ -51,18 +57,22 @@ const generateInvoicePdf = (apiResponse) => {
   doc.fontSize(10).fillColor("#333333").font("Helvetica");
   doc.text("ServerPe App Solutions", 50, 110);
   doc.text("GSTIN: 29XXXXX0000X1Z5", 50, 125);
-  doc.text("Bangalore, Karnataka - 560013", 50, 140);
+  doc.text("New KHB Colony, ", 50, 140);
+  doc.text("LIG 2A, #8", 50, 140);
+  doc.text("Sirsi - 581402", 50, 140);
+  doc.text("District: Uttara Kannada, Karnataka - 560013", 50, 140);
+  doc.text("State: Karnataka", 50, 140);
 
-  doc.text(`Ref no: #${invoiceNo}`, 400, 85, { align: "right" });
+  doc.text(`Invoice #: ${invoice_id}`, 300, 85, { align: "right" });
   doc.text(
     `Date: ${new Date(result_transaction.created_at).toLocaleDateString(
       "en-IN"
     )}`,
     400,
-    100,
+    115,
     { align: "right" }
   );
-  doc.text(`Status: PAID`, 400, 115, { align: "right" });
+  doc.text(`Status: PAID`, 400, 130, { align: "right" });
 
   // --- BILL TO ---
   doc.fontSize(12).font("Helvetica-Bold").text("Bill To", 50, 185);
