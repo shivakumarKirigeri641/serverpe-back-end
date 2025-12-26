@@ -125,7 +125,7 @@ const insertTransactionDetails = async (
     ]
   );
   //user sms
-  await sendRechargeConfirmationSMS(
+  /*await sendRechargeConfirmationSMS(
     result_user.rows[0].mobile_number,
     transaction_data.amount / 100,
     result_api.rows[0].api_calls_count,
@@ -148,7 +148,8 @@ const insertTransactionDetails = async (
     text: `Thank you for recharging ₹${transaction_data?.amount / 100}/-. ${
       result_api.rows[0].api_calls_count
     } mock API credits added successfully.`,
-  });
+  });*/
+  console.log("all good from inserttransactions!");
   return {
     status: 200,
     successstatus: true,
