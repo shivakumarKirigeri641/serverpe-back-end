@@ -37,9 +37,15 @@ const generateInvoicePdf = (apiResponse) => {
   doc.restore();
 
   // --- HEADER & LOGO ---
-  const logoPath = path.join(__dirname, "..", "images", "ServerPe_Logo.jpg");
+  const logoPath = path.join(
+    __dirname,
+    "..",
+    "images",
+    "logos",
+    "ServerPe_Logo.jpg"
+  );
   if (fs.existsSync(logoPath)) {
-    doc.image(logoPath, 50, 45, { width: 120 });
+    doc.image(logoPath, 50, 30, { width: 100, height: 80 });
   } else {
     doc
       .fontSize(20)
@@ -48,87 +54,132 @@ const generateInvoicePdf = (apiResponse) => {
       .text("ServerPe", 50, 50);
   }
 
+  // Professional header background
+  doc.rect(160, 30, 340, 80).fill("#f8f9fa").stroke("#e5e7eb");
+
   doc
-    .fillColor("#000000")
-    .fontSize(25)
+    .fillColor("#1f2937")
+    .fontSize(28)
     .font("Helvetica-Bold")
-    .text("INVOICE", 400, 50, { align: "right" });
+    .text("INVOICE", 175, 48, { align: "left" });
+
+  doc
+    .fillColor("#6366f1")
+    .fontSize(11)
+    .font("Helvetica")
+    .text("Professional Invoice from ServerPe", 175, 78, { align: "left" });
 
   doc.fontSize(10).fillColor("#333333").font("Helvetica");
-  doc.text("ServerPe App Solutions", 50, 110);
-  doc.text("GSTIN: 29XXXXX0000X1Z5", 50, 125);
-  doc.text("New KHB Colony, ", 50, 140);
-  doc.text("LIG 2A, #8", 50, 140);
-  doc.text("Sirsi - 581402", 50, 140);
-  doc.text("District: Uttara Kannada, Karnataka - 560013", 50, 140);
-  doc.text("State: Karnataka", 50, 140);
+  doc.text("ServerPe App Solutions", 50, 125);
+  doc.fontSize(9).fillColor("#666666");
+  doc.text("GSTIN: 29XXXXX0000X1Z5", 50, 142);
+  doc.text("New KHB Colony, LIG 2A, #8", 50, 157);
+  doc.text("Sirsi - 581402, Uttara Kannada", 50, 172);
+  doc.text("Karnataka, India | State: Karnataka", 50, 187);
 
-  doc.text(`Invoice #: ${invoice_id}`, 300, 85, { align: "right" });
+  // Invoice details on the right
+  doc.fontSize(10).fillColor("#374151").font("Helvetica");
+  doc.text(`Invoice #: ${invoice_id}`, 320, 125, { align: "left" });
   doc.text(
     `Date: ${new Date(result_transaction.created_at).toLocaleDateString(
       "en-IN"
     )}`,
-    400,
-    115,
-    { align: "right" }
+    320,
+    142,
+    { align: "left" }
   );
-  doc.text(`Status: PAID`, 400, 130, { align: "right" });
+  doc
+    .fillColor("#10b981")
+    .font("Helvetica-Bold")
+    .text(`Status: PAID`, 320, 159, { align: "left" });
 
   // --- BILL TO ---
-  doc.fontSize(12).font("Helvetica-Bold").text("Bill To", 50, 185);
-  doc.fontSize(10).font("Helvetica");
-  doc.text(result_credit.invoice_user_name, 50, 205);
-  doc.text(result_credit.invoice_address, 50, 220, { width: 220 });
-  doc.text(`Email: ${result_credit.invoice_email}`, 50, 255);
+  doc.rect(50, 210, 500, 70).fill("#ffffff").stroke("#d1d5db");
+  doc
+    .fontSize(11)
+    .fillColor("#1f2937")
+    .font("Helvetica-Bold")
+    .text("Bill To", 60, 220);
+  doc.fontSize(10).font("Helvetica").fillColor("#374151");
+  doc.text(result_credit.invoice_user_name, 60, 245);
+  doc.text(result_credit.invoice_address, 60, 263, { width: 480 });
+  doc.fontSize(9).fillColor("#6b7280");
+  doc.text(`Email: ${result_credit.invoice_email}`, 60, 270);
 
   // --- TABLE HEADER ---
-  const tableTop = 300;
-  doc.rect(50, tableTop, 500, 20).fill("#f3f4f6").stroke("#e5e7eb");
-  doc.fillColor("#374151").font("Helvetica-Bold");
-  doc.text("Item Description", 60, tableTop + 5);
-  doc.text("Qty", 300, tableTop + 5);
-  doc.text("Rate", 360, tableTop + 5);
-  doc.text("Tax (18%)", 430, tableTop + 5);
-  doc.text("Total", 500, tableTop + 5);
+  const tableTop = 305;
+  doc.rect(50, tableTop, 500, 25).fill("#4f46e5");
+  doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(11);
+  doc.text("Item Description", 60, tableTop + 6);
+  doc.text("Qty", 300, tableTop + 6);
+  doc.text("Rate (₹)", 360, tableTop + 6);
+  doc.text("Tax (18%)", 430, tableTop + 6);
+  doc.text("Total (₹)", 500, tableTop + 6);
 
   // --- TABLE ROW ---
-  const rowY = tableTop + 20;
-  doc.rect(50, rowY, 500, 45).stroke("#e5e7eb");
-  doc.fillColor("#000000").font("Helvetica");
+  const rowY = tableTop + 25;
+  doc.rect(50, rowY, 500, 50).fill("#f9fafb").stroke("#d1d5db");
+  doc.fillColor("#000000").font("Helvetica").fontSize(10);
   doc.text(
     result_transaction.description || "API Credits Purchase",
     60,
-    rowY + 18
+    rowY + 16
   );
-  doc.text("1", 300, rowY + 18);
-  doc.text(basePrice.toFixed(2), 360, rowY + 18);
-  doc.text(totalTax.toFixed(2), 430, rowY + 18);
-  doc.text(totalPaid.toFixed(2), 500, rowY + 18);
+  doc.text("1", 300, rowY + 16);
+  doc.text(`₹${basePrice.toFixed(2)}`, 360, rowY + 16);
+  doc.text(`₹${totalTax.toFixed(2)}`, 430, rowY + 16);
+  doc.text(`₹${totalPaid.toFixed(2)}`, 500, rowY + 16);
 
   // --- GST BREAKDOWN & TOTAL ---
   const summaryY = rowY + 70;
-  doc.rect(330, summaryY, 220, 100).stroke("#e5e7eb");
+  doc.rect(280, summaryY, 270, 115).fill("#ffffff").stroke("#d1d5db");
 
-  doc.fontSize(10);
-  doc.text("Taxable Value", 340, summaryY + 15);
+  doc.fontSize(10).fillColor("#374151").font("Helvetica");
+  doc.text("Taxable Value", 290, summaryY + 15);
+  doc.fillColor("#000000").font("Helvetica-Bold");
   doc.text(`₹${basePrice.toFixed(2)}`, 480, summaryY + 15, { align: "right" });
 
-  doc.text("CGST (9%)", 340, summaryY + 35);
-  doc.text(`₹${cgst_sgst.toFixed(2)}`, 480, summaryY + 35, { align: "right" });
+  doc.fillColor("#374151").font("Helvetica").fontSize(10);
+  doc.text("CGST (9%)", 290, summaryY + 37);
+  doc.fillColor("#000000").font("Helvetica");
+  doc.text(`₹${cgst_sgst.toFixed(2)}`, 480, summaryY + 37, { align: "right" });
 
-  doc.text("SGST (9%)", 340, summaryY + 55);
-  doc.text(`₹${cgst_sgst.toFixed(2)}`, 480, summaryY + 55, { align: "right" });
+  doc.fillColor("#374151").font("Helvetica");
+  doc.text("SGST (9%)", 290, summaryY + 59);
+  doc.fillColor("#000000").font("Helvetica");
+  doc.text(`₹${cgst_sgst.toFixed(2)}`, 480, summaryY + 59, { align: "right" });
 
-  doc.font("Helvetica-Bold").fontSize(12);
-  doc.text("Grand Total", 340, summaryY + 80);
-  doc.text(`₹${totalPaid.toFixed(2)}`, 480, summaryY + 80, { align: "right" });
+  // Grand Total highlight
+  doc.rect(290, summaryY + 80, 210, 25).fill("#4f46e5");
+  doc.font("Helvetica-Bold").fontSize(12).fillColor("#ffffff");
+  doc.text("Grand Total", 300, summaryY + 87);
+  doc.text(`₹${totalPaid.toFixed(2)}`, 480, summaryY + 87, { align: "right" });
 
   // --- FOOTER ---
+  const footerY = 730;
+  doc.rect(50, footerY - 10, 500, 1).fill("#d1d5db");
+
   doc.fontSize(9).font("Helvetica").fillColor("#6b7280");
   doc.text(
     "This is a system-generated invoice and does not require a signature.",
     50,
-    750,
+    footerY,
+    { align: "center" }
+  );
+
+  doc.fontSize(8).fillColor("#9ca3af");
+  doc.text(
+    "For more information, visit www.serverpe.com | Contact: support@serverpe.com",
+    50,
+    footerY + 20,
+    { align: "center" }
+  );
+
+  doc.fontSize(7).fillColor("#d1d5db");
+  doc.text(
+    `Generated on ${new Date().toLocaleString("en-IN")}`,
+    50,
+    footerY + 38,
     { align: "center" }
   );
 
