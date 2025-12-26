@@ -81,8 +81,8 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
         res.cookie("token", token, {
           httpOnly: true,
           secure: true, // REQUIRED for SameSite=None
-          sameSite: "none", // REQUIRED for cross-domain React → Node
-          maxAge: 60 * 60 * 1000,
+          sameSite: "None", // REQUIRED for cross-domain React → Node
+          domain: ".serverpe.in",
         });
       }
     }
