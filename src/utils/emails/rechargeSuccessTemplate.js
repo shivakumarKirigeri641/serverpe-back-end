@@ -270,7 +270,7 @@ const rechargeSuccessTemplate = ({ amount, credits }) => {
 
         <!-- CTA Button -->
         <center>
-          <a href="https://www.serverpe.com/dashboard" class="cta-button">Go to Dashboard</a>
+          <a href="https://www.serverpe.in/user-home" class="cta-button">Go to Dashboard</a>
         </center>
 
         <!-- Support Info -->

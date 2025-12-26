@@ -7,7 +7,6 @@ const checkApiKey = async (req, res, next) => {
   try {
     const pool = await connectMainDB();
     const apiKey = req.headers["x-api-key"];
-    const secretKey = req.headers["x-secret-key"];
     // 1️⃣ Validate API Key
     if (!apiKey) {
       return res.status(401).json({
@@ -17,19 +16,10 @@ const checkApiKey = async (req, res, next) => {
       });
     }
 
-    // 2️⃣ Validate Secret Key
-    if (!secretKey) {
-      return res.status(401).json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Secret key missing",
-      });
-    }
-
     //check now
     const result = await pool.query(
-      `select *from serverpe_user where apikey_text = $1 and secret_key=$2`,
-      [apiKey, secretKey]
+      `select *from serverpe_user where apikey_text = $1`,
+      [apiKey]
     );
     //if demo key & all good say next();
     return demoCorsMiddleware(req, res, next);
@@ -41,7 +31,7 @@ const checkApiKey = async (req, res, next) => {
         poweredby: "serverpe.in",
         mock_data: true,
         status: "Failed",
-        message: "Invalid api key or secret key",
+        message: "Invalid api key",
       });
     }
   } catch (err) {

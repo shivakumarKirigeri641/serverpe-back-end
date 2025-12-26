@@ -7,13 +7,6 @@ const validateForInvoiceUserProfile = (bodyjson) => {
       message: "Request body information not found!",
     };
   }
-  if (!bodyjson.mobile_number) {
-    return {
-      statuscode: 404,
-      successstatus: false,
-      message: "No mobile number present!",
-    };
-  }
   if (!bodyjson.user_name) {
     return {
       statuscode: 404,

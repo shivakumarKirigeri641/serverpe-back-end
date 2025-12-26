@@ -1,9 +1,8 @@
 const generateapikey = require("../../utils/generateapikey");
 const generateSecretKey = require("../../utils/generateSecretKey");
 const sendLoggedInUserSMS = require("../../utils/sendLoggedInUserSMS");
-const validateotp = async (client, mobile_number, otp) => {
+const validateotp = async (client, mobile_number, otp, ipAddress) => {
   let result_apikey = null;
-  let secretkey = null;
   //first delete if entry has expired!
   await client.query(`delete from serverpe_otpstore where expires_at < NOW()`);
 
@@ -26,7 +25,6 @@ const validateotp = async (client, mobile_number, otp) => {
     //check if api key already exists
     if (result_user.rows[0].apikey_text) {
       result_apikey = result_user.rows[0].apikey_text;
-      secretkey = result_user.rows[0].secret_key;
       //update firsttime_subscription_status to false;
       result_user = await client.query(
         `update serverpe_user set firsttime_subscription_status=$1 where mobile_number=$2 returning *`,
@@ -38,11 +36,10 @@ const validateotp = async (client, mobile_number, otp) => {
         mobile_number,
         result_user.rows[0].fk_state
       );
-      secretkey = await generateSecretKey();
       //update user
       await client.query(
-        `update serverpe_user set apikey_text = $1, secret_key=$2 where mobile_number = $3`,
-        [result_apikey, secretkey, mobile_number]
+        `update serverpe_user set apikey_text = $1 where mobile_number = $2`,
+        [result_apikey, mobile_number]
       );
       //getpricing
       const result_free_Price = await client.query(
@@ -65,17 +62,13 @@ const validateotp = async (client, mobile_number, otp) => {
       );
     }
     //alert notifification to me with SMS when user logins
-    /*await sendLoggedInUserSMS(
-      result_user.rows[0].user_name,
-      result_user.rows[0].mobile_number
-    );*/
+    await sendLoggedInUserSMS(ipAddress, result_user.rows[0].mobile_number);
     return {
       statuscode: 200,
       successstatus: true,
-      message: "Otp verified success fully!",
+      message: "Otp verified successfully!",
       data: {
         api_key: result_apikey,
-        secret_key: secretkey,
       },
     };
   } else {

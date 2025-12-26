@@ -17,12 +17,12 @@ const insertotpentry = async (client, data, otp) => {
     if (0 < result_user.rows.length) {
     } else {
       await client.query(
-        `insert into serverpe_user (user_name, mobile_number, fk_state) values ($1,$2,$3) returning *;`,
-        [data.user_name, data.mobile_number, data.stateid]
+        `insert into serverpe_user (mobile_number) values ($1) returning *;`,
+        [data.mobile_number]
       );
     }
     //alert here call fast2sms otp sms api
-    //await sendOTPSMS(data.mobile_number, otp, 3);
+    await sendOTPSMS(data.mobile_number, otp, 3);
     await client.query(
       `insert into serverpe_otpstore (mobile_number, otp, expires_at) values ($1,$2, NOW() + INTERVAL '3 minutes') returning *`,
       [data.mobile_number, otp]

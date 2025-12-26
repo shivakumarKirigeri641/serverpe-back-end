@@ -14,8 +14,6 @@ const getPostgreClient = require("../SQL/getPostgreClient");
 const { connectMainDB } = require("../database/connectDB");
 const insertotpentry = require("../SQL/main/insertotpentry");
 const rateLimitPerApiKey = require("../middleware/rateLimitPerApiKey");
-const updateUserProfile = require("../SQL/main/updateUserProfile");
-const updateUserForInvoiceProfile = require("../SQL/main/updateUserForInvoiceProfile");
 const validateotp = require("../SQL/main/validateotp");
 const validateverifyOtp = require("../validations/main/validateverifyOtp");
 const checkServerPeUser = require("../middleware/checkServerPeUser");
@@ -33,7 +31,6 @@ const getApiEndPoints = require("../SQL/main/getApiEndPoints");
 const getWalletAndRechargeInformation = require("../SQL/main/getWalletAndRechargeInformation");
 const getUserDashboardData = require("../SQL/main/getUserDashboardData");
 const getUserProfile = require("../SQL/main/getUserProfile");
-const validateForUserProfile = require("../validations/main/validateForUserProfile");
 const validateForInvoiceUserProfile = require("../validations/main/validateForInvoiceUserProfile");
 const { default: axios } = require("axios");
 const { resourceLimits } = require("worker_threads");
@@ -283,77 +280,6 @@ userRouter.get(
   }
 );
 // ======================================================
-//                user profile
-// ======================================================
-userRouter.get(
-  "/mockapis/serverpeuser/loggedinuser/user-profile",
-  checkServerPeUser,
-  async (req, res) => {
-    let client;
-    try {
-      //client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          poweredby: "serverpe.in",
-          mock_data: true,
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
-      }
-      const result_userprofile = await getUserProfile(poolMain, req);
-      return res.status(result_userprofile.statuscode).json(result_userprofile);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
-    } finally {
-      //if (poolMain) client.release();
-    }
-  }
-);
-// ======================================================
-//                user profileupdate
-// ======================================================
-userRouter.put(
-  "/mockapis/serverpeuser/loggedinuser/user-profile-update",
-  checkServerPeUser,
-  async (req, res) => {
-    let client;
-    try {
-      //client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          poweredby: "serverpe.in",
-          mock_data: true,
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
-      }
-      let result_userprofile = validateForUserProfile(req?.body);
-      if (result_userprofile.successstatus) {
-        result_userprofile = await updateUserProfile(poolMain, req);
-      }
-      return res.status(result_userprofile.statuscode).json(result_userprofile);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
-    } finally {
-      //if (poolMain) client.release();
-    }
-  }
-);
-// ======================================================
 //                razorpay order
 // ======================================================
 userRouter.post(
@@ -472,7 +398,7 @@ userRouter.post(
   }
 );
 // ======================================================
-//                invoicd download
+//                invoice download
 // ======================================================
 userRouter.get(
   "/mockapis/serverpeuser/loggedinuser/invoices/download/:id",
@@ -510,6 +436,40 @@ userRouter.get(
           });
         }
       });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      //if (poolMain) client.release();
+    }
+  }
+);
+// ======================================================
+//                user profile
+// ======================================================
+userRouter.get(
+  "/mockapis/serverpeuser/loggedinuser/user-profile",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      //client = await getPostgreClient(poolMain);
+      if (!validateMobileNumber(poolMain, req.mobile_number)) {
+        res.status(401).json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          status: "Failed",
+          successstatus: false,
+          message: "Unauthorized user!",
+        });
+      }
+      const result_userprofile = await getUserProfile(poolMain, req);
+      return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
       console.error(err);
       return res.status(500).json({

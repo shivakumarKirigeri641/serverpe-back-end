@@ -20,20 +20,6 @@ const validateSendOtp = (bodyjson) => {
       message: "No mobile number present!",
     };
   }
-  if (!bodyjson.user_name) {
-    return {
-      statuscode: 404,
-      successstatus: false,
-      message: "No name present!",
-    };
-  }
-  if (!bodyjson.stateid) {
-    return {
-      statuscode: 404,
-      successstatus: false,
-      message: "state/union territory not selected!",
-    };
-  }
   let status = /^[6-9]\d{9}$/.test(bodyjson.mobile_number);
   if (false === status) {
     return {

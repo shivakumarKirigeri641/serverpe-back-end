@@ -42,8 +42,8 @@ generalRouter.post("/mockapis/serverpeuser/send-otp", async (req, res) => {
     let validationresult = validateSendOtp(req.body);
 
     if (validationresult.successstatus) {
-      const result_otp = "1234"; // static for now
-      //const result_otp = generateOtp();
+      //const result_otp = "1234"; // static for now
+      const result_otp = generateOtp();
       validationresult = await insertotpentry(client, req.body, result_otp);
     }
 
@@ -68,21 +68,32 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
   let client;
   try {
     client = await getPostgreClient(poolMain);
-
+    const ipAddress =
+      (req.headers["x-forwarded-for"] &&
+        req.headers["x-forwarded-for"].split(",")[0]) ||
+      req.socket?.remoteAddress ||
+      null;
     let validateforverifyotpresult = validateverifyOtp(req.body);
     if (validateforverifyotpresult.successstatus) {
       validateforverifyotpresult = await validateotp(
         client,
         req.body.mobile_number,
-        req.body.otp
+        req.body.otp,
+        ipAddress
       );
       if (validateforverifyotpresult.successstatus) {
         const token = generateToken(req.body.mobile_number);
-        res.cookie("token", token, {
+        /*res.cookie("token", token, {
           httpOnly: true,
           secure: true, // REQUIRED for SameSite=None
           sameSite: "None", // REQUIRED for cross-domain React → Node
           domain: ".serverpe.in",
+        });*/
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: false, // must be false because you're not using HTTPS
+          sameSite: "lax", // must be lax or strict on localhost
+          maxAge: 10 * 60 * 1000,
         });
       }
     }

@@ -233,7 +233,6 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
-      console.log("calling district");
       const start = Date.now();
       //clientMain = await getPostgreClient(poolMain);
       //clientPin = await getPostgreClient(poolPin);
@@ -291,7 +290,6 @@ pincodeRouter.post(
     let clientMain;
     let clientPin;
     try {
-      console.log("calling block");
       const start = Date.now();
       //clientMain = await getPostgreClient(poolMain);
       //clientPin = await getPostgreClient(poolPin);
