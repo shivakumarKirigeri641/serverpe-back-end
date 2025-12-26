@@ -3,15 +3,12 @@ const DEMO_ALLOWED_ORIGINS = process.env.BASE_UI_URLS?.split(",");
 module.exports = function demoCorsMiddleware(req, res, next) {
   try {
     const apiKey = req.headers["x-api-key"];
-    const apiSecret = req.headers["x-secret-key"];
 
     const origin = req.headers.origin;
     const referer = req.headers.referer;
     const userAgent = (req.headers["user-agent"] || "").toLowerCase();
 
-    const isDemoKey =
-      apiKey === process.env.DEMO_API_KEY &&
-      apiSecret === process.env.DEMO_SECRET_KEY;
+    const isDemoKey = apiKey === process.env.DEMO_API_KEY;
 
     /* =========================
      DEMO KEY + SECRET RULES

@@ -5,10 +5,10 @@ const getUserDashboardData = async (client, req) => {
   //which plan?
 
   const result_userdetails = await client.query(
-    `select suser.user_name, suser.firsttime_subscription_status, suser.mobile_number, s.state_name,suser.apikey_text, suser.secret_key, (wallet.outstanding_apikey_count_free +  wallet.outstanding_apikey_count) as api_credits from serverpe_apipricing pricing 
+    `select suser.firsttime_subscription_status, suser.mobile_number, suser.apikey_text, 
+(wallet.outstanding_apikey_count_free +  wallet.outstanding_apikey_count) as api_credits from serverpe_apipricing pricing 
 left join serverpe_user_apikeywallet_credit credit on credit.fk_pricing = pricing.id
 join serverpe_user suser on suser.id=credit.fk_user
-join states s on s.id=suser.fk_state
 join serverpe_user_apikeywallet wallet on wallet.fk_user = suser.id
 where suser.mobile_number=$1`,
     [req.mobile_number]

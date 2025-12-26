@@ -3,12 +3,9 @@
 
 const updateApiUsage = async (client, req, start) => {
   const apiKey = req.headers["x-api-key"];
-  const secretKey = req.headers["x-secret-key"];
 
   //check if demo key, then return ok
-  const isDemoKey =
-    apiKey === process.env.DEMO_API_KEY &&
-    secretKey === process.env.DEMO_SECRET_KEY;
+  const isDemoKey = apiKey === process.env.DEMO_API_KEY;
   if (isDemoKey) {
     return {
       ok: true,
@@ -16,15 +13,15 @@ const updateApiUsage = async (client, req, start) => {
       userId: null,
     };
   }
-  if (!apiKey || !secretKey) {
-    return { ok: false, message: "API key and secret key required" };
+  if (!apiKey) {
+    return { ok: false, message: "API key required" };
   }
 
   // 1️⃣ Fetch user
   const userRes = await client.query(
     `SELECT id FROM serverpe_user 
-     WHERE apikey_text = $1 AND secret_key = $2`,
-    [apiKey, secretKey]
+     WHERE apikey_text = $1`,
+    [apiKey]
   );
 
   if (userRes.rows.length === 0) {
