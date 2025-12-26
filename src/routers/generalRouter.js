@@ -42,8 +42,8 @@ generalRouter.post("/mockapis/serverpeuser/send-otp", async (req, res) => {
     let validationresult = validateSendOtp(req.body);
 
     if (validationresult.successstatus) {
-      const result_otp = "1234"; // static for now
-      //const result_otp = generateOtp();
+      //const result_otp = "1234"; // static for now
+      const result_otp = generateOtp();
       validationresult = await insertotpentry(client, req.body, result_otp);
     }
 
