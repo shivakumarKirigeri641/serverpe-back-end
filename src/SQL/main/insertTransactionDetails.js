@@ -1,4 +1,6 @@
 const sendRechargeConfirmationSMS = require("../../utils/sendRechargeConfirmationSMS");
+const rechargeSuccessTemplate = require("../../utils/emails/rechargeSuccessTemplate");
+const { sendMail } = require("../../utils/emails/sendMail");
 const sendAlertForRechargeConfirmationSMS = require("../../utils/sendAlertForRechargeConfirmationSMS");
 const insertTransactionDetails = async (
   client,
@@ -135,6 +137,18 @@ const insertTransactionDetails = async (
     result_user.rows[0].mobile_number,
     transaction_data.amount / 100
   );
+  //email
+  await sendMail({
+    to: summaryFormData?.myemail,
+    subject: "Recharge Successful - ServerPe",
+    html: rechargeSuccessTemplate({
+      amount: transaction_data?.amount / 100,
+      credits: result_api.rows[0].api_calls_count,
+    }),
+    text: `Thank you for recharging ₹${transaction_data?.amount / 100}/-. ${
+      result_api.rows[0].api_calls_count
+    } mock API credits added successfully.`,
+  });
   return {
     status: 200,
     successstatus: true,
