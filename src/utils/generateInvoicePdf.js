@@ -83,7 +83,7 @@ const generateInvoicePdf = (apiResponse) => {
   doc.text("New KHB Colony, LIG 2A, #8, Sirsi - 581402", 50, 157);
   doc.text("Uttara Kannada District, Karnataka 560013, India", 50, 172);
   doc.fontSize(8).fillColor("#7c3aed");
-  doc.text("Email: billing@serverpe.com", 50, 187);
+  doc.text("Email: billing@serverpe.in", 50, 187);
 
   // --- INVOICE DETAILS BOX ---
   doc.rect(280, 120, 270, 75).fill("#f8f5ff").stroke("#c7d2fe");
@@ -201,7 +201,7 @@ const generateInvoicePdf = (apiResponse) => {
     712
   );
   doc.text(
-    "3. For discrepancies, contact billing@serverpe.com | 4. Valid for 30 days",
+    "3. For discrepancies, contact billing@serverpe.in | 4. Valid for 30 days",
     50,
     722
   );
@@ -212,13 +212,13 @@ const generateInvoicePdf = (apiResponse) => {
 
   // --- PROFESSIONAL FOOTER ---
   doc.fontSize(9).font("Helvetica-Bold").fillColor("#1e293b");
-  doc.text("ServerPe™ - Your Partner in Digital Solutions", 50, footerY + 2, {
+  doc.text("ServerPe™ - Desi API to challenge your UI", 50, footerY + 2, {
     align: "center",
   });
 
   doc.fontSize(8).fillColor("#64748b").font("Helvetica");
   doc.text(
-    "Web: www.serverpe.com | Email: billing@serverpe.com | Phone: +91-XXXXX-XXXXX",
+    "Web: www.serverpe.in | Email: billing@serverpe.in",
     50,
     footerY + 18,
     { align: "center" }
