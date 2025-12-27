@@ -81,18 +81,18 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
       );
       if (validateforverifyotpresult.successstatus) {
         const token = generateToken(req.body.mobile_number);
-        /*res.cookie("token", token, {
+        res.cookie("token", token, {
           httpOnly: true,
           secure: true, // REQUIRED for SameSite=None
           sameSite: "None", // REQUIRED for cross-domain React → Node
           domain: ".serverpe.in",
-        });*/
-        res.cookie("token", token, {
+        });
+        /*res.cookie("token", token, {
           httpOnly: true,
           secure: false, // must be false because you're not using HTTPS
           sameSite: "lax", // must be lax or strict on localhost
           maxAge: 10 * 60 * 1000,
-        });
+        });*/
       }
     }
 
