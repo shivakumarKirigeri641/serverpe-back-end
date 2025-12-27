@@ -200,11 +200,7 @@ const generateInvoicePdf = (apiResponse) => {
     50,
     712
   );
-  doc.text(
-    "3. For discrepancies, contact billing@serverpe.in | 4. Valid for 30 days",
-    50,
-    722
-  );
+  doc.text("3. For discrepancies, contact billing@serverpe.in", 50, 722);
 
   // --- FOOTER DIVIDER ---
   const footerY = 750;
