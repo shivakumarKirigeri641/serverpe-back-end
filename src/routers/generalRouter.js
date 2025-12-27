@@ -8,7 +8,10 @@ const validateSendOtp = require("../validations/main/validateSendOtp");
 const generateToken = require("../utils/generateToken");
 const getPostgreClient = require("../SQL/getPostgreClient");
 const getMockApiCategoryDownloadPaths = require("../SQL/main/getMockApiCategoryDownloadPaths");
-const { connectMainDB } = require("../database/connectDB");
+const {
+  connectMainDB,
+  connectMockTrainTicketsDb,
+} = require("../database/connectDB");
 const insertotpentry = require("../SQL/main/insertotpentry");
 const getStatesAndTerritories = require("../SQL/main/getStatesAndTerritories");
 const validateotp = require("../SQL/main/validateotp");
@@ -36,15 +39,13 @@ const poolMain = connectMainDB();
 //                SEND OTP
 // ======================================================
 generalRouter.post("/mockapis/serverpeuser/send-otp", async (req, res) => {
-  let client;
   try {
-    client = await getPostgreClient(poolMain);
     let validationresult = validateSendOtp(req.body);
 
     if (validationresult.successstatus) {
-      //const result_otp = "1234"; // static for now
-      const result_otp = generateOtp();
-      validationresult = await insertotpentry(client, req.body, result_otp);
+      const result_otp = "1234"; // static for now
+      //const result_otp = generateOtp();
+      validationresult = await insertotpentry(poolMain, req.body, result_otp);
     }
 
     return res.status(validationresult.statuscode).json(validationresult);
@@ -57,7 +58,6 @@ generalRouter.post("/mockapis/serverpeuser/send-otp", async (req, res) => {
       message: err.message,
     });
   } finally {
-    if (client) client.release();
   }
 });
 
@@ -65,9 +65,7 @@ generalRouter.post("/mockapis/serverpeuser/send-otp", async (req, res) => {
 //                VERIFY OTP
 // ======================================================
 generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
-  let client;
   try {
-    client = await getPostgreClient(poolMain);
     const ipAddress =
       (req.headers["x-forwarded-for"] &&
         req.headers["x-forwarded-for"].split(",")[0]) ||
@@ -76,7 +74,7 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
     let validateforverifyotpresult = validateverifyOtp(req.body);
     if (validateforverifyotpresult.successstatus) {
       validateforverifyotpresult = await validateotp(
-        client,
+        poolMain,
         req.body.mobile_number,
         req.body.otp,
         ipAddress
@@ -110,17 +108,14 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
       message: err.message,
     });
   } finally {
-    if (client) client.release();
   }
 });
 // ======================================================
 //                testimonials
 // ======================================================
 generalRouter.get("/mockapis/serverpeuser/testimonials", async (req, res) => {
-  let client;
   try {
-    client = await getPostgreClient(poolMain);
-    const testimonialsdata = await getTestimonials(client);
+    const testimonialsdata = await getTestimonials(poolMain);
     return res.status(testimonialsdata.statuscode).json(testimonialsdata);
   } catch (err) {
     console.error(err);
@@ -132,20 +127,17 @@ generalRouter.get("/mockapis/serverpeuser/testimonials", async (req, res) => {
       message: err.message,
     });
   } finally {
-    if (client) client.release();
   }
 });
 // ======================================================
 //                add to contact me
 // ======================================================
 generalRouter.post("/mockapis/serverpeuser/contact-me", async (req, res) => {
-  let client;
   try {
-    client = await getPostgreClient(poolMain);
     let resultcontactme = validateForAddingContactMeData(req);
     if (resultcontactme.successstatus) {
       resultcontactme = await insertContactMeData(
-        client,
+        poolMain,
         req.body.user_name,
         req.body.email,
         req.body.rating ? req.body.rating : 5,
@@ -163,7 +155,6 @@ generalRouter.post("/mockapis/serverpeuser/contact-me", async (req, res) => {
       message: err.message,
     });
   } finally {
-    if (client) client.release();
   }
 });
 // ======================================================
@@ -172,10 +163,8 @@ generalRouter.post("/mockapis/serverpeuser/contact-me", async (req, res) => {
 generalRouter.get(
   "/mockapis/serverpeuser/feedback-categories",
   async (req, res) => {
-    let client;
     try {
-      client = await getPostgreClient(poolMain);
-      const feedbackcategories = await getAllFeedbackCategories(client);
+      const feedbackcategories = await getAllFeedbackCategories(poolMain);
       return res.status(feedbackcategories.statuscode).json(feedbackcategories);
     } catch (err) {
       console.error(err);
@@ -187,7 +176,6 @@ generalRouter.get(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
     }
   }
 );
@@ -195,11 +183,9 @@ generalRouter.get(
 //                api get state list (unchargeable)
 // ======================================================
 generalRouter.get("/mockapis/serverpeuser/states", async (req, res) => {
-  let clientMain;
   try {
-    clientMain = await getPostgreClient(poolMain);
     // 2️⃣ Business Logic
-    const result = await getStatesAndTerritories(clientMain);
+    const result = await getStatesAndTerritories(poolMain);
     return res.status(result.statuscode ? result.statuscode : 200).json({
       poweredby: "serverpe.in",
       mock_data: true,
@@ -215,17 +201,14 @@ generalRouter.get("/mockapis/serverpeuser/states", async (req, res) => {
       message: err.message,
     });
   } finally {
-    if (clientMain) clientMain.release();
   }
 });
 // ======================================================
 //                API plans
 // ======================================================
 generalRouter.get("/mockapis/serverpeuser/api-plans", async (req, res) => {
-  let client;
   try {
-    client = await getPostgreClient(poolMain);
-    const plansResult = await fetchApiPlans(client, true);
+    const plansResult = await fetchApiPlans(poolMain, true);
     return res.status(plansResult.statuscode).json(plansResult);
   } catch (err) {
     console.error(err);
@@ -236,17 +219,14 @@ generalRouter.get("/mockapis/serverpeuser/api-plans", async (req, res) => {
       message: err.message,
     });
   } finally {
-    if (client) client.release();
   }
 });
 // ======================================================
 //                API all endpionts
 // ======================================================
 generalRouter.get("/mockapis/serverpeuser/all-endpoints", async (req, res) => {
-  let client;
   try {
-    client = await getPostgreClient(poolMain);
-    const apiendpoints = await getApiEndPoints(client);
+    const apiendpoints = await getApiEndPoints(poolMain);
     return res.status(apiendpoints.statuscode).json(apiendpoints);
   } catch (err) {
     console.error(err);
@@ -257,7 +237,6 @@ generalRouter.get("/mockapis/serverpeuser/all-endpoints", async (req, res) => {
       message: err.message,
     });
   } finally {
-    if (client) client.release();
   }
 });
 // ======================================================
@@ -266,7 +245,6 @@ generalRouter.get("/mockapis/serverpeuser/all-endpoints", async (req, res) => {
 generalRouter.get(
   "/mockapis/serverpeuser/download/apidoc/:id",
   async (req, res) => {
-    let client;
     try {
       const { id } = req?.params;
       if (!id) {
@@ -275,8 +253,7 @@ generalRouter.get(
           message: "Invalid mock api caetgory id provided!",
         };
       }
-      client = await getPostgreClient(poolMain);
-      const result = await getMockApiCategoryDownloadPaths(client, id);
+      const result = await getMockApiCategoryDownloadPaths(poolMain, id);
       console.log("result from apidoc:", result.data[0].api_doc_path);
       if (result.successtatus) {
         const filePath = path.join(
@@ -305,7 +282,6 @@ generalRouter.get(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
     }
   }
 );
@@ -315,7 +291,6 @@ generalRouter.get(
 generalRouter.get(
   "/mockapis/serverpeuser/download/postmancollection/:id",
   async (req, res) => {
-    let client;
     try {
       const { id } = req?.params;
       if (!id) {
@@ -324,8 +299,7 @@ generalRouter.get(
           message: "Invalid mock api caetgory id provided!",
         };
       }
-      client = await getPostgreClient(poolMain);
-      const result = await getMockApiCategoryDownloadPaths(client, id);
+      const result = await getMockApiCategoryDownloadPaths(poolMain, id);
       if (result.successtatus) {
         const filePath = path.join(
           path.resolve(__dirname, "..", ".."),
@@ -353,7 +327,6 @@ generalRouter.get(
         message: err.message,
       });
     } finally {
-      if (client) client.release();
     }
   }
 );
@@ -361,7 +334,6 @@ generalRouter.get(
 //health check
 // ======================================================
 generalRouter.get("/mockapis/health/check", async (req, res) => {
-  let client;
   try {
     res.status(200).json({ status: "ok" });
   } catch (err) {
@@ -374,7 +346,6 @@ generalRouter.get("/mockapis/health/check", async (req, res) => {
       message: err.message,
     });
   } finally {
-    if (client) client.release();
   }
 });
 module.exports = generalRouter;

@@ -67,7 +67,6 @@ LIMIT 1;
     console.error("Error:", err.message);
   } finally {
     console.log(`Booking done${new Date()}`);
-    await client.release();
   }
 };
 module.exports = runSimulator_cc;
