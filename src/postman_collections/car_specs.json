@@ -16,12 +16,7 @@
 				"header": [
 					{
 						"key": "x-api-key",
-						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
-						"type": "text"
-					},
-					{
-						"key": "x-secret-key",
-						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"value": "SPK_live_IN-11_<your_api_key>",
 						"type": "text"
 					}
 				],
@@ -54,12 +49,7 @@
 				"header": [
 					{
 						"key": "x-api-key",
-						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
-						"type": "text"
-					},
-					{
-						"key": "x-secret-key",
-						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"value": "SPK_live_IN-11_<your_api_key>",
 						"type": "text"
 					}
 				],
@@ -97,12 +87,7 @@
 				"header": [
 					{
 						"key": "x-api-key",
-						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
-						"type": "text"
-					},
-					{
-						"key": "x-secret-key",
-						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"value": "SPK_live_IN-11_<your_api_key>",
 						"type": "text"
 					}
 				],
@@ -140,12 +125,7 @@
 				"header": [
 					{
 						"key": "x-api-key",
-						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
-						"type": "text"
-					},
-					{
-						"key": "x-secret-key",
-						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"value": "SPK_live_IN-11_<your_api_key>",
 						"type": "text"
 					}
 				],
@@ -183,12 +163,7 @@
 				"header": [
 					{
 						"key": "x-api-key",
-						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
-						"type": "text"
-					},
-					{
-						"key": "x-secret-key",
-						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"value": "SPK_live_IN-11_<your_api_key>",
 						"type": "text"
 					}
 				],
@@ -226,12 +201,7 @@
 				"header": [
 					{
 						"key": "x-api-key",
-						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
-						"type": "text"
-					},
-					{
-						"key": "x-secret-key",
-						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"value": "SPK_live_IN-11_<your_api_key>",
 						"type": "text"
 					}
 				],
@@ -269,12 +239,7 @@
 				"header": [
 					{
 						"key": "x-api-key",
-						"value": "SPK_live_IN-11_8bde95af555e377f5d1d8885fa166dcf",
-						"type": "text"
-					},
-					{
-						"key": "x-secret-key",
-						"value": "c5f72e0c738bdc1b5cbd17f5e84f76e538295c91c9ea6b858aacaf3701984396",
+						"value": "SPK_live_IN-11_<your_api_key>",
 						"type": "text"
 					}
 				],
