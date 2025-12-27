@@ -41,8 +41,16 @@ async function runReservationSimulator() {
   } catch (err) {
     console.log(err.message);
   } finally {
+    await randomDelay(3, 5);
   }
 }
+function randomDelay(minSeconds = 3, maxSeconds = 5) {
+  const min = minSeconds * 1000;
+  const max = maxSeconds * 1000;
+  const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
 // ✅ Get IST time safely
 function getIndianHour() {
   const indiaTime = new Date().toLocaleString("en-US", {
@@ -53,10 +61,8 @@ function getIndianHour() {
 // ✅ Infinite loop that runs only from 6 AM – 10:59 PM IST
 async function startInfiniteLoop() {
   console.log("🚀 Continuous runner started (6 AM – 10:59 PM IST)");
-
   while (true) {
     const hour = getIndianHour();
-
     if (hour >= 6 && hour < 23) {
       try {
         await runReservationSimulator(); // keep running continuously
@@ -72,25 +78,20 @@ async function startInfiniteLoop() {
 }
 // ✅ Start it
 startInfiniteLoop();
-
 //runs at 12:01am daily
 cron.schedule(
   "2 0 * * *",
   async () => {
-    let client = null;
     try {
       const pool = await connectMockTrainTicketsDb();
-      client = await pool.connect();
-      await client.query("BEGIN");
-      backup_remove_newSeats(client); //runs in every 24hrs
+      await pool.query("BEGIN");
+      backup_remove_newSeats(pool); //runs in every 24hrs
       console.log("backup successfull");
-      await insertNewSeats_sl(client);
-      await client.query("COMMIT");
+      //await insertNewSeats_sl(pool);
+      await pool.query("COMMIT");
     } catch (err) {
-      await client.query("ROLLBACK");
+      await pool.query("ROLLBACK");
       console.log(err.message);
-    } finally {
-      await client.release();
     }
   },
   {
@@ -108,20 +109,29 @@ cron.schedule(
     timezone: "Asia/Kolkata", // optional: set timezone
   }
 );
-const backup_remove_newSeats = async (client) => {
+const backup_remove_newSeats = async (pool) => {
   try {
     //first backup
-    await backup(client);
+    await backup(pool);
     //remove yesterday entry
-    await removePreviousDatEntries(client);
+    await removePreviousDatEntries(pool);
     //insert new entry which must be exactly 60days from now
-    await insertNewSeats_sl(client);
+    await insertNewSeats(pool, "sl", 72);
+    await insertNewSeats(pool, "1a", 24);
+    await insertNewSeats(pool, "2a", 46);
+    await insertNewSeats(pool, "3a", 64);
+    await insertNewSeats(pool, "cc", 78);
+    await insertNewSeats(pool, "ec", 56);
+    await insertNewSeats(pool, "ea", 56);
+    await insertNewSeats(pool, "e3", 83);
+    await insertNewSeats(pool, "2s", 108);
+    await insertNewSeats(pool, "fc", 20);
   } catch (err) {
     console.log(err.message);
   } finally {
   }
 };
-const backup = async (client) => {
+const backup = async (pool) => {
   //try backup
   const today = new Date();
 
@@ -135,7 +145,7 @@ const backup = async (client) => {
 
   const formattedDate = `${year}-${month}-${day}`;
   const result =
-    await client.query(`select b.*, sa.*, a1.*, a2.*, a3.*, cc.*, _2s.*, ec.*, ea.*, e3.*, fc.*, p.* from bookingdata b join
+    await pool.query(`select b.*, sa.*, a1.*, a2.*, a3.*, cc.*, _2s.*, ec.*, ea.*, e3.*, fc.*, p.* from bookingdata b join
   passengerdata p on b.id = p.fkbookingdata
   left join seatallocation_sl sa on sa.fkpassengerdata = p.id
   left join seatallocation_1a a1 on a1.fkpassengerdata = p.id
@@ -159,59 +169,78 @@ const backup = async (client) => {
     console.log("no backup found");
   }
 };
-const removePreviousDatEntries = async (client) => {
+const removePreviousDatEntries = async (pool) => {
   //try backup
 
-  await client.query(`
-    DO $$
-DECLARE
-    target_date DATE := CURRENT_DATE - INTERVAL '1 day';
-    table_name TEXT;
-BEGIN
-    -- Delete passengerdata first
-    DELETE FROM passengerdata
-    WHERE fkbookingdata IN (
-        SELECT id FROM bookingdata WHERE date_of_journey = target_date
+  await pool.query(`    WHERE fkbookingdata IN (
+        SELECT id
+        FROM bookingdata
+        WHERE date_of_journey < CURRENT_DATE
     );
 
-    -- Delete seat allocations first
+    -- 2️⃣ Delete seat allocations (child)
     DELETE FROM seatallocation_sl
     WHERE fk_seatsondate_sl IN (
-        SELECT id FROM seatsondate_sl WHERE date_of_journey = target_date
+        SELECT id
+        FROM seatsondate_sl
+        WHERE date_of_journey < CURRENT_DATE
     );
 
-    -- Then delete parent bookingdata
-    DELETE FROM bookingdata WHERE date_of_journey = target_date;
+    -- 3️⃣ Delete parent bookingdata
+    DELETE FROM bookingdata
+    WHERE date_of_journey < CURRENT_DATE;
 
-    -- List of seat tables to loop
+    -- 4️⃣ Delete from all seatsondate_* tables
     FOR table_name IN 
         SELECT unnest(ARRAY[
-            'seatsondate_sl', 'seatsondate_3a', 'seatsondate_2a',
-            'seatsondate_1a', 'seatsondate_cc', 'seatsondate_ec',
-            'seatsondate_ea', 'seatsondate_e3', 'seatsondate_fc', 'seatsondate_2s'
+            'seatsondate_sl',
+            'seatsondate_3a',
+            'seatsondate_2a',
+            'seatsondate_1a',
+            'seatsondate_cc',
+            'seatsondate_ec',
+            'seatsondate_ea',
+            'seatsondate_e3',
+            'seatsondate_fc',
+            'seatsondate_2s'
         ])
     LOOP
-        EXECUTE format('DELETE FROM %I WHERE date_of_journey = %L', table_name, target_date);
+        EXECUTE format(
+            'DELETE FROM %I WHERE date_of_journey < CURRENT_DATE',
+            table_name
+        );
     END LOOP;
 END $$;
 
 `);
   console.log("previous days entries removed!");
 };
-const insertNewSeats_sl = async (client) => {
+const insertNewSeats = async (pool, coachname, seatcount) => {
   //try backup
 
-  await client.query(`WITH target_date AS (
+  await pool.query(`WITH target_date AS (
     SELECT (CURRENT_DATE + INTERVAL '60 day')::date AS date_of_journey
 ),
 sl_trains AS (
     SELECT 
         train_number,
-        bogi_count_sl AS bogi_count
+        bogi_count_${coachname} AS bogi_count
     FROM coaches
-    WHERE sl = 'Y'
+    WHERE ${
+      coachname === "1a"
+        ? "a_1"
+        : coachname === "2a"
+        ? "a_2"
+        : coachname === "3a"
+        ? "a_3"
+        : coachname === "e3"
+        ? "e_3"
+        : coachname === "2s"
+        ? "_2s"
+        : coachname
+    } = 'Y'
 )
-INSERT INTO seatsondate_sl (
+INSERT INTO seatsondate_${coachname} (
     train_number,
     date_of_journey,
     total_seats,
@@ -228,21 +257,21 @@ INSERT INTO seatsondate_sl (
 SELECT 
     t.train_number,
     td.date_of_journey,
-    t.bogi_count * 72 AS total_seats,         
-    ROUND(t.bogi_count * 72 * 0.70) AS gen_count,      
-    ROUND(t.bogi_count * 72 * 0.10) AS rac_count,      
-    ROUND(t.bogi_count * 72 * 0.10) AS rac_share_count,
-    ROUND(t.bogi_count * 72 * 0.05) AS ttl_count,      
-    ROUND(t.bogi_count * 72 * 0.05) AS ptl_count,      
-    ROUND(t.bogi_count * 72 * 0.03) AS ladies_count,   
-    ROUND(t.bogi_count * 72 * 0.02) AS duty_count,     
-    ROUND(t.bogi_count * 72 * 0.03) AS senior_count,   
-    ROUND(t.bogi_count * 72 * 0.02) AS pwd_count       
+    t.bogi_count * ${seatcount} AS total_seats,         
+    ROUND(t.bogi_count * ${seatcount} * 0.70) AS gen_count,      
+    ROUND(t.bogi_count * ${seatcount} * 0.10) AS rac_count,      
+    ROUND(t.bogi_count * ${seatcount} * 0.10) AS rac_share_count,
+    ROUND(t.bogi_count * ${seatcount} * 0.05) AS ttl_count,      
+    ROUND(t.bogi_count * ${seatcount} * 0.05) AS ptl_count,      
+    ROUND(t.bogi_count * ${seatcount} * 0.03) AS ladies_count,   
+    ROUND(t.bogi_count * ${seatcount} * 0.02) AS duty_count,     
+    ROUND(t.bogi_count * ${seatcount} * 0.03) AS senior_count,   
+    ROUND(t.bogi_count * ${seatcount} * 0.02) AS pwd_count       
 FROM sl_trains t
 CROSS JOIN target_date td
 WHERE NOT EXISTS (
     SELECT 1 
-    FROM seatsondate_sl s 
+    FROM seatsondate_${coachname} s 
     WHERE s.train_number = t.train_number 
       AND s.date_of_journey = td.date_of_journey
 )
