@@ -172,7 +172,13 @@ const backup = async (pool) => {
 const removePreviousDatEntries = async (pool) => {
   //try backup
 
-  await pool.query(`    WHERE fkbookingdata IN (
+  await pool.query(`DO $$
+DECLARE
+    table_name TEXT;
+BEGIN
+    -- 1️⃣ Delete passengerdata first (child)
+    DELETE FROM passengerdata
+    WHERE fkbookingdata IN (
         SELECT id
         FROM bookingdata
         WHERE date_of_journey < CURRENT_DATE
@@ -211,6 +217,7 @@ const removePreviousDatEntries = async (pool) => {
         );
     END LOOP;
 END $$;
+
 
 `);
   console.log("previous days entries removed!");
