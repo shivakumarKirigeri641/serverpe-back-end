@@ -115,7 +115,7 @@ generalRouter.post("/mockapis/serverpeuser/verify-otp", async (req, res) => {
 // ======================================================
 generalRouter.get("/mockapis/serverpeuser/testimonials", async (req, res) => {
   try {
-    const testimonialsdata = await getTestimonials(poolMain);
+    const testimonialsdata = await getTestimonials(poolMain, req);
     return res.status(testimonialsdata.statuscode).json(testimonialsdata);
   } catch (err) {
     console.error(err);
