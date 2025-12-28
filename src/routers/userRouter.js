@@ -406,10 +406,7 @@ userRouter.get(
   async (req, res) => {
     let client;
     try {
-      const fileName = `ServerPe_Invoice_SP-${req.params.id.replace(
-        "CRD_",
-        ""
-      )}.pdf`;
+      const fileName = `ServerPe_Invoice_SP-${req.params.id}.pdf`;
       const filePath = path.join(
         path.resolve(__dirname, "..", "docs", "invoices"),
         fileName
