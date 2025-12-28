@@ -26,7 +26,7 @@ const insertFeedbacks = async (client, mobile_number, jsondata) => {
   await client.query(
     `insert into serverpe_contactme (user_name, emailid, fkcategory, rating, message) values ($1,$2,$3,$4,$5) returning *`,
     [
-      result_user.rows[0].user_name,
+      result_user.rows[0].user_name ? result_user.rows[0].user_name : "UINinja",
       result_user.rows[0].myemail
         ? result_user.rows[0].myemail
         : "dummy@gmail.com",
