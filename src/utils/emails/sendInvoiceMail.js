@@ -24,7 +24,7 @@ const sendInvoiceEmail = async (userEmail, userName, filePath, fileName) => {
         <div style="font-family: Arial, sans-serif; color: #333;">
           <h2 style="color: #075985;">Hello ${userName},</h2>
           <p>Thank you for your payment. Your transaction was successful.</p>
-          <p>Please find your official tax invoice attached to this email.</p>
+          <p>Please find the invoice attached to this email.</p>
           <br>
           <p><b>Regards,</b><br>ServerPe Team</p>
           <hr style="border: 0; border-top: 1px solid #eee;">
