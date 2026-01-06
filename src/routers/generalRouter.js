@@ -348,4 +348,92 @@ generalRouter.get("/mockapis/health/check", async (req, res) => {
   } finally {
   }
 });
+
+
+
+
+
+
+
+
+
+
+// ======================================================
+// new approach for studnents
+// send email otp
+// ======================================================
+generalRouter.post("/serverpeuser/mystudents/send-otp", async (req, res) => {
+  try {
+    let validationresult = validateSendOtp(req.body);
+
+    if (validationresult.successstatus) {
+      const result_otp_mobile = "1234"; // static for now
+      const result_otp_email = "5678"; // static for now
+      //const result_otp = generateOtp();
+      validationresult = await insertotpentry(poolMain, req.body, result_otp_mobile, result_otp_email);
+    }
+
+    return res.status(validationresult.statuscode).json(validationresult);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
+  } finally {
+  }
+});
+// ======================================================
+//                STUDENT-VERIFY OTP
+// ======================================================
+generalRouter.post("/serverpeuser/mystudents/verify-otp", async (req, res) => {
+  try {
+    const ipAddress =
+      (req.headers["x-forwarded-for"] &&
+        req.headers["x-forwarded-for"].split(",")[0]) ||
+      req.socket?.remoteAddress ||
+      null;
+    let validateforverifyotpresult = validateverifyOtp(req.body);
+    if (validateforverifyotpresult.successstatus) {
+      validateforverifyotpresult = await validateotp(
+        poolMain,
+        req.body.mobile_number,
+        req.body.email,
+        req.body.mobile_otp,
+        req.body.email_otp, 
+        ipAddress
+      );
+      if (validateforverifyotpresult.successstatus) {
+        const token = generateToken(req.body.mobile_number);
+        /*res.cookie("token", token, {
+          httpOnly: true,
+          secure: true, // REQUIRED for SameSite=None
+          sameSite: "None", // REQUIRED for cross-domain React → Node
+          domain: ".serverpe.in",
+        });*/
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: false, // must be false because you're not using HTTPS
+          sameSite: "lax", // must be lax or strict on localhost
+          maxAge: 10 * 60 * 1000,
+        });
+      }
+    }
+
+    return res
+      .status(validateforverifyotpresult.statuscode)
+      .json(validateforverifyotpresult);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
+  } finally {
+  }
+});
 module.exports = generalRouter;

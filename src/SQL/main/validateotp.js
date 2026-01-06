@@ -1,66 +1,26 @@
 const generateapikey = require("../../utils/generateapikey");
 const generateSecretKey = require("../../utils/generateSecretKey");
 const sendLoggedInUserSMS = require("../../utils/sendLoggedInUserSMS");
-const validateotp = async (client, mobile_number, otp, ipAddress) => {
+const validateotp = async (client, mobile_number, email, otp_mobile, otp_email, ipAddress) => {
   let result_apikey = null;
   //first delete if entry has expired!
-  await client.query(`delete from serverpe_otpstore where expires_at < NOW()`);
+  await client.query(`delete from user_verification_otps where expires_at < NOW()`);
 
   //now check
   const result = await client.query(
-    `select *from serverpe_otpstore where mobile_number=$1 and otp=$2`,
-    [mobile_number, otp]
+    `select u.mobile_number, uvo.* from user_verification_otps uvo 
+     inner join users u on u.id = uvo.fk_user_id 
+     where u.mobile_number=$1 and u.email=$2 and uvo.otp_mobile=$3 and uvo.otp_email=$4`,
+    [mobile_number, email, otp_mobile, otp_email]
   );
+
   if (0 < result.rows.length) {
     //success & delete it
     await client.query(
-      `delete from serverpe_otpstore where mobile_number=$1 and otp=$2`,
-      [mobile_number, otp]
+      `delete from user_verification_otps where id=$1`,
+      [result.rows[0].id]
     );
-    //get user
-    let result_user = await client.query(
-      `select *from serverpe_user where mobile_number=$1`,
-      [mobile_number]
-    );
-    //check if api key already exists
-    if (result_user.rows[0].apikey_text) {
-      result_apikey = result_user.rows[0].apikey_text;
-      //update firsttime_subscription_status to false;
-      result_user = await client.query(
-        `update serverpe_user set firsttime_subscription_status=$1 where mobile_number=$2 returning *`,
-        [false, result_user.rows[0].mobile_number]
-      );
-    } else {
-      //generate api key & update
-      result_apikey = await generateapikey(
-        mobile_number,
-        result_user.rows[0].fk_state
-      );
-      //update user
-      await client.query(
-        `update serverpe_user set apikey_text = $1 where mobile_number = $2`,
-        [result_apikey, mobile_number]
-      );
-      //getpricing
-      const result_free_Price = await client.query(
-        `select *from serverpe_apipricing where price=0`
-      );
-      //insert default credit
-      await client.query(
-        `insert into serverpe_user_apikeywallet_credit (fk_user, fk_pricing, credit_reason) values ($1,$2,$3);`,
-        [
-          result_user.rows[0].id,
-          result_free_Price.rows[0].id,
-          "first time subscription",
-        ]
-      );
-
-      //insert free api calls wallet.
-      await client.query(
-        `insert into serverpe_user_apikeywallet (fk_user, outstanding_apikey_count, outstanding_apikey_count_free) values ($1,0,50);`,
-        [result_user.rows[0].id]
-      );
-    }
+    
     //alert notifification to me with SMS when user logins
     await sendLoggedInUserSMS(ipAddress, result_user.rows[0].mobile_number);
     return {
@@ -68,14 +28,14 @@ const validateotp = async (client, mobile_number, otp, ipAddress) => {
       successstatus: true,
       message: "Otp verified successfully!",
       data: {
-        api_key: result_apikey,
+        // api_key: result_apikey, // No longer generating API key here
       },
     };
   } else {
     return {
       statuscode: 404,
       successstatus: false,
-      message: "Otp expired, please re-enter the mobile number & try again!",
+      message: "Otp expired or invalid, please re-enter & try again!",
     };
   }
 };
