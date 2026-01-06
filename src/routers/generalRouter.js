@@ -1,4 +1,5 @@
 const express = require("express");
+const getDisclaimerBeforeBuyList = require('../SQL/main/getDisclaimerBeforeBuyList');
 const path = require("path");
 const getTestimonials = require("../SQL/main/getTestimonials");
 const insertContactMeData = require("../SQL/main/insertContactMeData");
@@ -387,7 +388,7 @@ generalRouter.get("/serverpeuser/mystudents/states", async (req, res) => {
   }
 });
 // ======================================================
-//                feedback catagories
+//                project list
 // ======================================================
 generalRouter.get(
   "/serverpeuser/mystudents/project-list",
@@ -548,4 +549,26 @@ generalRouter.post("/serverpeuser/mystudents/login/verify-otp", async (req, res)
   } finally {
   }
 });
+// ======================================================
+//                disclaimer_before_buy_list
+// ======================================================
+generalRouter.get(
+  "/serverpeuser/mystudents/disclaimer-before-buy-list",
+  async (req, res) => {
+    try {
+      const disclaimerlist = await getDisclaimerBeforeBuyList(poolMain);
+      return res.status(disclaimerlist.statuscode).json(disclaimerlist);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+        message: err.message,
+      });
+    } finally {
+    }
+  }
+);
 module.exports = generalRouter;
