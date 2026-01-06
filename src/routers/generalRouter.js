@@ -1,4 +1,5 @@
 const express = require("express");
+const getAllStudentContactCategories = require('../SQL/main/getAllStudentContactCategories');
 const getDisclaimerBeforeBuyList = require('../SQL/main/getDisclaimerBeforeBuyList');
 const path = require("path");
 const getTestimonials = require("../SQL/main/getTestimonials");
@@ -31,6 +32,7 @@ const validateLoginSendOtp = require("../validations/main/validateLoginSendOtp")
 const validateverifyLoginOtp = require("../validations/main/validateVerifyingOtp");
 const validateVerifyingOtp = require("../validations/main/validateVerifyingOtp");
 const validateLoginOtp = require("../SQL/main/validateLoginOtp");
+const insertStudentContactMeData = require("../SQL/main/insertStudentContactMeData");
 
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -571,4 +573,54 @@ generalRouter.get(
     }
   }
 );
+// ======================================================
+//                contactme-categories
+// ======================================================
+generalRouter.get(
+  "/mockapis/serverpeuser/contact-categories",
+  async (req, res) => {
+    try {
+      const feedbackcategories = await getAllStudentContactCategories(poolMain);
+      return res.status(feedbackcategories.statuscode).json(feedbackcategories);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+        message: err.message,
+      });
+    } finally {
+    }
+  }
+);
+// ======================================================
+//                add to contact me
+// ======================================================
+generalRouter.post("/serverpeuser/mystudents/contact-me", async (req, res) => {
+  try {
+    let resultcontactme = validateForAddingContactMeData(req);
+    if (resultcontactme.successstatus) {
+      resultcontactme = await insertStudentContactMeData(
+        poolMain,
+        req.body.user_name,
+        req.body.email,
+        req.body.rating ? req.body.rating : 5,
+        req.body.category_name,
+        req.body.message
+      );
+    }
+    return res.status(resultcontactme.statuscode).json(resultcontactme);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
+  } finally {
+  }
+});
 module.exports = generalRouter;
