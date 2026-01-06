@@ -24,6 +24,7 @@ const generateOtp = require("../utils/generateOtp");
 require("dotenv").config();
 const Redis = require("ioredis");
 const convertDocxToPdf = require("../utils/convertDocxToPdf");
+const getProjectList = require("../SQL/main/getProjectList");
 
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -357,7 +358,28 @@ generalRouter.get("/mockapis/health/check", async (req, res) => {
 
 
 
-
+// ======================================================
+//                feedback catagories
+// ======================================================
+generalRouter.get(
+  "/serverpeuser/mystudents/project-list",
+  async (req, res) => {
+    try {
+      const projectlist = await getProjectList(poolMain);
+      return res.status(projectlist.statuscode).json(projectlist);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+        message: err.message,
+      });
+    } finally {
+    }
+  }
+);
 // ======================================================
 // new approach for studnents
 // send email otp
