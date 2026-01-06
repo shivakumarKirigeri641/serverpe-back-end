@@ -25,6 +25,11 @@ require("dotenv").config();
 const Redis = require("ioredis");
 const convertDocxToPdf = require("../utils/convertDocxToPdf");
 const getProjectList = require("../SQL/main/getProjectList");
+const insertLoginOtpEntry = require("../SQL/main/insertLoginOtpEntry");
+const validateLoginSendOtp = require("../validations/main/validateLoginSendOtp");
+const validateverifyLoginOtp = require("../validations/main/validateVerifyingOtp");
+const validateVerifyingOtp = require("../validations/main/validateVerifyingOtp");
+const validateLoginOtp = require("../SQL/main/validateLoginOtp");
 
 const redis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -357,7 +362,30 @@ generalRouter.get("/mockapis/health/check", async (req, res) => {
 
 
 
-
+// ======================================================
+//                api get state list (unchargeable)
+// ======================================================
+generalRouter.get("/serverpeuser/mystudents/states", async (req, res) => {
+  try {
+    // 2️⃣ Business Logic
+    const result = await getStatesAndTerritories(poolMain);
+    return res.status(result.statuscode ? result.statuscode : 200).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    console.error("API Error:", err);
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
+  } finally {
+  }
+});
 // ======================================================
 //                feedback catagories
 // ======================================================
@@ -382,9 +410,9 @@ generalRouter.get(
 );
 // ======================================================
 // new approach for studnents
-// send email otp
+// subscription send otp
 // ======================================================
-generalRouter.post("/serverpeuser/mystudents/send-otp", async (req, res) => {
+generalRouter.post("/serverpeuser/mystudents/subscription/send-otp", async (req, res) => {
   try {
     let validationresult = validateSendOtp(req.body);
 
@@ -392,7 +420,7 @@ generalRouter.post("/serverpeuser/mystudents/send-otp", async (req, res) => {
       const result_otp_mobile = "1234"; // static for now
       const result_otp_email = "5678"; // static for now
       //const result_otp = generateOtp();
-      validationresult = await insertotpentry(poolMain, req.body, result_otp_mobile, result_otp_email);
+      validationresult = await insertotpentry(poolMain, req.body);
     }
 
     return res.status(validationresult.statuscode).json(validationresult);
@@ -409,8 +437,9 @@ generalRouter.post("/serverpeuser/mystudents/send-otp", async (req, res) => {
 });
 // ======================================================
 //                STUDENT-VERIFY OTP
+//      subscription verify otp
 // ======================================================
-generalRouter.post("/serverpeuser/mystudents/verify-otp", async (req, res) => {
+generalRouter.post("/serverpeuser/mystudents/subscription/verify-otp", async (req, res) => {
   try {
     const ipAddress =
       (req.headers["x-forwarded-for"] &&
@@ -425,6 +454,67 @@ generalRouter.post("/serverpeuser/mystudents/verify-otp", async (req, res) => {
         req.body.email,
         req.body.mobile_otp,
         req.body.email_otp, 
+        ipAddress
+      );
+    }
+
+    return res
+      .status(validateforverifyotpresult.statuscode)
+      .json(validateforverifyotpresult);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
+  } finally {
+  }
+});
+// ======================================================
+// new approach for studnents
+// login send otp
+// ======================================================
+generalRouter.post("/serverpeuser/mystudents/login/send-otp", async (req, res) => {
+  try {
+    let validationresult = validateLoginSendOtp(req.body);
+
+    if (validationresult.successstatus) {
+      const result_otp = "1234"; // static for now      
+      //const result_otp = generateOtp();
+      validationresult = await insertLoginOtpEntry(poolMain, req.body, result_otp);
+    }
+
+    return res.status(validationresult.statuscode).json(validationresult);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
+  } finally {
+  }
+});
+// ======================================================
+//                STUDENT-VERIFY OTP
+//      login verify otp
+// ======================================================
+generalRouter.post("/serverpeuser/mystudents/login/verify-otp", async (req, res) => {
+  try {
+    const ipAddress =
+      (req.headers["x-forwarded-for"] &&
+        req.headers["x-forwarded-for"].split(",")[0]) ||
+      req.socket?.remoteAddress ||
+      null;
+    let validateforverifyotpresult = validateVerifyingOtp(req.body);
+    if (validateforverifyotpresult.successstatus) {
+      validateforverifyotpresult = await validateLoginOtp(
+        poolMain,
+        req.body.input_field,
+        req.body.otp, 
         ipAddress
       );
       if (validateforverifyotpresult.successstatus) {

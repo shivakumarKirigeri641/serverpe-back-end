@@ -1,4 +1,4 @@
-const insertotpentry = async (client, data, otp_mobile, otp_email) => {
+const insertotpentry = async (client, data) => {
   try {
     // Check if email exists
     const emailResult = await client.query(
@@ -46,7 +46,7 @@ const insertotpentry = async (client, data, otp_mobile, otp_email) => {
     await client.query(
       `INSERT INTO user_verification_otps (fk_user_id, otp_mobile, otp_email, expires_at) 
        VALUES ($1, $2, $3, NOW() + INTERVAL '3 minutes')`,
-      [userId, otp_mobile, otp_email]
+      [userId, data.otp_mobile, data.otp_email]
     );
 
     return {

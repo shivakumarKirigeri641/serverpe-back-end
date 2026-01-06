@@ -26,7 +26,7 @@ const validateotp = async (client, mobile_number, email, otp_mobile, otp_email, 
     return {
       statuscode: 200,
       successstatus: true,
-      message: "Otp verified successfully!",
+      message: "Otp verified successfully and user subscription is successfull. Please login to continue.",
       data: {
         // api_key: result_apikey, // No longer generating API key here
       },
