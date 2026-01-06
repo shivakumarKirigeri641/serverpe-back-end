@@ -21,7 +21,7 @@ const insertStudentContactMeData = async (
     [user_name, email, result_category.rows[0].id, rating, message]
   );
   //alert notifification to me with SMS when user gives contact form
-  await sendAlertForContactRequestSMS(user_name, email, category);
+  //await sendAlertForContactRequestSMS(user_name, email, category);
   return {
     statuscode: 200,
     successstatus: true,

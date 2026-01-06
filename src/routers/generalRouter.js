@@ -577,7 +577,7 @@ generalRouter.get(
 //                contactme-categories
 // ======================================================
 generalRouter.get(
-  "/mockapis/serverpeuser/contact-categories",
+  "/serverpeuser/mystudents/contact-categories",
   async (req, res) => {
     try {
       const feedbackcategories = await getAllStudentContactCategories(poolMain);
@@ -598,7 +598,7 @@ generalRouter.get(
 // ======================================================
 //                add to contact me
 // ======================================================
-generalRouter.post("/serverpeuser/mystudents/contact-me", async (req, res) => {
+generalRouter.post("/serverpeuser/mystudents/contact-categories", async (req, res) => {
   try {
     let resultcontactme = validateForAddingContactMeData(req);
     if (resultcontactme.successstatus) {
