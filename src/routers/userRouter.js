@@ -7,6 +7,7 @@ const getStudentUserProfile = require("../SQL/main/getStudentUserProfile");
 const validateStudentMobileNumber = require("../SQL/main/validateStudentMobileNumber");
 const getStudentPurchaseHistory = require("../SQL/main/getStudentPurchaseHistory");
 const getStudentPurchaseProjectDetails = require("../SQL/main/getStudentPurchaseProjectDetails");
+const getStudentPurchasedDetails = require("../SQL/main/getPurchasedDetails");
 const poolMain = connectMainDB();
 
 
@@ -82,6 +83,39 @@ userRouter.get(
     try {
       const result_userprofile = await getStudentPurchaseProjectDetails(poolMain, req, req.params.project_id);
       return res.status(result_userprofile.statuscode).json(result_userprofile);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      //if (poolMain) client.release();
+    }
+  }
+);
+// ======================================================
+//                student-purchased details
+// ======================================================
+userRouter.get(
+  "/serverpeuser/loggedinstudent/purchased-details/:order_number",  
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      if(!req.params.order_number){
+        return res.status(400).json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          status: "Failed",
+          successstatus: false,
+          message: "Invalid order number!",
+        });
+      }
+      const result_purchaseddetails = await getStudentPurchasedDetails(poolMain, req.params.order_number);
+      return res.status(result_purchaseddetails.statuscode).json(result_purchaseddetails);
     } catch (err) {
       console.error(err);
       return res.status(500).json({
