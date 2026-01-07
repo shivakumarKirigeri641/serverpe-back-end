@@ -1,4 +1,5 @@
 const express = require("express");
+const {updateStudentProfileByMobile} = require("../SQL/main/updateStudentProfileByMobile");
 const { connectMainDB } = require("../database/connectDB");
 const checkServerPeUser = require("../middleware/checkServerPeUser");
 const userRouter = express.Router();
@@ -17,10 +18,8 @@ const poolMain = connectMainDB();
 userRouter.get(
   "/serverpeuser/loggedinstudent/user-profile",  
   checkServerPeUser,
-  async (req, res) => {
-    let client;
+  async (req, res) => {    
     try {
-      //client = await getPostgreClient(poolMain);
       if (!validateStudentMobileNumber(poolMain, req.mobile_number)) {
         res.status(401).json({
           poweredby: "serverpe.in",
@@ -45,6 +44,58 @@ userRouter.get(
     }
   }
 );
+// ======================================================
+//                update student-user profile
+// ======================================================
+userRouter.patch(
+  "/serverpeuser/loggedinstudent/user-profile",
+  checkServerPeUser,
+  async (req, res) => {
+    try {
+      // 🔐 Validate logged-in student by mobile number
+      const isValidUser = await validateStudentMobileNumber(
+        poolMain,
+        req.mobile_number
+      );
+
+      if (!isValidUser) {
+        return res.status(401).json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          status: "Failed",
+          successstatus: false,
+          message: "Unauthorized user!",
+        });
+      }
+
+      // 🔄 Update profile using mobile number
+      const result_updateProfile = await updateStudentProfileByMobile(
+        poolMain,
+        req
+      );
+
+      return res.status(result_updateProfile.statuscode).json({
+        poweredby: "serverpe.in",
+        mock_data: false,
+        ...result_updateProfile,
+      });
+
+    } catch (err) {
+      console.error("Update Profile Error:", err);
+
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        status: "Failed",
+        successstatus: false,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    }
+  }
+);
+
+
 
 // ======================================================
 //                student-purchase history
@@ -70,7 +121,6 @@ userRouter.get(
     }
   }
 );
-
 
 // ======================================================
 //                student-purchase details
