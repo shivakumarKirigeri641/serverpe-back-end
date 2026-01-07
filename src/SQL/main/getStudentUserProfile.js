@@ -33,7 +33,7 @@ FROM users u
 LEFT JOIN college_list c
     ON c.id = u.fk_college_id
 
-LEFT JOIN states_ut s
+LEFT JOIN states s
     ON s.id = u.fk_state_id
 
 WHERE

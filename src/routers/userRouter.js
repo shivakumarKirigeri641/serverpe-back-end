@@ -15,6 +15,7 @@ const poolMain = connectMainDB();
 // ======================================================
 userRouter.get(
   "/serverpeuser/loggedinstudent/user-profile",  
+  checkServerPeUser,
   async (req, res) => {
     let client;
     try {
@@ -68,6 +69,7 @@ userRouter.get(
     }
   }
 );
+
 
 // ======================================================
 //                student-purchase details
