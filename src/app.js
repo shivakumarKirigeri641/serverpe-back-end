@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 8888;
 const app = express();
 
 /* 🔐 MUST be before CORS & cookies */
-app.set("trust proxy", 1);
+//app.set("trust proxy", 1);
 
 /* Measure latency */
 app.use((req, res, next) => {
@@ -45,7 +45,7 @@ app.use(express.json());
 );*/
 app.use(
   cors({
-    origin: "http://localhost:1234",
+    origin: "http://localhost:3000",
     credentials: true,
   })
 );

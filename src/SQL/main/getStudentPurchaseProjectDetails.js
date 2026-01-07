@@ -17,10 +17,17 @@ const getStudentPurchaseProjectDetails = async (client, req, project_id) => {
     SELECT *from projects where     id=$1`,
     [Number(project_id)]
   );
+  const basePrice = Number(result_project.rows[0].base_price);
+const gstPercent = Number(result_project.rows[0].gst_percent);
+
+const total_payment =
+  basePrice + (basePrice * gstPercent / 100);
+
   return {
     statuscode: 200,
     successstatus: true,
-    data: {user_details: result_user.rows[0], project_details: result_project.rows[0]},
+    data: {user_details: result_user.rows[0], project_details: result_project.rows[0], 
+      total_payment: total_payment},
   };
 };
 module.exports = getStudentPurchaseProjectDetails;

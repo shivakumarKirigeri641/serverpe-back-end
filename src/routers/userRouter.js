@@ -1,4 +1,6 @@
 const express = require("express");
+const crypto = require("crypto");
+const razorpay = require("../utils/razorpay");
 const {updateStudentProfileByMobile} = require("../SQL/main/updateStudentProfileByMobile");
 const { connectMainDB } = require("../database/connectDB");
 const checkServerPeUser = require("../middleware/checkServerPeUser");
@@ -9,6 +11,8 @@ const validateStudentMobileNumber = require("../SQL/main/validateStudentMobileNu
 const getStudentPurchaseHistory = require("../SQL/main/getStudentPurchaseHistory");
 const getStudentPurchaseProjectDetails = require("../SQL/main/getStudentPurchaseProjectDetails");
 const getStudentPurchasedDetails = require("../SQL/main/getPurchasedDetails");
+const validateForAmount = require("../utils/validateForAmount");
+const insertProjectPurchaseTransaction = require("../SQL/main/insertProjectPurchaseTransaction");
 const poolMain = connectMainDB();
 
 
@@ -205,6 +209,164 @@ userRouter.post(
       });
     } finally {
       //if (poolMain) client.release();
+    }
+  }
+);
+// ======================================================
+//                razorpay order
+// ======================================================
+userRouter.post(
+  "/serverpeuser/loggedinuser/razorpay/order",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      const { amount } = req.body; // amount in INR
+      let result_order = validateForAmount(req);
+      if (result_order.successstatus) {
+        result_order = await razorpay.orders.create({
+          amount: amount * 100, // INR → paise
+          currency: "INR",
+          receipt: `serverpe_${Date.now()}`,
+          payment_capture: 1,
+        });
+      }
+      result_order.statuscode = 200;
+      return res.status(result_order.statuscode).json(result_order);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      //if (poolMain) client.release();
+    }
+  }
+);
+// ======================================================
+//                razorpay verify
+// ======================================================
+userRouter.post(
+  "/serverpeuser/loggedinuser/razorpay/verify",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+        req.body;
+
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+      const expectedSignature = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(body)
+        .digest("hex");
+
+      if (expectedSignature === razorpay_signature) {
+        // ✅ Payment verified
+        return res.json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          statuscode: 200,
+          successstatus: true,
+        });
+      } else {
+        return res
+          .status(400)
+          .json({ poweredby: "serverpe.in", mock_data: true, success: false });
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      //if (poolMain) client.release();
+    }
+  }
+);
+// ======================================================
+//                razorpay order-status
+// ======================================================
+userRouter.post(
+  "/serverpeuser/loggedinuser/razorpay/status",
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      //client = await getPostgreClient(poolMain);
+      const { razorpay_payment_id, summaryFormData } = req.body;
+      let result = await razorpay.payments.fetch(razorpay_payment_id);
+      result = await insertProjectPurchaseTransaction(
+        poolMain,
+        result,
+        req.mobile_number,
+        summaryFormData
+      );
+      //create invoice pdf here and store it in docs/invoices.
+      //const { filePath, fileName } = generateInvoicePdf(result);
+      res.status(200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        successstatus: true,
+        data: result,
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      //if (poolMain) client.release();
+    }
+  }
+);
+// ======================================================
+//                download .zip project
+// ======================================================
+userRouter.get(
+  "/serverpeuser/loggedinuser/project/download/:license_key",
+  checkServerPeUser,
+  async (req, res) => {
+    try {
+      const { license_key } = req.params;
+      const mobile_number = req.mobile_number;
+
+      const result = await downloadProjectZipByLicense(
+        poolMain,
+        license_key,
+        mobile_number,
+        req.ip
+      );
+
+      if (!result.successstatus) {
+        return res.status(result.statuscode).json({
+          poweredby: "serverpe.in",
+          mock_data: false,
+          ...result
+        });
+      }
+
+      // 🔽 Send ZIP securely
+      return res.download(result.file_path, result.file_name);
+
+    } catch (err) {
+      console.error("ZIP Download Error:", err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        status: "Failed",
+        successstatus: false,
+        message: "Internal Server Error"
+      });
     }
   }
 );
