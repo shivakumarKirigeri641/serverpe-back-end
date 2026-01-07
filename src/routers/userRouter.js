@@ -14,7 +14,7 @@ const poolMain = connectMainDB();
 //                student-user profile
 // ======================================================
 userRouter.get(
-  "/serverpeuser/loggedinuser/user-profile",  
+  "/serverpeuser/loggedinstudent/user-profile",  
   async (req, res) => {
     let client;
     try {
@@ -48,7 +48,7 @@ userRouter.get(
 //                student-purchase history
 // ======================================================
 userRouter.get(
-  "/serverpeuser/loggedinuser/purchase-history",  
+  "/serverpeuser/loggedinstudent/purchase-history",  
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -73,7 +73,7 @@ userRouter.get(
 //                student-purchase details
 // ======================================================
 userRouter.get(
-  "/serverpeuser/loggedinuser/purchase-details/:project_id",  
+  "/serverpeuser/loggedinstudent/purchase-details/:project_id",  
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -97,7 +97,7 @@ userRouter.get(
 //                student-logout
 // ======================================================
 userRouter.post(
-  "/serverpeuser/loggedinuser/logout",  
+  "/serverpeuser/loggedinstudent/logout",  
   checkServerPeUser,
   async (req, res) => {
     let client;
