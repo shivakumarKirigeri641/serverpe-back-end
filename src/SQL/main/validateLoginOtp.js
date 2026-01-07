@@ -17,11 +17,11 @@ const validateLoginOtp = async (client, input_field, otp, ipAddress) => {
     // If input is mobile, check u.mobile_number and uvo.otp_mobile
     
     if (isEmail) {
-      query = `select u.mobile_number, uvo.* from user_verification_otps uvo 
+      query = `select u.*, uvo.* from user_verification_otps uvo 
                inner join users u on u.id = uvo.fk_user_id 
                where u.email=$1 and uvo.otp_email=$2`;
     } else {
-      query = `select u.mobile_number, uvo.* from user_verification_otps uvo 
+      query = `select u.*, uvo.* from user_verification_otps uvo 
                inner join users u on u.id = uvo.fk_user_id 
                where u.mobile_number=$1 and uvo.otp_mobile=$2`;
     }
@@ -46,7 +46,7 @@ const validateLoginOtp = async (client, input_field, otp, ipAddress) => {
         successstatus: true,
         message: "Login successful!",
         data: {
-             mobile_number: result.rows[0].mobile_number
+             ...result.rows[0]
         },
       };
 

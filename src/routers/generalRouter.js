@@ -521,7 +521,7 @@ generalRouter.post("/serverpeuser/mystudents/login/verify-otp", async (req, res)
         ipAddress
       );
       if (validateforverifyotpresult.successstatus) {
-        const token = generateToken(req.body.mobile_number);
+        const token = generateToken(validateforverifyotpresult?.data?.mobile_number);
         /*res.cookie("token", token, {
           httpOnly: true,
           secure: true, // REQUIRED for SameSite=None
