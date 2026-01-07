@@ -1,4 +1,5 @@
 const express = require("express");
+const insertotpentry = require("../SQL/main/insertotpentry");
 const { connectMainDB } = require("../database/connectDB");
 const getAllStudentContactCategories = require('../SQL/main/getAllStudentContactCategories');
 const getDisclaimerBeforeBuyList = require('../SQL/main/getDisclaimerBeforeBuyList');
@@ -75,7 +76,7 @@ generalRouter.post("/serverpeuser/mystudents/subscription/send-otp", async (req,
       const result_otp_mobile = "1234"; // static for now
       const result_otp_email = "5678"; // static for now
       //const result_otp = generateOtp();
-      validationresult = await insertotpentry(poolMain, req.body);
+      validationresult = await insertotpentry(poolMain, req.body, result_otp_mobile, result_otp_email);
     }
 
     return res.status(validationresult.statuscode).json(validationresult);
