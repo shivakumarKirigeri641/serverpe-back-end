@@ -1,4 +1,5 @@
 const express = require("express");
+const { connectMainDB } = require("../database/connectDB");
 const getAllStudentContactCategories = require('../SQL/main/getAllStudentContactCategories');
 const getDisclaimerBeforeBuyList = require('../SQL/main/getDisclaimerBeforeBuyList');
 const validateForAddingContactMeData = require("../validations/main/validateForAddingContactMeData");
@@ -15,7 +16,7 @@ const validateLoginSendOtp = require("../validations/main/validateLoginSendOtp")
 const validateVerifyingOtp = require("../validations/main/validateVerifyingOtp");
 const validateLoginOtp = require("../SQL/main/validateLoginOtp");
 const insertStudentContactMeData = require("../SQL/main/insertStudentContactMeData");
-
+const poolMain = connectMainDB();
 // ======================================================
 //                api get state list (unchargeable)
 // ======================================================

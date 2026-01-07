@@ -93,5 +93,29 @@ userRouter.get(
     }
   }
 );
+// ======================================================
+//                student-purchase details
+// ======================================================
+userRouter.post(
+  "/serverpeuser/loggedinuser/logout",  
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      res.cookie("token", null);
+      return res.status(200).json({status:'ok', message:'Logged out successfully'});
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      //if (poolMain) client.release();
+    }
+  }
+);
 
 module.exports = userRouter;
