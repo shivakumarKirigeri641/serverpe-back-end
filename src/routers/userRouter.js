@@ -94,7 +94,7 @@ userRouter.get(
   }
 );
 // ======================================================
-//                student-purchase details
+//                student-logout
 // ======================================================
 userRouter.post(
   "/serverpeuser/loggedinuser/logout",  
