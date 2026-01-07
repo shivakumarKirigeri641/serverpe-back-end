@@ -94,9 +94,6 @@ userRouter.patch(
     }
   }
 );
-
-
-
 // ======================================================
 //                student-purchase history
 // ======================================================
@@ -128,9 +125,17 @@ userRouter.get(
 userRouter.get(
   "/serverpeuser/loggedinstudent/purchase-details/:project_id",  
   checkServerPeUser,
-  async (req, res) => {
-    let client;
+  async (req, res) => {    
     try {
+      if(!req.params.project_id){
+        return res.status(400).json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          status: "Failed",
+          successstatus: false,
+          message: "Invalid project_id number!",
+        });
+      }
       const result_userprofile = await getStudentPurchaseProjectDetails(poolMain, req, req.params.project_id);
       return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
