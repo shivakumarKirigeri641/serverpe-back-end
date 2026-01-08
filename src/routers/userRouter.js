@@ -13,7 +13,7 @@ const getStudentPurchaseHistory = require("../SQL/main/getStudentPurchaseHistory
 const getStudentPurchaseProjectDetails = require("../SQL/main/getStudentPurchaseProjectDetails");
 const getStudentPurchasedDetails = require("../SQL/main/getPurchasedDetails");
 const validateForAmount = require("../utils/validateForAmount");
-const insertProjectPurchaseTransaction = require("../SQL/main/insertProjectPurchaseTransaction");
+const inserTransactions = require("../SQL/main/inserTransactions");
 const poolMain = connectMainDB();
 
 
@@ -302,27 +302,26 @@ userRouter.post(
 userRouter.post(
   "/serverpeuser/loggedinuser/razorpay/status",
   checkServerPeUser,
-  async (req, res) => {
-    let client;
+  async (req, res) => {    
     try {
-      //client = await getPostgreClient(poolMain);
       const { razorpay_payment_id, summaryFormData } = req.body;
-      let result = await razorpay.payments.fetch(razorpay_payment_id);
-      result = await insertProjectPurchaseTransaction(
+      let result = await razorpay.payments.fetch(razorpay_payment_id);      
+      let result_status = await inserTransactions(
         poolMain,
         result,
         req.mobile_number,
         summaryFormData
-      );
+      );      
       //create invoice pdf here and store it in docs/invoices.
       //const { filePath, fileName } = generateInvoicePdf(result);
+      console.log(result_status);
       res.status(200).json({
         poweredby: "serverpe.in",
         mock_data: true,
         successstatus: true,
-        data: result,
+        data: result_status,
       });
-    } catch (err) {
+    } catch (err) {      
       console.error(err);
       return res.status(500).json({
         poweredby: "serverpe.in",
@@ -331,7 +330,6 @@ userRouter.post(
         message: err.message,
       });
     } finally {
-      //if (poolMain) client.release();
     }
   }
 );

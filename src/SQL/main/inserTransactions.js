@@ -1,15 +1,15 @@
-const insertProjectPurchaseTransaction = async (
-  client,
+const generateOrderNumber = require("./generateOrderNumber");   
+const inserTransactions = async (
+  poolMain,
   transaction_data,   // Razorpay payment object
   mobile_number,
   summaryFormData     // user_name, email, project_id
-) => {
-  await client.query("BEGIN");
+) => {  
   try{
   /* -----------------------------------------
    1️⃣ FETCH USER (BY MOBILE NUMBER)
   ------------------------------------------*/
-  const result_user = await client.query(
+  const result_user = await poolMain.query(
     `SELECT id, user_name, email
      FROM users
      WHERE mobile_number = $1`,
@@ -27,8 +27,13 @@ const insertProjectPurchaseTransaction = async (
   ------------------------------------------*/
   const baseAmount = transaction_data.amount / 100 / 1.18;
   const gstAmount  = (transaction_data.amount / 100) - baseAmount;
-
-  const result_order = await client.query(
+  const order_number = generateOrderNumber({
+    user_id: user.id,
+    mobile_number,
+    email: user.email,
+    project_id: summaryFormData?.project?.id
+  });
+  const result_order = await poolMain.query(
     `INSERT INTO orders (
         fk_user_id,
         order_number,
@@ -40,7 +45,7 @@ const insertProjectPurchaseTransaction = async (
      RETURNING *`,
     [
       user.id,
-      transaction_data.order_id,
+      order_number,
       baseAmount.toFixed(2),
       gstAmount.toFixed(2),
       transaction_data.amount / 100
@@ -52,7 +57,7 @@ const insertProjectPurchaseTransaction = async (
   /* -----------------------------------------
    3️⃣ INSERT PAYMENT (RAZORPAY)
   ------------------------------------------*/
-  await client.query(
+  await poolMain.query(
     `INSERT INTO payments (
         fk_order_id,
         gateway,
@@ -73,7 +78,7 @@ const insertProjectPurchaseTransaction = async (
   ------------------------------------------*/
   const licenseKey = `LIC-${user.id}-${Date.now()}`;
 
-  const result_license = await client.query(
+  const result_license = await poolMain.query(
     `INSERT INTO licenses (
         fk_user_id,
         fk_project_id,
@@ -82,7 +87,7 @@ const insertProjectPurchaseTransaction = async (
      RETURNING *`,
     [
       user.id,
-      summaryFormData?.selectedPlan?.project_details?.id,
+      summaryFormData?.project?.id,
       licenseKey
     ]
   );
@@ -92,7 +97,7 @@ const insertProjectPurchaseTransaction = async (
   ------------------------------------------*/
   const invoiceNumber = `SVRP/${new Date().getFullYear()}/${order.id}`;
 
-  await client.query(
+  await poolMain.query(
     `INSERT INTO invoices (
         fk_order_id,
         invoice_number,
@@ -104,13 +109,12 @@ const insertProjectPurchaseTransaction = async (
     [
       order.id,
       invoiceNumber,
-      summaryFormData?.selectedPlan?.user_details?.user_name,
+      summaryFormData?.userDetails?.user_name,
       baseAmount.toFixed(2),
       gstAmount.toFixed(2),
       transaction_data.amount / 100
     ]
-  );
-  await client.query("COMMIT");
+  );  
 
   /* -----------------------------------------
    6️⃣ EMAIL CONFIRMATION
@@ -137,7 +141,7 @@ const insertProjectPurchaseTransaction = async (
     result_transaction: {
       razorpay_order_id: transaction_data.order_id || order.order_number,
       amount: transaction_data.amount, // in paise
-      description: transaction_data.description || `Plan: ${summaryFormData?.selectedPlan?.project_details?.project_code}`,
+      description: transaction_data.description || `Plan: ${summaryFormData?.project?.project_code}`,
       created_at: transaction_data.created_at || Math.floor(Date.now() / 1000),
       status: transaction_data.status || 'captured'
     },
@@ -155,9 +159,8 @@ const insertProjectPurchaseTransaction = async (
   };
 }
 catch(err){
-  await client.query("ROLLBACK");
-
+  throw err;
 }
 };
 
-module.exports = insertProjectPurchaseTransaction;
+module.exports = inserTransactions;
