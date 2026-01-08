@@ -18,6 +18,10 @@ const validateotp = async (client, mobile_number, email, otp_mobile, otp_email, 
       `delete from user_verification_otps where id=$1`,
       [result.rows[0].id]
     );
+    const result_update_email_mobile_verification = await client.query(
+      `update users set is_email_verified = TRUE, is_mobile_verified = TRUE where id = $1`,
+      [result.rows[0].fk_user_id]
+    );    
     
     //alert notifification to me with SMS when user logins
     //await sendLoggedInUserSMS(ipAddress, result_user.rows[0].mobile_number);

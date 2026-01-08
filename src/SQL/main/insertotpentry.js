@@ -30,7 +30,7 @@ const insertotpentry = async (client, data, otp_mobile, otp_email) => {
     //imnsert user
     const insertUserResult = await client.query(
       `INSERT INTO users (user_name, email, mobile_number, fk_college_id, fk_state_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [data.user_name, data.email, data.mobile_number, 1,11]
+      [data.user_name, data.email, data.mobile_number, data.collegeid,data.stateid]
     );
     //alert here call fast2sms otp sms api
     //await sendOTPSMS(data.mobile_number, otp, 3);    

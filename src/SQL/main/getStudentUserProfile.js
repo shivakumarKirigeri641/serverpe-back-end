@@ -16,9 +16,9 @@ const getStudentUserProfile = async (client, req) => {
     -- COLLEGE DETAILS
     c.id                 AS college_id,
     c.college_name,
-    c.place              AS college_place,
-    c.district           AS college_district,
-    c.state              AS college_state,
+    c.college_address              AS college_place,
+    c.college_district           AS college_district,
+    s.state_name              AS college_state,
 
     -- STATE DETAILS
     s.state_name,
