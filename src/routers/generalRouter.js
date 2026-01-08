@@ -17,6 +17,7 @@ const validateLoginSendOtp = require("../validations/main/validateLoginSendOtp")
 const validateVerifyingOtp = require("../validations/main/validateVerifyingOtp");
 const validateLoginOtp = require("../SQL/main/validateLoginOtp");
 const insertStudentContactMeData = require("../SQL/main/insertStudentContactMeData");
+const { getCollegesByStateId } = require("../SQL/main/getCollegesByStateId");
 const poolMain = connectMainDB();
 // ======================================================
 //                api get state list (unchargeable)
@@ -42,6 +43,46 @@ generalRouter.get("/serverpeuser/mystudents/states", async (req, res) => {
   } finally {
   }
 });
+// ======================================================
+//        api get college list by stateId (unchargeable)
+// ======================================================
+generalRouter.get(
+  "/serverpeuser/mystudents/colleges/:stateId",
+  async (req, res) => {
+    try {
+      const { stateId } = req.params;
+
+      // Basic validation
+      if (!stateId || isNaN(stateId)) {
+        return res.status(400).json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          success: false,
+          message: "Invalid stateId",
+        });
+      }
+
+      // Business Logic
+      const result = await getCollegesByStateId(poolMain, stateId);
+
+      return res.status(result.statuscode ?? 200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      console.error("API Error:", err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    }
+  }
+);
+
 // ======================================================
 //                project list
 // ======================================================
