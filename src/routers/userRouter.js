@@ -1,113 +1,31 @@
-const validateForAmount = require("../validations/main/validateForAmount");
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
-const generateInvoicePdf = require("../utils/generateInvoicePdf");
 const express = require("express");
+const {downloadInvoicePdf}=require("../utils/downloadInvoicePdf");
+const crypto = require("crypto");
 const razorpay = require("../utils/razorpay");
-const getStatesAndTerritories = require("../SQL/PINCODES/getStatesAndTerritories");
-const validateMobileNumber = require("../SQL/main/validateMobileNumber");
-const validateSendOtp = require("../validations/main/validateSendOtp");
-const generateOtp = require("../utils/generateOtp");
-const generateToken = require("../utils/generateToken");
-const getPostgreClient = require("../SQL/getPostgreClient");
+const {updateStudentProfileByMobile} = require("../SQL/main/updateStudentProfileByMobile");
 const { connectMainDB } = require("../database/connectDB");
-const insertotpentry = require("../SQL/main/insertotpentry");
-const rateLimitPerApiKey = require("../middleware/rateLimitPerApiKey");
-const validateotp = require("../SQL/main/validateotp");
-const validateverifyOtp = require("../validations/main/validateverifyOtp");
 const checkServerPeUser = require("../middleware/checkServerPeUser");
-const checkApiKey = require("../middleware/checkApiKey");
-const validateForFeedbackInsert = require("../validations/main/validateForInsertFeedback"); // NEW ATOMIC VERSION
-const insertFeedbacks = require("../SQL/main/insertFeedbacks");
-const fetchApiHistory = require("../SQL/main/fetchApiHistory");
-const fetchApiPlans = require("../SQL/main/fetchApiPlans");
 const userRouter = express.Router();
-const securityMiddleware = require("../middleware/securityMiddleware");
-const getUsageAnalytics = require("../SQL/main/getUsageAnalytics");
 require("dotenv").config();
-const Redis = require("ioredis");
-const getApiEndPoints = require("../SQL/main/getApiEndPoints");
-const getWalletAndRechargeInformation = require("../SQL/main/getWalletAndRechargeInformation");
-const getUserDashboardData = require("../SQL/main/getUserDashboardData");
-const getUserProfile = require("../SQL/main/getUserProfile");
-const validateForInvoiceUserProfile = require("../validations/main/validateForInvoiceUserProfile");
-const { default: axios } = require("axios");
-const { resourceLimits } = require("worker_threads");
-const insertTransactionDetails = require("../SQL/main/insertTransactionDetails");
-const updateMockAPICredits = require("../SQL/main/updateMockAPICredits");
-const redis = new Redis(process.env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-  reconnectOnError: () => true,
-  retryStrategy(times) {
-    return Math.min(times * 50, 2000);
-  },
-  tls: {}, // IMPORTANT for redis.io URLs with TLS (rediss://)
-});
+const getStudentUserProfile = require("../SQL/main/getStudentUserProfile");
+const validateStudentMobileNumber = require("../SQL/main/validateStudentMobileNumber");
+const getStudentPurchaseHistory = require("../SQL/main/getStudentPurchaseHistory");
+const getStudentPurchaseProjectDetails = require("../SQL/main/getStudentPurchaseProjectDetails");
+const getStudentPurchasedDetails = require("../SQL/main/getPurchasedDetails");
+const validateForAmount = require("../utils/validateForAmount");
+const insertProjectPurchaseTransaction = require("../SQL/main/insertProjectPurchaseTransaction");
 const poolMain = connectMainDB();
-// ======================================================
-//                API USAGE
-// ======================================================
-userRouter.get(
-  "/mockapis/serverpeuser/loggedinuser/api-usage",
-  checkServerPeUser,
-  async (req, res) => {
-    let client;
-    try {
-      //client = await getPostgreClient(poolMain);
-      const historyResult = await fetchApiHistory(poolMain, req.mobile_number);
 
-      return res.status(historyResult.statuscode).json(historyResult);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
-    } finally {
-      //if (poolMain) client.release();
-    }
-  }
-);
+
 // ======================================================
-//                API plans premium
+//                student-user profile
 // ======================================================
 userRouter.get(
-  "/mockapis/serverpeuser/loggedinuser/api-plans-premium",
+  "/serverpeuser/loggedinstudent/user-profile",  
   checkServerPeUser,
-  async (req, res) => {
-    let client;
+  async (req, res) => {    
     try {
-      //client = await getPostgreClient(poolMain);
-      const plansResult = await fetchApiPlans(poolMain, false);
-      return res.status(plansResult.statuscode).json(plansResult);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
-    } finally {
-      //if (poolMain) client.release();
-    }
-  }
-);
-// ======================================================
-//                feedbacks
-// ======================================================
-userRouter.post(
-  "/mockapis/serverpeuser/loggedinuser/feedback",
-  checkServerPeUser,
-  async (req, res) => {
-    let client;
-    try {
-      //client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(poolMain, req.mobile_number)) {
+      if (!validateStudentMobileNumber(poolMain, req.mobile_number)) {
         res.status(401).json({
           poweredby: "serverpe.in",
           mock_data: true,
@@ -116,11 +34,8 @@ userRouter.post(
           message: "Unauthorized user!",
         });
       }
-      let result = validateForFeedbackInsert(req);
-      if (result.successstatus) {
-        result = await insertFeedbacks(poolMain, req.mobile_number, req.body);
-      }
-      return res.status(result.statuscode).json(result);
+      const result_userprofile = await getStudentUserProfile(poolMain, req);
+      return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
       console.error(err);
       return res.status(500).json({
@@ -135,17 +50,21 @@ userRouter.post(
   }
 );
 // ======================================================
-//                get all endpoints sets in array and send to ui
+//                update student-user profile
 // ======================================================
-userRouter.get(
-  "/mockapis/serverpeuser/loggedinuser/all-endpoints",
+userRouter.patch(
+  "/serverpeuser/loggedinstudent/user-profile",
   checkServerPeUser,
   async (req, res) => {
-    let client;
     try {
-      //client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
+      // 🔐 Validate logged-in student by mobile number
+      const isValidUser = await validateStudentMobileNumber(
+        poolMain,
+        req.mobile_number
+      );
+
+      if (!isValidUser) {
+        return res.status(401).json({
           poweredby: "serverpe.in",
           mock_data: true,
           status: "Failed",
@@ -153,47 +72,77 @@ userRouter.get(
           message: "Unauthorized user!",
         });
       }
-      const apiendpoints = await getApiEndPoints(poolMain);
-      return res.status(apiendpoints.statuscode).json(apiendpoints);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
-    } finally {
-      //if (poolMain) client.release();
-    }
-  }
-);
-// ======================================================
-//                get wallet & recharges
-// ======================================================
-userRouter.get(
-  "/mockapis/serverpeuser/loggedinuser/wallet-recharges",
-  checkServerPeUser,
-  async (req, res) => {
-    let client;
-    try {
-      //client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          poweredby: "serverpe.in",
-          mock_data: true,
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
-      }
-      const result_walletrecharge = await getWalletAndRechargeInformation(
+
+      // 🔄 Update profile using mobile number
+      const result_updateProfile = await updateStudentProfileByMobile(
         poolMain,
         req
       );
-      return res
-        .status(result_walletrecharge.statuscode)
-        .json(result_walletrecharge);
+
+      return res.status(result_updateProfile.statuscode).json({
+        poweredby: "serverpe.in",
+        mock_data: false,
+        ...result_updateProfile,
+      });
+
+    } catch (err) {
+      console.error("Update Profile Error:", err);
+
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        status: "Failed",
+        successstatus: false,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    }
+  }
+);
+// ======================================================
+//                student-purchase history
+// ======================================================
+userRouter.get(
+  "/serverpeuser/loggedinstudent/purchase-history",  
+  checkServerPeUser,
+  async (req, res) => {
+    let client;
+    try {
+      const result_userprofile = await getStudentPurchaseHistory(poolMain, req);
+      return res.status(result_userprofile.statuscode).json(result_userprofile);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      //if (poolMain) client.release();
+    }
+  }
+);
+
+// ======================================================
+//                student-purchase details
+// ======================================================
+userRouter.get(
+  "/serverpeuser/loggedinstudent/purchase-details/:project_id",  
+  checkServerPeUser,
+  async (req, res) => {    
+    try {
+      if(!req.params.project_id){
+        return res.status(400).json({
+          poweredby: "serverpe.in",
+          mock_data: true,
+          status: "Failed",
+          successstatus: false,
+          message: "Invalid project_id number!",
+        });
+      }
+      const result_userprofile = await getStudentPurchaseProjectDetails(poolMain, req, req.params.project_id);
+      return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
       console.error(err);
       return res.status(500).json({
@@ -208,28 +157,25 @@ userRouter.get(
   }
 );
 // ======================================================
-//                usage analytics
+//                student-purchased details
 // ======================================================
 userRouter.get(
-  "/mockapis/serverpeuser/loggedinuser/usage-analytics",
+  "/serverpeuser/loggedinstudent/purchased-details/:order_number",  
   checkServerPeUser,
   async (req, res) => {
     let client;
     try {
-      //client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
+      if(!req.params.order_number){
+        return res.status(400).json({
           poweredby: "serverpe.in",
           mock_data: true,
           status: "Failed",
           successstatus: false,
-          message: "Unauthorized user!",
+          message: "Invalid order number!",
         });
       }
-      const result_usageanalytics = await getUsageAnalytics(poolMain, req);
-      return res
-        .status(result_usageanalytics.statuscode)
-        .json(result_usageanalytics);
+      const result_purchaseddetails = await getStudentPurchasedDetails(poolMain, req.params.order_number);
+      return res.status(result_purchaseddetails.statuscode).json(result_purchaseddetails);
     } catch (err) {
       console.error(err);
       return res.status(500).json({
@@ -244,28 +190,21 @@ userRouter.get(
   }
 );
 // ======================================================
-//                user dashboard data
+//                student-logout
 // ======================================================
-userRouter.get(
-  "/mockapis/serverpeuser/loggedinuser/user-dashboard-data",
+userRouter.post(
+  "/serverpeuser/loggedinstudent/logout",  
   checkServerPeUser,
   async (req, res) => {
     let client;
     try {
-      //client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
-          poweredby: "serverpe.in",
-          mock_data: true,
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
-        });
-      }
-      const result_usageanalytics = await getUserDashboardData(poolMain, req);
-      return res
-        .status(result_usageanalytics.statuscode)
-        .json(result_usageanalytics);
+      res.clearCookie("token", {
+        httpOnly: true,
+        secure: false, // matches the setting in login
+        sameSite: "lax",
+        path: "/",
+      });
+      return res.status(200).json({status:'ok', message:'Logged out successfully'});
     } catch (err) {
       console.error(err);
       return res.status(500).json({
@@ -283,7 +222,7 @@ userRouter.get(
 //                razorpay order
 // ======================================================
 userRouter.post(
-  "/mockapis/serverpeuser/loggedinuser/razorpay/order",
+  "/serverpeuser/loggedinuser/razorpay/order",
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -317,7 +256,7 @@ userRouter.post(
 //                razorpay verify
 // ======================================================
 userRouter.post(
-  "/mockapis/serverpeuser/loggedinuser/razorpay/verify",
+  "/serverpeuser/loggedinuser/razorpay/verify",
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -327,8 +266,7 @@ userRouter.post(
 
       const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-      const expectedSignature = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      const expectedSignature = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(body)
         .digest("hex");
 
@@ -362,7 +300,7 @@ userRouter.post(
 //                razorpay order-status
 // ======================================================
 userRouter.post(
-  "/mockapis/serverpeuser/loggedinuser/razorpay/status",
+  "/serverpeuser/loggedinuser/razorpay/status",
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -370,14 +308,14 @@ userRouter.post(
       //client = await getPostgreClient(poolMain);
       const { razorpay_payment_id, summaryFormData } = req.body;
       let result = await razorpay.payments.fetch(razorpay_payment_id);
-      result = await insertTransactionDetails(
+      result = await insertProjectPurchaseTransaction(
         poolMain,
         result,
         req.mobile_number,
         summaryFormData
       );
       //create invoice pdf here and store it in docs/invoices.
-      const { filePath, fileName } = generateInvoicePdf(result);
+      //const { filePath, fileName } = generateInvoicePdf(result);
       res.status(200).json({
         poweredby: "serverpe.in",
         mock_data: true,
@@ -398,86 +336,95 @@ userRouter.post(
   }
 );
 // ======================================================
-//                invoice download
+//                download .zip project
 // ======================================================
 userRouter.get(
-  "/mockapis/serverpeuser/loggedinuser/invoices/download/:id",
+  "/serverpeuser/loggedinuser/project/download/:license_key",
   checkServerPeUser,
   async (req, res) => {
-    let client;
     try {
-      const fileName = `ServerPe_Invoice_SP-${req.params.id}.pdf`;
-      const filePath = path.join(
-        path.resolve(__dirname, "..", "docs", "invoices"),
-        fileName
+      const { license_key } = req.params;
+      const mobile_number = req.mobile_number;
+
+      const result = await downloadProjectZipByLicense(
+        poolMain,
+        license_key,
+        mobile_number,
+        req.ip
       );
-      //check if file exists
-      fs.access(filePath, fs.constants.F_OK, (err) => {
-        if (err) {
-          return res.status(500).json({
-            poweredby: "serverpe.in",
-            mock_data: true,
-            error: "Internal Server Error",
-            message: "Invoice not found!",
-          });
-        }
-      });
-      res.download(filePath, fileName, (err) => {
-        if (err) {
-          console.error("File download error:", err);
-          res.status(500).json({
-            poweredby: "serverpe.in",
-            mock_data: true,
-            success: false,
-            message: "Unable to download file",
-          });
-        }
-      });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({
-        poweredby: "serverpe.in",
-        mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
-      });
-    } finally {
-      //if (poolMain) client.release();
-    }
-  }
-);
-// ======================================================
-//                user profile
-// ======================================================
-userRouter.get(
-  "/mockapis/serverpeuser/loggedinuser/user-profile",
-  checkServerPeUser,
-  async (req, res) => {
-    let client;
-    try {
-      //client = await getPostgreClient(poolMain);
-      if (!validateMobileNumber(poolMain, req.mobile_number)) {
-        res.status(401).json({
+
+      if (!result.successstatus) {
+        return res.status(result.statuscode).json({
           poweredby: "serverpe.in",
-          mock_data: true,
-          status: "Failed",
-          successstatus: false,
-          message: "Unauthorized user!",
+          mock_data: false,
+          ...result
         });
       }
-      const result_userprofile = await getUserProfile(poolMain, req);
-      return res.status(result_userprofile.statuscode).json(result_userprofile);
+
+      // 🔽 Send ZIP securely
+      return res.download(result.file_path, result.file_name);
+
     } catch (err) {
-      console.error(err);
+      console.error("ZIP Download Error:", err);
       return res.status(500).json({
         poweredby: "serverpe.in",
         mock_data: true,
-        error: "Internal Server Error",
-        message: err.message,
+        status: "Failed",
+        successstatus: false,
+        message: "Internal Server Error"
       });
-    } finally {
-      //if (poolMain) client.release();
     }
   }
 );
+// ======================================================
+//                download invoice (PDF)
+// ======================================================
+userRouter.get(
+  "/serverpeuser/loggedinuser/invoice/download/:invoice_id",
+  checkServerPeUser,
+  async (req, res) => {
+    try {
+      const { invoice_id } = req.params;
+      const mobile_number = req.mobile_number;
+
+      if (!invoice_id || isNaN(invoice_id)) {
+        return res.status(400).json({
+          poweredby: "serverpe.in",
+          mock_data: false,
+          successstatus: false,
+          message: "Invalid invoice id"
+        });
+      }
+
+      const result = await downloadInvoicePdf(
+        poolMain,
+        invoice_id,
+        mobile_number,
+        req.ip
+      );
+
+      if (!result.successstatus) {
+        return res.status(result.statuscode).json({
+          poweredby: "serverpe.in",
+          mock_data: false,
+          ...result
+        });
+      }
+
+      // 🔽 Send PDF securely
+      return res.download(result.file_path, result.file_name);
+
+    } catch (err) {
+      console.error("Invoice Download Error:", err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        status: "Failed",
+        successstatus: false,
+        message: "Internal Server Error"
+      });
+    }
+  }
+);
+
 module.exports = userRouter;

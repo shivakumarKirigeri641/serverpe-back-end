@@ -2,7 +2,7 @@ const { sendMail } = require("../../utils/emails/sendMail");
 const userVisitLandingPageAlertTemplate = require("../../utils/emails/userVisitLandingPageAlertTemplate");
 const getTestimonials = async (client, req) => {
   const result = await client.query(
-    `select cm.user_name, cc.category_name, cm.message, cm.rating, cm.created_at from serverpe_contactme cm join serverpe_contactcategory cc on cc.id = cm.fkcategory order by cm.created_at`
+    `select f.user_name, c.category_name, f.message, f.rating, f.created_at from user_feedback f join feedback_category c on c.id = f.fk_category_id order by f.created_at`
   );
   //send mail alert on visiting
   let ipAddress =
@@ -23,7 +23,7 @@ const getTestimonials = async (client, req) => {
     : /tablet/i.test(devicetype)
     ? "Tablet"
     : "Desktop/Laptop";
-  await sendMail({
+  /*await sendMail({
     to: process.env.ADMINMAIL,
     subject: "An user landing page visit alert",
     html: userVisitLandingPageAlertTemplate({
@@ -32,7 +32,7 @@ const getTestimonials = async (client, req) => {
       devicename,
     }),
     text: "Alert! User visited landing page",
-  });
+  });*/
   return {
     statuscode: 200,
     successstatus: true,

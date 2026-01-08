@@ -5,7 +5,7 @@ const checkServerPeUser = async (req, res, next) => {
   try {
     const token = req.cookies.token; // or serverpe_user_token
 
-    if (!token) {
+    if (!token || token === "null" || token === "undefined") {
       return res
         .status(401)
         .json({

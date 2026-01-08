@@ -13,11 +13,25 @@ const validateforverifyotp = (data) => {
       message: "No mobile number present!",
     };
   }
-  if (!data.otp) {
+  if (!data.email) {
     return {
       statuscode: 404,
       successstatus: false,
-      message: "Otp not provided!",
+      message: "No email present!",
+    };
+  }
+  if (!data.mobile_otp) {
+    return {
+      statuscode: 404,
+      successstatus: false,
+      message: "Mobile OTP not provided!",
+    };
+  }
+  if (!data.email_otp) {
+    return {
+      statuscode: 404,
+      successstatus: false,
+      message: "Email OTP not provided!",
     };
   }
   return { statuscode: 200, successstatus: true, message: "success" };
