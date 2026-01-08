@@ -1,4 +1,5 @@
 const express = require("express");
+const {downloadInvoicePdf}=require("../utils/downloadInvoicePdf");
 const crypto = require("crypto");
 const razorpay = require("../utils/razorpay");
 const {updateStudentProfileByMobile} = require("../SQL/main/updateStudentProfileByMobile");
@@ -197,7 +198,12 @@ userRouter.post(
   async (req, res) => {
     let client;
     try {
-      res.cookie("token", null);
+      res.clearCookie("token", {
+        httpOnly: true,
+        secure: false, // matches the setting in login
+        sameSite: "lax",
+        path: "/",
+      });
       return res.status(200).json({status:'ok', message:'Logged out successfully'});
     } catch (err) {
       console.error(err);
@@ -360,6 +366,56 @@ userRouter.get(
 
     } catch (err) {
       console.error("ZIP Download Error:", err);
+      return res.status(500).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        status: "Failed",
+        successstatus: false,
+        message: "Internal Server Error"
+      });
+    }
+  }
+);
+// ======================================================
+//                download invoice (PDF)
+// ======================================================
+userRouter.get(
+  "/serverpeuser/loggedinuser/invoice/download/:invoice_id",
+  checkServerPeUser,
+  async (req, res) => {
+    try {
+      const { invoice_id } = req.params;
+      const mobile_number = req.mobile_number;
+
+      if (!invoice_id || isNaN(invoice_id)) {
+        return res.status(400).json({
+          poweredby: "serverpe.in",
+          mock_data: false,
+          successstatus: false,
+          message: "Invalid invoice id"
+        });
+      }
+
+      const result = await downloadInvoicePdf(
+        poolMain,
+        invoice_id,
+        mobile_number,
+        req.ip
+      );
+
+      if (!result.successstatus) {
+        return res.status(result.statuscode).json({
+          poweredby: "serverpe.in",
+          mock_data: false,
+          ...result
+        });
+      }
+
+      // 🔽 Send PDF securely
+      return res.download(result.file_path, result.file_name);
+
+    } catch (err) {
+      console.error("Invoice Download Error:", err);
       return res.status(500).json({
         poweredby: "serverpe.in",
         mock_data: true,

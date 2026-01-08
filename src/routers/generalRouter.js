@@ -18,6 +18,7 @@ const validateVerifyingOtp = require("../validations/main/validateVerifyingOtp")
 const validateLoginOtp = require("../SQL/main/validateLoginOtp");
 const insertStudentContactMeData = require("../SQL/main/insertStudentContactMeData");
 const { getCollegesByStateId } = require("../SQL/main/getCollegesByStateId");
+const getTestimonials = require("../SQL/main/getTestimonials");
 const poolMain = connectMainDB();
 // ======================================================
 //                api get state list (unchargeable)
@@ -305,6 +306,26 @@ generalRouter.post("/serverpeuser/mystudents/contact-categories", async (req, re
         req.body.message
       );
     }
+    return res.status(resultcontactme.statuscode).json(resultcontactme);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      poweredby: "serverpe.in",
+      mock_data: true,
+      error: "Internal Server Error",
+      message: err.message,
+    });
+  } finally {
+  }
+});
+// ======================================================
+//                testimonials
+// ======================================================
+generalRouter.get("/serverpeuser/mystudents/what-students-say", async (req, res) => {
+  try {
+    resultcontactme = await getTestimonials(
+        poolMain, req
+      );
     return res.status(resultcontactme.statuscode).json(resultcontactme);
   } catch (err) {
     console.error(err);
