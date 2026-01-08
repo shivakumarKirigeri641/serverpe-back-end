@@ -1,15 +1,21 @@
 const generateOrderNumber = require("./generateOrderNumber");   
 const inserTransactions = async (
-  poolMain,
+  client,  // CRITICAL: Must be a dedicated client from pool.connect(), NOT the pool itself
   transaction_data,   // Razorpay payment object
   mobile_number,
   summaryFormData     // user_name, email, project_id
 ) => {  
+  // ============================================================
+  // START TRANSACTION
+  // This ensures ALL queries below are atomic (all-or-nothing)
+  // ============================================================
+  
   try{
+    await client.query('BEGIN');
   /* -----------------------------------------
    1️⃣ FETCH USER (BY MOBILE NUMBER)
   ------------------------------------------*/
-  const result_user = await poolMain.query(
+  const result_user = await client.query(
     `SELECT id, user_name, email
      FROM users
      WHERE mobile_number = $1`,
@@ -33,7 +39,8 @@ const inserTransactions = async (
     email: user.email,
     project_id: summaryFormData?.project?.id
   });
-  const result_order = await poolMain.query(
+  
+  const result_order = await client.query(
     `INSERT INTO orders (
         fk_user_id,
         order_number,
@@ -57,7 +64,7 @@ const inserTransactions = async (
   /* -----------------------------------------
    3️⃣ INSERT PAYMENT (RAZORPAY)
   ------------------------------------------*/
-  await poolMain.query(
+  await client.query(
     `INSERT INTO payments (
         fk_order_id,
         gateway,
@@ -78,7 +85,7 @@ const inserTransactions = async (
   ------------------------------------------*/
   const licenseKey = `LIC-${user.id}-${Date.now()}`;
 
-  const result_license = await poolMain.query(
+  const result_license = await client.query(
     `INSERT INTO licenses (
         fk_user_id,
         fk_project_id,
@@ -97,7 +104,7 @@ const inserTransactions = async (
   ------------------------------------------*/
   const invoiceNumber = `SVRP/${new Date().getFullYear()}/${order.id}`;
 
-  await poolMain.query(
+  await client.query(
     `INSERT INTO invoices (
         fk_order_id,
         invoice_number,
@@ -114,7 +121,13 @@ const inserTransactions = async (
       gstAmount.toFixed(2),
       transaction_data.amount / 100
     ]
-  );  
+  );
+  
+  // ============================================================
+  // COMMIT TRANSACTION
+  // All inserts above were NOT committed yet. This commits them atomically.
+  // If we reached here, everything succeeded.
+  // ============================================================  
 
   /* -----------------------------------------
    6️⃣ EMAIL CONFIRMATION
@@ -129,7 +142,7 @@ const inserTransactions = async (
     }),
     text: `Your project purchase was successful. License Key: ${licenseKey}`
   });*/
-
+await client.query('COMMIT');
   /* -----------------------------------------
    ✅ FINAL RESPONSE
   ------------------------------------------*/
@@ -156,9 +169,15 @@ const inserTransactions = async (
     // Keep original for debugging/completeness if needed, or remove if sensitive
     order,
     license: result_license.rows[0]
-  };
+  };  
 }
 catch(err){
+  // ============================================================
+  // ROLLBACK TRANSACTION
+  // If ANY query above failed, undo ALL changes.
+  // This prevents orphaned orders/payments in the database.
+  // ============================================================  
+  await client.query('ROLLBACK');
   throw err;
 }
 };
