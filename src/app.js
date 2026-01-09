@@ -5,14 +5,12 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 const {
-  connectMockTrainTicketsDb,
-  connectPinCodeDB,
-  connectCarSpecsDB,
-  connectBikeSpecsDB,
+  connectTrainSeatDb,
   connectMainDB,
 } = require("./database/connectDB");
 
 const generalRouter = require("./routers/generalRouter");
+const   studentsTrainSeatReserveRouter = require("./routers/studentsTrainSeatReserveRouter");
 const userRouter = require("./routers/userRouter");
 
 const PORT = process.env.PORT || 8888;
@@ -66,9 +64,11 @@ app.use("/images", express.static(path.join(__dirname, "images")));
 /* Routes */
 app.use("/", generalRouter);
 app.use("/", userRouter);
+app.use("/", studentsTrainSeatReserveRouter);
 
 /* DB connections */
 connectMainDB();
+connectTrainSeatDb();
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
