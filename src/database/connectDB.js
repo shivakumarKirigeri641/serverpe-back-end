@@ -59,4 +59,6 @@ const connectTrainSeatDb = () => {
 module.exports = {
   connectMainDB,
   connectTrainSeatDb,
+  getMainPool: () => poolmain,
+  getTrainPool: () => poolTrain
 };
