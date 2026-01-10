@@ -1,4 +1,4 @@
-export const updateStudentProfileByMobile = async (client, req) => {  
+const updateStudentProfileByMobile = async (client, req) => {  
 
   try {
     const {
@@ -85,3 +85,4 @@ export const updateStudentProfileByMobile = async (client, req) => {
   } finally {
   }
 };
+module.exports = updateStudentProfileByMobile;
