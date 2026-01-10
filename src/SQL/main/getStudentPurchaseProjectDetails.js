@@ -2,14 +2,23 @@ const getStudentPurchaseProjectDetails = async (client, req, project_id) => {
   const result_user = await client.query(
     `
     SELECT
-    u.id                    AS user_id,
+    u.id                    AS user_id,    
     u.user_name,
     u.email,
     u.mobile_number,
     u.fk_college_id,
     u.branch,
-    u.created_at            AS user_registered_at 
-    FROM users u WHERE u.mobile_number = $1`,
+    u.created_at            AS user_registered_at,
+    c.college_name,
+    c.college_address,
+    c.college_district,
+    c.college_university,
+    s.state_name
+    FROM users u join
+    college_list c on u.fk_college_id = c.id
+    join states s on c.fk_state = s.id
+    
+    WHERE u.mobile_number = $1`,
     [req.mobile_number]
   );
   const result_project = await client.query(

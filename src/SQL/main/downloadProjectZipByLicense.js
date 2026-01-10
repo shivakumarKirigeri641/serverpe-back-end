@@ -36,7 +36,7 @@ const downloadProjectZipByLicense = async (
       `
       SELECT
         l.id AS license_id,
-        l.is_active,
+        l.status,
         p.title,
         pv.zip_file_path
       FROM licenses l
@@ -60,7 +60,7 @@ const downloadProjectZipByLicense = async (
 
     const license = licenseRes.rows[0];
 
-    if (!license.is_active) {
+    if (license.status !== 'ACTIVE') {
       return {
         statuscode: 403,
         successstatus: false,
