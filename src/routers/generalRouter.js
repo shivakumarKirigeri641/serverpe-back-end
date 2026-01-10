@@ -26,7 +26,7 @@ const poolMain = connectMainDB();
 generalRouter.get("/serverpeuser/mystudents/states", async (req, res) => {
   try {
     // 2️⃣ Business Logic
-    const result = await getStatesAndTerritories(poolMain);
+    const result = await getStatesAndTerritories(poolMain, req);
     return res.status(result.statuscode ? result.statuscode : 200).json({
       poweredby: "serverpe.in",
       mock_data: true,
