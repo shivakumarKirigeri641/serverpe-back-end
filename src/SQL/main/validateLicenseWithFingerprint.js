@@ -74,7 +74,7 @@ const validateLicenseWithFingerprint = async (
     /* ------------------------------------
        2️⃣ CHECK IF LICENSE IS ACTIVE
     ------------------------------------ */
-    if (license.status !== 'ACTIVE') {
+    if (license.status !== true) {
       await client.query("ROLLBACK");
       return {
         statuscode: 403,

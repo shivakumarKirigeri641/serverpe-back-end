@@ -2,12 +2,14 @@ const express = require("express");
 const studentsTrainSeatReserveRouter = express.Router();
 const { getMainPool } = require("../database/connectDB");
 const checkStudentLicenseOrAdmin = require("../middleware/checkStudentLicenseOrAdmin");
+const checkStudentLicenseOnly = require("../middleware/checkStudentLicense");
 
 // Apply flexible middleware: Admins can access without license, students need license
-studentsTrainSeatReserveRouter.use(checkStudentLicenseOrAdmin);
+//studentsTrainSeatReserveRouter.use(checkStudentLicenseOnly(getMainPool()));
 
 studentsTrainSeatReserveRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/stations",
+  checkStudentLicenseOnly(getMainPool()),
   (req, res) => {
     // Check if admin accessed without license
     if (req.isAdminAccess) {
