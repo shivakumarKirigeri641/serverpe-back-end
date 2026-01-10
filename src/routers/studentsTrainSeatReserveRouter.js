@@ -1,25 +1,37 @@
 const express = require("express");
 const studentsTrainSeatReserveRouter = express.Router();
 const { getMainPool } = require("../database/connectDB");
-const checkStudentLicense = require("../middleware/checkStudentLicense");
+const checkStudentLicenseOrAdmin = require("../middleware/checkStudentLicenseOrAdmin");
 
-// Apply license validation middleware to ALL routes in this router
-studentsTrainSeatReserveRouter.use(checkStudentLicense(getMainPool()));
+// Apply flexible middleware: Admins can access without license, students need license
+studentsTrainSeatReserveRouter.use(checkStudentLicenseOrAdmin);
 
-/**
- * GET /mockapis/serverpeuser/api/mocktrain/reserved/stations
- * 
- * Demo endpoint for student train seat reservation
- * Protected by license + fingerprint validation
- * 
- * Required Headers/Body:
- * - x-license-key or license_key (in query/body)
- * - x-device-fingerprint or fingerprint (in headers/body)
- */
 studentsTrainSeatReserveRouter.get(
   "/mockapis/serverpeuser/api/mocktrain/reserved/stations",
   (req, res) => {
-    // License info is attached by middleware
+    // Check if admin accessed without license
+    if (req.isAdminAccess) {
+      return res.status(200).json({
+        poweredby: "serverpe.in",
+        mock_data: true,
+        status: "Success",
+        successstatus: true,
+        message: "Students Train Seat Reserve - Admin Access",
+        admin_info: {
+          user_name: req.user.user_name,
+          email: req.user.email
+        },
+        data: {
+          reserved_stations: [
+            { station_code: "SBC", station_name: "Bangalore City" },
+            { station_code: "MYS", station_name: "Mysore" },
+            { station_code: "HWH", station_name: "Howrah" }
+          ]
+        }
+      });
+    }
+
+    // Regular student access with license
     const { licenseInfo } = req;
 
     res.status(200).json({
@@ -46,3 +58,4 @@ studentsTrainSeatReserveRouter.get(
 );
 
 module.exports = studentsTrainSeatReserveRouter;
+

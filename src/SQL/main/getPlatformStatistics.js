@@ -11,7 +11,7 @@ const getPlatformStatistics = async (pool) => {
        1️⃣ TOTAL USERS
     ------------------------------------ */
     const usersResult = await pool.query(`
-      SELECT COUNT(*) as total_users
+      SELECT COUNT(*) as users
       FROM users
     `);
 
@@ -20,9 +20,9 @@ const getPlatformStatistics = async (pool) => {
     ------------------------------------ */
     const licensesResult = await pool.query(`
       SELECT 
-        COUNT(*) as total_licenses,
-        COUNT(*) FILTER (WHERE status = 'ACTIVE') as active_licenses,
-        COUNT(*) FILTER (WHERE status = 'INACTIVE') as inactive_licenses,
+        COUNT(*) as licenses,
+        COUNT(*) FILTER (WHERE status = true) as active_licenses,
+        COUNT(*) FILTER (WHERE status = false) as inactive_licenses,
         COUNT(*) FILTER (WHERE device_fingerprint IS NOT NULL) as bound_licenses,
         COUNT(*) FILTER (WHERE device_fingerprint IS NULL) as unbound_licenses
       FROM licenses
@@ -33,8 +33,8 @@ const getPlatformStatistics = async (pool) => {
     ------------------------------------ */
     const revenueResult = await pool.query(`
       SELECT 
-        COUNT(*) as total_orders,
-        COALESCE(SUM(payable_amount), 0) as total_revenue,
+        COUNT(*) as orders,
+        COALESCE(SUM(payable_amount), 0) as revenue,
         COALESCE(AVG(payable_amount), 0) as avg_order_value
       FROM orders
       WHERE order_status = 'PAID'
@@ -64,20 +64,32 @@ const getPlatformStatistics = async (pool) => {
        5️⃣ PROJECTS STATISTICS
     ------------------------------------ */
     const projectsResult = await pool.query(`
-      SELECT COUNT(*) as total_projects
+      SELECT COUNT(*) as projects
       FROM projects
     `);
 
     /* ------------------------------------
-       6️⃣ DOWNLOADS STATISTICS
+       6️⃣ DOWNLOADS STATISTICS (Optional - table may not exist)
     ------------------------------------ */
-    const downloadsResult = await pool.query(`
-      SELECT 
-        COUNT(*) as total_downloads,
-        COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days') as downloads_7d,
-        COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days') as downloads_30d
-      FROM downloads
-    `);
+    let downloadsResult;
+    try {
+      downloadsResult = await pool.query(`
+        SELECT 
+          COUNT(*) as downloads,
+          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days') as downloads_7d,
+          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days') as downloads_30d
+        FROM downloads
+      `);
+    } catch (err) {
+      // Downloads table doesn't exist - use zero values
+      downloadsResult = {
+        rows: [{
+          downloads: 0,
+          downloads_7d: 0,
+          downloads_30d: 0
+        }]
+      };
+    }
 
     /* ------------------------------------
        ✅ COMBINE ALL STATISTICS
@@ -88,20 +100,20 @@ const getPlatformStatistics = async (pool) => {
       status: "Success",
       data: {
         users: {
-          total: parseInt(usersResult.rows[0].total_users),
+          total: parseInt(usersResult.rows[0].users),
           new_last_7_days: parseInt(recentActivity.rows[0].new_users_7d),
           new_last_30_days: parseInt(recentActivity.rows[0].new_users_30d)
         },
         licenses: {
-          total: parseInt(licensesResult.rows[0].total_licenses),
+          total: parseInt(licensesResult.rows[0].licenses),
           active: parseInt(licensesResult.rows[0].active_licenses),
           inactive: parseInt(licensesResult.rows[0].inactive_licenses),
           bound_to_device: parseInt(licensesResult.rows[0].bound_licenses),
           not_yet_used: parseInt(licensesResult.rows[0].unbound_licenses)
         },
         revenue: {
-          total_orders: parseInt(revenueResult.rows[0].total_orders),
-          total_revenue: parseFloat(revenueResult.rows[0].total_revenue),
+          total_orders: parseInt(revenueResult.rows[0].orders),
+          total_revenue: parseFloat(revenueResult.rows[0].revenue),
           average_order_value: parseFloat(revenueResult.rows[0].avg_order_value),
           last_7_days: parseFloat(recentSales.rows[0].revenue_7d),
           last_30_days: parseFloat(recentSales.rows[0].revenue_30d)
@@ -111,10 +123,10 @@ const getPlatformStatistics = async (pool) => {
           last_30_days: parseInt(recentSales.rows[0].sales_30d)
         },
         projects: {
-          total: parseInt(projectsResult.rows[0].total_projects)
+          total: parseInt(projectsResult.rows[0].projects)
         },
         downloads: {
-          total: parseInt(downloadsResult.rows[0].total_downloads),
+          total: parseInt(downloadsResult.rows[0].downloads),
           last_7_days: parseInt(downloadsResult.rows[0].downloads_7d),
           last_30_days: parseInt(downloadsResult.rows[0].downloads_30d)
         },

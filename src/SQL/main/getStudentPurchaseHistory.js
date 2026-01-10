@@ -43,7 +43,7 @@ const getStudentPurchaseHistory = async (client, req) => {
 
     -- LICENSE DETAILS
     l.license_key,
-    l.is_active             AS license_active,
+    l.status             AS license_active,
     l.expiry_date,
     l.created_at            AS license_issued_at,
 

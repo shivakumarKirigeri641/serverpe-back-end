@@ -44,7 +44,7 @@ const getAllUsers = async (pool, page = 1, limit = 20, search = null) => {
         u.is_admin,
         u.created_at,
         COUNT(l.id) as total_licenses,
-        COUNT(l.id) FILTER (WHERE l.status = 'ACTIVE') as active_licenses,
+        COUNT(l.id) FILTER (WHERE l.status = true) as active_licenses,
         COALESCE(SUM(o.payable_amount), 0) as total_spent
        FROM users u
        LEFT JOIN licenses l ON l.fk_user_id = u.id

@@ -56,7 +56,7 @@ const getStudentPurchasedDetails = async (client, order_number) => {
 
     -- License
     l.license_key,
-    l.is_active AS license_active,
+    l.status AS license_active,
     l.created_at AS license_issued_at
 
 FROM orders o

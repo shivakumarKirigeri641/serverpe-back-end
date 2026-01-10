@@ -34,12 +34,14 @@ adminRouter.get("/analytics/overview", async (req, res) => {
       data: result.data
     });
   } catch (error) {
-    console.error("Error fetching platform statistics:", error);
+    console.error("Error fetching platform statistics:");
+    console.error(error);
     res.status(500).json({
       poweredby: "serverpe.in",
       status: "Failed",
       successstatus: false,
-      message: "Failed to fetch statistics"
+      message: "Failed to fetch statistics",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
