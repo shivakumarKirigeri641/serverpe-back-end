@@ -1,7 +1,2 @@
 node_modules
 .env
-student
-# student_mock_train_seat_reservation/student-back-end/node_modules
-# student_mock_train_seat_reservation/student-front-end/node_modules
-# student_mock_train_seat_reservation/student-back-end/dist
-# student_mock_train_seat_reservation/student-back-end/build
