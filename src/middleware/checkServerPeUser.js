@@ -21,6 +21,7 @@ const checkServerPeUser = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
     // Attach decoded data
+    req.email = decoded.email;
     req.mobile_number = decoded.mobile_number;
     next();
   } catch (err) {

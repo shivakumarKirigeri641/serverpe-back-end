@@ -32,7 +32,7 @@ valid_trains AS (
 
         (s2.kilometer - s1.kilometer) AS journey_km,
 
-        CONCAT_WS(' ',
+        json_build_array(
             CASE WHEN t.train_runs_on_mon = 'Y' THEN 'Mon' END,
             CASE WHEN t.train_runs_on_tue = 'Y' THEN 'Tue' END,
             CASE WHEN t.train_runs_on_wed = 'Y' THEN 'Wed' END,

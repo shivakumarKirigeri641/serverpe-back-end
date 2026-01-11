@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: train_db
+    environment:
+      POSTGRES_USER: student
+      POSTGRES_PASSWORD: student123
+      POSTGRES_DB: mock_train_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/mock_train_student_db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U student -d mock_train_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - train_network
+
+  # Backend API
+  backend:
+    build: .
+    container_name: train_backend
+    environment:
+      NODE_ENV: production
+      PORT: 8888
+      SECRET_KEY: student-secret-key-12345
+      MOCK_TRAIN_DB_HOST: postgres
+      MOCK_TRAIN_DB_PORT: 5432
+      MOCK_TRAIN_DB_USER: student
+      MOCK_TRAIN_DB_PASSWORD: student123
+      MOCK_TRAIN_DB_NAME: mock_train_db
+    ports:
+      - "8888:8888"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - train_network
+
+  # Frontend App
+  frontend:
+    build: ./mock_train_frontend
+    container_name: train_frontend
+    environment:
+      REACT_APP_API_URL: http://localhost:8888
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - train_network
+
+volumes:
+  postgres_data:
+
+networks:
+  train_network:
+    driver: bridge
