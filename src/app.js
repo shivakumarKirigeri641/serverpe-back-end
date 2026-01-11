@@ -12,6 +12,7 @@ const {
 const generalRouter = require("./routers/generalRouter");
 const userRouter = require("./routers/userRouter");
 const adminRouter = require("./routers/adminRouter");
+const trainRouter = require("./routers/trainRouter");
 
 const PORT = process.env.PORT || 8888;
 const app = express();
@@ -63,6 +64,7 @@ app.use("/images", express.static(path.join(__dirname, "images")));
 /* Routes */
 app.use("/", generalRouter);
 app.use("/", userRouter);
+app.use("/", trainRouter);
 app.use("/admin", adminRouter);
 
 /* DB connections */

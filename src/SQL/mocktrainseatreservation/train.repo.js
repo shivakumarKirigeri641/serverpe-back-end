@@ -80,14 +80,18 @@ exports.getCoachTypes = async () => {
   }
 };
 exports.getTrains = async (source_code, destination_code, doj) => {
+  // 🔄 Normalize inputs to uppercase
+  source_code = source_code?.toUpperCase();
+  destination_code = destination_code?.toUpperCase();
+
   const query = getSearchQueryText();
 
   try {
     // ⏱️ Query timeout (5s)
     const pool = connectMockTrainTicketsDb();
     const result = await pool.query(query, [
-      source_code.toUpperCase(),
-      destination_code.toUpperCase(),
+      source_code,
+      destination_code,
       doj,
     ]);
     return result.rows[0]?.result|| [];
@@ -105,6 +109,13 @@ exports.calculateTotalFare = async (
   reservation_type,
   passengers
 ) => {
+  // 🔄 Normalize inputs to uppercase
+  train_number = train_number?.toUpperCase();
+  source_code = source_code?.toUpperCase();
+  destination_code = destination_code?.toUpperCase();
+  coach_code = coach_code?.toUpperCase();
+  reservation_type = reservation_type?.toUpperCase();
+
   try {
     // ⏱️ Query timeout (5s)
     const pool = connectMockTrainTicketsDb();
@@ -120,9 +131,9 @@ WHERE
     AND s1.station_sequence < s2.station_sequence; `;
     // 1️⃣ journey km
     const kmResult = await pool.query(journeyKmSql, [
-      train_number.toUpperCase(),
-      source_code.toUpperCase(),
-      destination_code.toUpperCase(),
+      train_number,
+      source_code,
+      destination_code,
     ]);
 
     const journeyKm = kmResult.rows[0]?.journey_km;
@@ -178,7 +189,14 @@ exports.confirmTicket = async (
   mobile_number,
   total_fare,
   email
-) => {  
+) => {
+  // 🔄 Normalize inputs to uppercase
+  train_number = train_number?.toUpperCase();
+  source_code = source_code?.toUpperCase();
+  destination_code = destination_code?.toUpperCase();
+  coach_code = coach_code?.toUpperCase();
+  reservation_type = reservation_type?.toUpperCase();
+
   try {
     // ⏱️ Query timeout (5s)    
     const pool = connectMockTrainTicketsDb();    
@@ -189,21 +207,21 @@ exports.confirmTicket = async (
     );    
     const result_reservation_type = await pool.query(
       `select id from reservationtype where type_code = $1`,
-      [reservation_type.toUpperCase()]
+      [reservation_type]
     );
     //check coach_code
     const result_coach_type = await pool.query(
       `select id from coachtype where coach_code = $1`,
-      [coach_code.toUpperCase()]
+      [coach_code]
     );
     // Fetch Station IDs and Names
     const result_src = await pool.query(
       `select id, station_name from stations where code = $1`,
-      [source_code.toUpperCase()]
+      [source_code]
     );
     const result_dest = await pool.query(
       `select id, station_name from stations where code = $1`,
-      [destination_code.toUpperCase()]
+      [destination_code]
     );
 
     // --- FARE CALCULATION PREP ---
@@ -211,7 +229,7 @@ exports.confirmTicket = async (
     const journeyKmSql = `SELECT (s2.kilometer - s1.kilometer) AS journey_km 
                           FROM schedules s1 JOIN schedules s2 ON s2.train_number = s1.train_number 
                           WHERE s1.train_number = $1 AND s1.station_code = $2 AND s2.station_code = $3 AND s1.station_sequence < s2.station_sequence`;
-    const kmResult = await pool.query(journeyKmSql, [train_number.toUpperCase(), source_code.toUpperCase(), destination_code.toUpperCase()]);
+    const kmResult = await pool.query(journeyKmSql, [train_number, source_code, destination_code]);
     const journeyKm = kmResult.rows[0]?.journey_km;
 
     // 2. Get Fare Rule
@@ -359,6 +377,7 @@ exports.confirmTicket = async (
         },
         fare_calculation_details: fareBreakdown,
         passenger_details: allocated_passengerdata.map(p => ({
+          id: p.passenger_details.id,
             name: p.passenger_details.p_name,
             age: p.passenger_details.p_age,
             gender: p.passenger_details.p_gender,
@@ -676,7 +695,7 @@ exports.getPnrStatus = async (pnr) => {
         const pool = connectMockTrainTicketsDb();
         // Get Booking Info
         const bookingQuery = `
-            SELECT 
+            SELECT DISTINCT
                 b.id,
                 b.pnr,
                 b.pnr_status,
@@ -687,9 +706,9 @@ exports.getPnrStatus = async (pnr) => {
                 s2.station_name as destination_name,
                 COALESCE(SUM(pd.base_fare), 0) as total_fare
             FROM bookingdata b
-            JOIN trains t ON b.fktrain_number = t.id
-            JOIN stations s1 ON b.fksource_code = s1.id
-            JOIN stations s2 ON b.fkdestination_code = s2.id
+            LEFT JOIN trains t ON b.fktrain_number = t.id
+            LEFT JOIN stations s1 ON b.fksource_code = s1.id
+            LEFT JOIN stations s2 ON b.fkdestination_code = s2.id
             LEFT JOIN passengerdata pd ON pd.fkbookingdata = b.id
             WHERE b.pnr = $1
             GROUP BY b.id, b.pnr, b.pnr_status, b.date_of_journey, t.train_number, t.train_name, s1.station_name, s2.station_name
@@ -705,13 +724,7 @@ exports.getPnrStatus = async (pnr) => {
         // Get Passengers
         const passengersQuery = `
             SELECT 
-                passenger_name,
-                age,
-                gender,
-                current_seat_status,
-                coach_code,
-                seat_number,
-                berth_type
+                *
             FROM passengerdata
             WHERE fkbookingdata = $1
             ORDER BY id
@@ -721,9 +734,9 @@ exports.getPnrStatus = async (pnr) => {
         return {
             ...booking,
             passengers: passengersResult.rows.map(p => ({
-                name: p.passenger_name,
-                age: p.age,
-                gender: p.gender,
+                name: p.p_name,
+                age: p.p_age,
+                gender: p.p_gender,
                 status: p.current_seat_status,
                 coach_code: p.coach_code,
                 seat_number: p.seat_number,
