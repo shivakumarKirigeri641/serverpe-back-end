@@ -400,51 +400,43 @@ exports.confirmTicket = async (
     throw mapPgError(err); // 🔥 convert to AppError
   }
 };
-exports.getTrainSchedule = async (train_number) => {
+exports.getTrainSchedule = async (train_input) => {
 
   try {
 
     const pool = connectMockTrainTicketsDb();
-    // 1������ Train Details
+    
+    // 🔄 Normalize input - could be train number or name
+    const searchValue = train_input?.trim().toUpperCase();
 
+    // 1️⃣ Train Details - search by number OR name
     const trainQuery = `
-
       SELECT
-
         train_number, train_name, train_type,
-
         json_build_array(
-
           CASE WHEN train_runs_on_mon = 'Y' THEN 'Mon' END,
-
           CASE WHEN train_runs_on_tue = 'Y' THEN 'Tue' END,
-
           CASE WHEN train_runs_on_wed = 'Y' THEN 'Wed' END,
-
           CASE WHEN train_runs_on_thu = 'Y' THEN 'Thu' END,
-
           CASE WHEN train_runs_on_fri = 'Y' THEN 'Fri' END,
-
           CASE WHEN train_runs_on_sat = 'Y' THEN 'Sat' END,
-
           CASE WHEN train_runs_on_sun = 'Y' THEN 'Sun' END
-
         ) as running_days
-
       FROM trains
-
-      WHERE train_number = $1
-
+      WHERE train_number = $1 OR UPPER(train_name) ILIKE '%' || $1 || '%'
+      LIMIT 1
     `;
 
+    // First find the train to get its train_number
+    const trainRes = await pool.query(trainQuery, [searchValue]);
+    const train = trainRes.rows[0];
+    if (!train) return null;
 
+    const train_number = train.train_number;
 
-    // 2������ Coach Configuration
-
+    // 2️⃣ Coach Configuration
     const coachQuery = `
-
         SELECT 
-
             bogi_count_sl as SL, bogi_count_1a as "1A", bogi_count_2a as "2A", 
 
             bogi_count_3a as "3A", bogi_count_cc as CC, bogi_count_fc as FC, 
@@ -461,8 +453,7 @@ exports.getTrainSchedule = async (train_number) => {
 
 
 
-    // 3������ Schedule (Using 'running_day' confirmed from schema)
-
+    // 3️⃣ Schedule
     const scheduleQuery = `
 
       SELECT
@@ -489,31 +480,14 @@ exports.getTrainSchedule = async (train_number) => {
 
     `;
 
-
-
-    const [trainRes, coachRes, scheduleRes] = await Promise.all([
-
-      pool.query(trainQuery, [train_number]),
-
+    // Get coach and schedule using the found train_number
+    const [coachRes, scheduleRes] = await Promise.all([
       pool.query(coachQuery, [train_number]),
-
       pool.query(scheduleQuery, [train_number]),
-
     ]);
 
-
-
-    const train = trainRes.rows[0];
-
-    if (!train) return null;
-
-
-
     // Filter out nulls from running_days array
-
     train.running_days = (train.running_days || []).filter(d => d !== null);
-
-
 
     return {
 
@@ -541,9 +515,26 @@ exports.getTrainSchedule = async (train_number) => {
 
   }
 }
-exports.getLiveTrainStatus = async (train_number) => {
+exports.getLiveTrainStatus = async (train_input) => {
   try {
     const pool = connectMockTrainTicketsDb();
+    
+    // 🔄 Normalize input - could be train number or name
+    const searchValue = train_input?.trim().toUpperCase();
+
+    // First find the train to get its train_number
+    const trainLookup = await pool.query(`
+      SELECT train_number FROM trains 
+      WHERE train_number = $1 OR UPPER(train_name) ILIKE '%' || $1 || '%'
+      LIMIT 1
+    `, [searchValue]);
+    
+    if (trainLookup.rows.length === 0) {
+      return [];
+    }
+    
+    const train_number = trainLookup.rows[0].train_number;
+
     const query = `
       SELECT
         s.station_code,

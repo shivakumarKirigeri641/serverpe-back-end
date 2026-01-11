@@ -131,21 +131,22 @@ trainRouter.get("/train/search", async (req, res) => {
 });
 
 /**
- * GET /train/schedule/:train_number
+ * GET /train/schedule/:train_input
  * Get complete schedule for a specific train
+ * Accepts train number (e.g., "12951") or train name (e.g., "Rajdhani")
  */
-trainRouter.get("/train/schedule/:train_number", async (req, res) => {
+trainRouter.get("/train/schedule/:train_input", async (req, res) => {
   try {
-    const { train_number } = req.params;
+    const { train_input } = req.params;
 
-    if (!train_number) {
-      return sendError(res, 400, "Train number is required");
+    if (!train_input) {
+      return sendError(res, 400, "Train number or name is required");
     }
 
-    const schedule = await trainRepo.getTrainSchedule(train_number);
+    const schedule = await trainRepo.getTrainSchedule(train_input);
 
     if (!schedule) {
-      return sendError(res, 404, `Train ${train_number} not found`);
+      return sendError(res, 404, `Train "${train_input}" not found`);
     }
 
     sendSuccess(res, { schedule }, "Train schedule fetched successfully");
@@ -156,25 +157,26 @@ trainRouter.get("/train/schedule/:train_number", async (req, res) => {
 });
 
 /**
- * GET /train/live-status/:train_number
+ * GET /train/live-status/:train_input
  * Get live running status for a specific train
+ * Accepts train number (e.g., "12951") or train name (e.g., "Rajdhani")
  */
-trainRouter.get("/train/live-status/:train_number", async (req, res) => {
+trainRouter.get("/train/live-status/:train_input", async (req, res) => {
   try {
-    const { train_number } = req.params;
+    const { train_input } = req.params;
 
-    if (!train_number) {
-      return sendError(res, 400, "Train number is required");
+    if (!train_input) {
+      return sendError(res, 400, "Train number or name is required");
     }
 
-    const status = await trainRepo.getLiveTrainStatus(train_number);
+    const status = await trainRepo.getLiveTrainStatus(train_input);
 
     if (!status || status.length === 0) {
-      return sendError(res, 404, `Train ${train_number} not found`);
+      return sendError(res, 404, `Train "${train_input}" not found`);
     }
 
     sendSuccess(res, { 
-      train_number,
+      train_input,
       live_status: status 
     }, "Live train status fetched successfully");
   } catch (err) {
