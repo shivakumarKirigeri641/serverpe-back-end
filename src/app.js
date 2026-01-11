@@ -10,7 +10,6 @@ const {
 } = require("./database/connectDB");
 
 const generalRouter = require("./routers/generalRouter");
-const   studentsTrainSeatReserveRouter = require("./routers/studentsTrainSeatReserveRouter");
 const userRouter = require("./routers/userRouter");
 const adminRouter = require("./routers/adminRouter");
 
@@ -64,7 +63,6 @@ app.use("/images", express.static(path.join(__dirname, "images")));
 /* Routes */
 app.use("/", generalRouter);
 app.use("/", userRouter);
-app.use("/", studentsTrainSeatReserveRouter);
 app.use("/admin", adminRouter);
 
 /* DB connections */

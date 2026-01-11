@@ -17,8 +17,6 @@ const getLicenseDetails = async (pool, licenseKey) => {
         l.fk_user_id,
         l.fk_project_id,
         l.status,
-        l.device_fingerprint,
-        l.fingerprint_bound_at,
         l.created_at as license_created_at,
         u.user_name,
         u.email,
@@ -92,12 +90,7 @@ const getLicenseDetails = async (pool, licenseKey) => {
         license: {
           license_key: license.license_key,
           status: license.status,
-          created_at: license.license_created_at,
-          fingerprint: {
-            is_bound: !!license.device_fingerprint,
-            bound_at: license.fingerprint_bound_at,
-            hash: license.device_fingerprint ? license.device_fingerprint.substring(0, 16) + "..." : null
-          }
+          created_at: license.license_created_at
         },
         user: {
           id: license.fk_user_id,

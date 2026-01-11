@@ -7,7 +7,7 @@
  */
 const getAllLicenses = async (
   pool,
-  { page = 1, limit = 20, status = null, bound = null, search = null } = {}
+  { page = 1, limit = 20, status = null, search = null } = {}
 ) => {
   try {
     const offset = (page - 1) * limit;
@@ -18,12 +18,6 @@ const getAllLicenses = async (
     if (status) {
       whereClauses.push(`l.status = $${params.length + 1}`);
       params.push(status);
-    }
-
-    if (bound === 'true' || bound === true) {
-      whereClauses.push(`l.device_fingerprint IS NOT NULL`);
-    } else if (bound === 'false' || bound === false) {
-      whereClauses.push(`l.device_fingerprint IS NULL`);
     }
 
     if (search) {
@@ -64,8 +58,6 @@ const getAllLicenses = async (
       `SELECT 
         l.license_key,
         l.status,
-        l.device_fingerprint,
-        l.fingerprint_bound_at,
         l.created_at,
         u.user_name,
         u.email,
@@ -77,7 +69,7 @@ const getAllLicenses = async (
        JOIN projects p ON p.id = l.fk_project_id
        LEFT JOIN downloads d ON d.fk_license_id = l.id
        ${whereClause}
-       GROUP BY l.license_key, l.status, l.device_fingerprint, l.fingerprint_bound_at, 
+       GROUP BY l.license_key, l.status, 
                 l.created_at, u.user_name, u.email, p.title, p.project_code
        ORDER BY l.created_at DESC
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -95,8 +87,6 @@ const getAllLicenses = async (
         licenses: licensesResult.rows.map(lic => ({
           license_key: lic.license_key,
           status: lic.status,
-          is_bound: !!lic.device_fingerprint,
-          bound_at: lic.fingerprint_bound_at,
           created_at: lic.created_at,
           user: {
             name: lic.user_name,

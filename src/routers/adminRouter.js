@@ -4,7 +4,6 @@ const checkAdmin = require("../middleware/checkAdmin");
 const { getMainPool } = require("../database/connectDB");
 
 // Import SQL functions
-const resetLicenseFingerprint = require("../SQL/main/resetLicenseFingerprint");
 const getPlatformStatistics = require("../SQL/main/getPlatformStatistics");
 const getAllUsers = require("../SQL/main/getAllUsers");
 const getLicenseDetails = require("../SQL/main/getLicenseDetails");
@@ -58,13 +57,12 @@ adminRouter.get("/analytics/overview", async (req, res) => {
 adminRouter.get("/licenses", async (req, res) => {
   try {
     const pool = getMainPool();
-    const { page, limit, status, bound, search } = req.query;
+    const { page, limit, status, search } = req.query;
 
     const result = await getAllLicenses(pool, {
       page: parseInt(page) || 1,
       limit: parseInt(limit) || 20,
       status,
-      bound,
       search
     });
 
@@ -111,36 +109,6 @@ adminRouter.get("/licenses/:license_key", async (req, res) => {
       status: "Failed",
       successstatus: false,
       message: "Failed to fetch license details"
-    });
-  }
-});
-
-/**
- * POST /admin/licenses/:license_key/reset-fingerprint
- * Reset device fingerprint for a license
- */
-adminRouter.post("/licenses/:license_key/reset-fingerprint", async (req, res) => {
-  try {
-    const pool = getMainPool();
-    const { license_key } = req.params;
-    const adminUserId = req.user.id;
-
-    const result = await resetLicenseFingerprint(pool, license_key, adminUserId);
-
-    res.status(result.statuscode).json({
-      poweredby: "serverpe.in",
-      status: result.status,
-      successstatus: result.successstatus,
-      message: result.message,
-      data: result.data
-    });
-  } catch (error) {
-    console.error("Error resetting fingerprint:", error);
-    res.status(500).json({
-      poweredby: "serverpe.in",
-      status: "Failed",
-      successstatus: false,
-      message: "Failed to reset fingerprint"
     });
   }
 });
@@ -258,7 +226,6 @@ adminRouter.get("/users/:user_id/purchases", async (req, res) => {
         l.license_key,
         l.status,
         l.created_at as purchased_at,
-        l.device_fingerprint IS NOT NULL as is_bound,
         p.title as project_title,
         p.project_code,
         o.order_number,
@@ -269,7 +236,7 @@ adminRouter.get("/users/:user_id/purchases", async (req, res) => {
        LEFT JOIN orders o ON o.fk_user_id = l.fk_user_id AND o.fk_user_id = $1
        LEFT JOIN downloads d ON d.fk_license_id = l.id
        WHERE l.fk_user_id = $1
-       GROUP BY l.license_key, l.status, l.created_at, l.device_fingerprint,
+       GROUP BY l.license_key, l.status, l.created_at,
                 p.title, p.project_code, o.order_number, o.payable_amount
        ORDER BY l.created_at DESC`,
       [user_id]
