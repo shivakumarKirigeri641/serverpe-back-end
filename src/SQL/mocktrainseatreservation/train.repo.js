@@ -122,7 +122,7 @@ WHERE
     const kmResult = await pool.query(journeyKmSql, [
       train_number.toUpperCase(),
       source_code.toUpperCase(),
-      destination_code,
+      destination_code.toUpperCase(),
     ]);
 
     const journeyKm = kmResult.rows[0]?.journey_km;
@@ -211,7 +211,7 @@ exports.confirmTicket = async (
     const journeyKmSql = `SELECT (s2.kilometer - s1.kilometer) AS journey_km 
                           FROM schedules s1 JOIN schedules s2 ON s2.train_number = s1.train_number 
                           WHERE s1.train_number = $1 AND s1.station_code = $2 AND s2.station_code = $3 AND s1.station_sequence < s2.station_sequence`;
-    const kmResult = await pool.query(journeyKmSql, [train_number.toUpperCase(), source_code.toUpperCase(), destination_code]);
+    const kmResult = await pool.query(journeyKmSql, [train_number.toUpperCase(), source_code.toUpperCase(), destination_code.toUpperCase()]);
     const journeyKm = kmResult.rows[0]?.journey_km;
 
     // 2. Get Fare Rule
@@ -241,15 +241,32 @@ exports.confirmTicket = async (
     
     //insert passengerdata
     let allocated_passengerdata=[];
-    
-    for(let pass in passengers){
+    const baseFarePerKm = Number(fareRule.fare_per_km);
+    const discountPercent = Number(fareRule.discount_percent);
+    const flatAddon = Number(fareRule.flat_addon);
+
+    for(let pass of passengers){
+        let passengerBaseFare = (journeyKm || 0) * baseFarePerKm;
+        let p_discount = discountPercent;
+        if (pass.passenger_ispwd) p_discount = 50;
+        else if (pass.passenger_age >= 60) p_discount = 40; // Senior check
+        
+        let discountedFare = passengerBaseFare - (passengerBaseFare * p_discount) / 100;
+        let passengerTotal = discountedFare + flatAddon;
+        
+        // Add GST 18% to match calculateInternalTotalFare
+        let finalFareWithGst = (passengerTotal * 1.18).toFixed(2);
+        
+        // Child below 6 is free (as per calculateInternalTotalFare)
+        if (pass.passenger_age < 6) finalFareWithGst = "0.00";
+
         const result_passengerdata = await pool.query(`
         insert into passengerdata (fkbookingdata, p_name,p_age,p_gender, is_child,is_senior, is_pwd, base_fare)
         values 
         ($1,$2,$3,$4,$5,$6,$7,$8)
          returning * ;
-        `,[result_bookingdata.rows[0].id,  passengers[pass].passenger_name,passengers[pass].passenger_age,passengers[pass].passenger_gender,
-        passengers[pass].passenger_ischild,passengers[pass].passenger_issenior,passengers[pass].passenger_ispwd,total_fare]);
+        `,[result_bookingdata.rows[0].id,  pass.passenger_name,pass.passenger_age,pass.passenger_gender,
+        pass.passenger_ischild,pass.passenger_issenior,pass.passenger_ispwd,finalFareWithGst]);
 
           //insert to seats (TRANSACTION + LOCK inside SQL function handles concurrency if implemented, but here explicit lock is safer or redundant depending on implementation)
           // The SQL function uses Advisory Lock, so explicit BEGIN/COMMIT here allows surrounding transaction.
@@ -604,7 +621,7 @@ exports.verifyOtp = async (email, otp) => {
         // Sort by created_at DESC to get latest
         const query = `
             SELECT * FROM email_otps 
-            WHERE email = $1 AND otp = $2 AND expires_at > NOW() AND is_verified = FALSE
+            WHERE email = $1 AND otp = $2 AND expires_at > NOW()
             ORDER BY created_at DESC
             LIMIT 1
         `;
@@ -612,7 +629,7 @@ exports.verifyOtp = async (email, otp) => {
         
         if (result.rows.length > 0) {
             // Mark as verified
-            await pool.query(`UPDATE email_otps SET is_verified = TRUE WHERE id = $1`, [result.rows[0].id]);
+            await pool.query(`delete from email_otps WHERE id = $1`, [result.rows[0].id]);
             return true;
         }
         return false;
@@ -703,7 +720,15 @@ exports.getPnrStatus = async (pnr) => {
 
         return {
             ...booking,
-            passengers: passengersResult.rows
+            passengers: passengersResult.rows.map(p => ({
+                name: p.passenger_name,
+                age: p.age,
+                gender: p.gender,
+                status: p.current_seat_status,
+                coach_code: p.coach_code,
+                seat_number: p.seat_number,
+                berth_type: p.berth_type
+            }))
         };
 
     } catch (err) {

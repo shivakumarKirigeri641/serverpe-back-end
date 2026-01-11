@@ -11,7 +11,7 @@ const getSearchQueryText = () => {
 --------------------------------------------------------- */
 valid_trains AS (
     SELECT
-        t.train_number,
+        c.train_number,
         t.train_name,
         t.train_type,
 
@@ -43,7 +43,8 @@ valid_trains AS (
         ) AS running_days
 
     FROM trains t
-    JOIN schedules s1 ON s1.train_number = t.train_number
+	JOIN coaches c ON c.train_number = t.train_number
+    JOIN schedules s1 ON s1.train_number = t.train_number	
     JOIN schedules s2 ON s2.train_number = t.train_number
     JOIN params p ON TRUE
     WHERE

@@ -1,0 +1,30 @@
+{
+  "name": "student-mock-train-backend",
+  "version": "1.0.0",
+  "description": "Student Backend for Mock Train Seat Reservation - Powered by ServerPE",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [
+    "train",
+    "reservation",
+    "mock",
+    "serverpe",
+    "student"
+  ],
+  "author": "ServerPE Student Package",
+  "license": "Educational",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "node-machine-id": "^1.1.12",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

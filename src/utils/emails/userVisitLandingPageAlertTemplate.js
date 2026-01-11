@@ -3,6 +3,27 @@ const userVisitLandingPageAlertTemplate = ({
   visitTime,
   deviceType,
 }) => {
+  //use ipaddress api to get actual user information instead of showing ipddress
+  //http://ip-api.com/json/101.0.63.89
+  /*
+  {
+    "status": "success",
+    "country": "India",
+    "countryCode": "IN",
+    "region": "KA",
+    "regionName": "Karnataka",
+    "city": "Bengaluru",
+    "zip": "560066",
+    "lat": 12.9753,
+    "lon": 77.591,
+    "timezone": "Asia/Kolkata",
+    "isp": "Tata Play Broadband Private Limited",
+    "org": "Tata Play Broadband Private Limited",
+    "as": "AS134674 TATA PLAY BROADBAND PRIVATE LIMITED",
+    "query": "101.0.63.89"
+}
+  */
+  //get response and display
   return `
   <!DOCTYPE html>
   <html lang="en">
