@@ -59,6 +59,7 @@ const connectTrainSeatDb = () => {
 module.exports = {
   connectMainDB,
   connectTrainSeatDb,
+  connectMockTrainTicketsDb: connectTrainSeatDb, // Alias for train.repo.js compatibility
   getMainPool: () => poolmain,
   getTrainPool: () => poolTrain
 };
