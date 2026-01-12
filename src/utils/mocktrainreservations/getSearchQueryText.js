@@ -191,7 +191,7 @@ train_details AS (
         vt.arrival,
         vt.journey_duration,
         vt.journey_km,
-        vt.running_days,
+        vt.running_days::TEXT,
 
         /* AVAILABILITY JSON ARRAY */
         json_agg(
@@ -234,7 +234,7 @@ train_details AS (
         vt.arrival,
         vt.journey_duration,
         vt.journey_km,
-        vt.running_days
+        vt.running_days::TEXT
 )
 
 /* ---------------------------------------------------------
