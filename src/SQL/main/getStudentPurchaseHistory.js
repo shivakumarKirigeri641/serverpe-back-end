@@ -40,6 +40,7 @@ const getStudentPurchaseHistory = async (client, req) => {
     pr.title                AS project_title,
     pr.technology,
     pr.difficulty,
+    pr.*,
 
     -- LICENSE DETAILS
     l.license_key,
@@ -48,6 +49,7 @@ const getStudentPurchaseHistory = async (client, req) => {
     l.created_at            AS license_issued_at,
 
     -- INVOICE DETAILS
+    i.id                    AS invoice_id,
     i.invoice_number,
     i.invoice_date,
     i.taxable_amount,
@@ -75,10 +77,15 @@ WHERE
     u.id = $1`,
         [result_user.rows[0].id]
     );
+  const data = result.rows.map(row => ({
+    ...row,
+    project_type: row.project_type || 'FULL_STACK'
+  }));
+
   return {
     statuscode: 200,
     successstatus: true,
-    data: result.rows,
+    data: data,
   };
 };
 module.exports = getStudentPurchaseHistory;

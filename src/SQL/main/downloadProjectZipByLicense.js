@@ -1,6 +1,17 @@
 const path = require("path");
 const fs = require("fs");
 
+/**
+ * =====================================================
+ * DOWNLOAD PROJECT ZIP BY LICENSE
+ * =====================================================
+ * 
+ * Downloads project zip based on license key.
+ * Supports both FULL_STACK and UI_ONLY project types.
+ * 
+ * @author ServerPE
+ */
+
 const downloadProjectZipByLicense = async (
   pool,
   licenseKey,
@@ -30,18 +41,20 @@ const downloadProjectZipByLicense = async (
     const userId = userRes.rows[0].id;
 
     /* ------------------------------------
-       2️⃣ Validate license ownership
+       2️⃣ Validate license and get project info
+       Using SELECT * to avoid errors if new columns don't exist yet
     ------------------------------------ */
     const licenseRes = await client.query(
       `
       SELECT
         l.id AS license_id,
         l.status,
+        l.api_key,
+        p.id AS project_id,
         p.title,
-        pv.zip_file_path
+        p.*
       FROM licenses l
       JOIN projects p ON p.id = l.fk_project_id
-      JOIN project_versions pv ON pv.fk_project_id = p.id
       WHERE l.license_key = $1
         AND l.fk_user_id = $2
       LIMIT 1
@@ -70,48 +83,87 @@ const downloadProjectZipByLicense = async (
     }
 
     /* ------------------------------------
-       3️⃣ Validate ZIP exists
+       3️⃣ Determine correct zip path based on project type
     ------------------------------------ */
-    if (!fs.existsSync(license.zip_file_path)) {
+    let zipFilePath;
+    
+    if (license.project_type === 'UI_ONLY') {
+      zipFilePath = license.zip_path_ui_only;
+    } else {
+      // Default to FULL_STACK
+      zipFilePath = license.zip_path_fullstack;
+    }
+
+    // Fallback: Check project_versions table if no direct path
+    if (!zipFilePath) {
+      const versionRes = await client.query(
+        `SELECT zip_file_path FROM project_versions 
+         WHERE fk_project_id = $1 
+         ORDER BY created_at DESC LIMIT 1`,
+        [license.project_id]
+      );
+      
+      if (versionRes.rowCount > 0) {
+        zipFilePath = versionRes.rows[0].zip_file_path;
+      }
+    }
+
+    if (!zipFilePath) {
       return {
         statuscode: 404,
         successstatus: false,
         status: "Failed",
-        message: "Project file not found"
+        message: "Project download not available"
       };
     }
 
     /* ------------------------------------
-       4️⃣ Log download (ANTI-ABUSE)
+       4️⃣ Resolve full path and validate file exists
+    ------------------------------------ */
+    // Navigate to project root (up 3 levels from src/SQL/main)
+    const projectRoot = path.join(__dirname, '../../..');
+    
+    const fullPath = path.isAbsolute(zipFilePath) 
+      ? zipFilePath 
+      : path.join(projectRoot, zipFilePath);
+
+    if (!fs.existsSync(fullPath)) {
+      return {
+        statuscode: 404,
+        successstatus: false,
+        status: "Failed",
+        message: "Project file not found",
+        debug_path: fullPath 
+      };
+    }
+
+    /* ------------------------------------
+       5️⃣ Log download (ANTI-ABUSE)
     ------------------------------------ */
     await client.query(
       `
       INSERT INTO downloads (
         fk_license_id,
-        fk_project_version_id,
         download_ip
       )
-      VALUES ($1,
-        (SELECT id FROM project_versions
-         WHERE fk_project_id = (
-           SELECT fk_project_id FROM licenses WHERE license_key = $2
-         )
-         ORDER BY created_at DESC
-         LIMIT 1),
-        $3
-      )
+      VALUES ($1, $2)
       `,
-      [license.license_id, licenseKey, downloadIp]
+      [license.license_id, downloadIp]
     );
 
     /* ------------------------------------
        ✅ SUCCESS
     ------------------------------------ */
+    const projectTypeSuffix = license.project_type === 'UI_ONLY' ? '_UI' : '_FullStack';
+    const fileName = `${license.title.replace(/\s+/g, "_")}${projectTypeSuffix}.zip`;
+
     return {
       statuscode: 200,
       successstatus: true,
-      file_path: license.zip_file_path,
-      file_name: `${license.title.replace(/\s+/g, "_")}.zip`
+      file_path: fullPath,
+      file_name: fileName,
+      project_type: license.project_type || 'FULL_STACK',
+      api_key: (license.project_type || 'FULL_STACK') === 'UI_ONLY' ? license.api_key : null
     };
 
   } catch (err) {
