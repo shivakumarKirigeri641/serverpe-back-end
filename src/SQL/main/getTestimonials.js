@@ -26,7 +26,7 @@ const getTestimonials = async (client, req) => {
   await sendMail({
     to: process.env.ADMINMAIL,
     subject: "An user landing page visit alert",
-    html: userVisitLandingPageAlertTemplate({
+    html: await userVisitLandingPageAlertTemplate({
       ipAddress,
       visitTime,
       devicename,

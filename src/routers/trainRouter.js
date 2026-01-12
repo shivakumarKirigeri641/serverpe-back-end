@@ -520,4 +520,30 @@ trainRouter.post("/train/verify-otp", async (req, res) => {
   }
 });
 
+/**
+ * GET /train/check-auth
+ * Verify authentication status and return user data
+ */
+trainRouter.get("/train/check-auth", checkServerPeUser, (req, res) => {
+  sendSuccess(res, { 
+    email: req.email,
+    mobile_number: req.mobile_number,
+    authenticated: true 
+  }, "Authenticated");
+});
+
+/**
+ * POST /train/logout
+ * Clear authentication cookie
+ */
+trainRouter.post("/train/logout", (req, res) => {
+  res.clearCookie("token", {
+    path: "/",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+  sendSuccess(res, null, "Logged out successfully");
+});
+
 module.exports = trainRouter;

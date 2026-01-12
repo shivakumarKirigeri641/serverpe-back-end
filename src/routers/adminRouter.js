@@ -366,4 +366,80 @@ adminRouter.get("/system/health", async (req, res) => {
   }
 });
 
+/**
+ * GET /admin/api-logs
+ * Get API call logs with pagination and filters
+ * Query params: page, limit, method, statusCode, startDate, endDate
+ */
+adminRouter.get("/api-logs", async (req, res) => {
+  try {
+    const pool = getMainPool();
+    const { page, limit, method, statusCode, startDate, endDate } = req.query;
+    
+    const p = parseInt(page) || 1;
+    const l = parseInt(limit) || 20;
+    const offset = (p - 1) * l;
+
+    let query = `
+      SELECT 
+        al.id, al.method, al.path, al.query_params, al.body, al.headers, 
+        al.status_code, al.latency_ms, al.created_at,
+        idp.ip_address, idp.city, idp.region_name, idp.country, idp.isp,
+        u.user_name as user_name
+      FROM api_logs al
+      LEFT JOIN ip_details idp ON al.fk_ip_details_id = idp.id
+      LEFT JOIN users u ON al.fk_user_id = u.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (method) {
+      params.push(method);
+      query += ` AND al.method = $${params.length}`;
+    }
+    if (statusCode) {
+      params.push(parseInt(statusCode));
+      query += ` AND al.status_code = $${params.length}`;
+    }
+    if (startDate) {
+      params.push(startDate);
+      query += ` AND al.created_at >= $${params.length}`;
+    }
+    if (endDate) {
+      params.push(endDate);
+      query += ` AND al.created_at <= $${params.length}`;
+    }
+
+    // Get total count for pagination
+    const countResult = await pool.query(`SELECT COUNT(*) FROM (${query}) as sub`, params);
+    const totalCount = parseInt(countResult.rows[0].count);
+
+    query += ` ORDER BY al.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(l, offset);
+
+    const result = await pool.query(query, params);
+
+    res.status(200).json({
+      poweredby: "serverpe.in",
+      status: "Success",
+      successstatus: true,
+      data: result.rows,
+      pagination: {
+        total: totalCount,
+        page: p,
+        limit: l,
+        totalPages: Math.ceil(totalCount / l)
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching api logs:", error);
+    res.status(500).json({
+      poweredby: "serverpe.in",
+      status: "Failed",
+      successstatus: false,
+      message: "Failed to fetch api logs"
+    });
+  }
+});
+
 module.exports = adminRouter;

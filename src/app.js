@@ -13,6 +13,7 @@ const generalRouter = require("./routers/generalRouter");
 const userRouter = require("./routers/userRouter");
 const adminRouter = require("./routers/adminRouter");
 const trainRouter = require("./routers/trainRouter");
+const apiLogger = require("./middleware/apiLogger");
 
 const PORT = process.env.PORT || 8888;
 const app = express();
@@ -20,16 +21,10 @@ const app = express();
 /* 🔐 MUST be before CORS & cookies */
 //app.set("trust proxy", 1);
 
-/* Measure latency */
-app.use((req, res, next) => {
-  const start = Date.now();
-  res.on("finish", () => {
-    req.latency = Date.now() - start;
-  });
-  next();
-});
-
 app.use(express.json());
+
+/* 📝 API Logging */
+app.use(apiLogger);
 
 /* ✅ CORS for cross-subdomain cookies */
 /*app.use(
@@ -55,6 +50,14 @@ app.get("/", (req, res) => {
     status: "OK",
     service: "ServerPe API",
     message: "API is running successfully 🚀",
+  });
+});
+
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    service: "ServerPe API"
   });
 });
 
