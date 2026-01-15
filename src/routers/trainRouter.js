@@ -74,7 +74,11 @@ trainRouter.get("/train/stations", async (req, res) => {
 trainRouter.get("/train/reservation-types", async (req, res) => {
   try {
     const reservation_types = await trainRepo.getReservationTypes();
-    sendSuccess(res, { reservation_types }, "Reservation types fetched successfully");
+    sendSuccess(
+      res,
+      { reservation_types },
+      "Reservation types fetched successfully"
+    );
   } catch (err) {
     console.error("Error fetching reservation types:", err);
     sendError(res, 500, "Failed to fetch reservation types", err.message);
@@ -110,7 +114,11 @@ trainRouter.get("/train/search", async (req, res) => {
 
     // Validation
     if (!source || !destination || !doj) {
-      return sendError(res, 400, "Missing required parameters: source, destination, doj");
+      return sendError(
+        res,
+        400,
+        "Missing required parameters: source, destination, doj"
+      );
     }
 
     // Validate date format
@@ -119,11 +127,15 @@ trainRouter.get("/train/search", async (req, res) => {
     }
 
     const trains = await trainRepo.getTrains(source, destination, doj);
-    sendSuccess(res, { 
-      query: { source, destination, doj },
-      trains_count: trains.length,
-      trains 
-    }, "Trains fetched successfully");
+    sendSuccess(
+      res,
+      {
+        query: { source, destination, doj },
+        trains_count: trains.length,
+        trains,
+      },
+      "Trains fetched successfully"
+    );
   } catch (err) {
     console.error("Error searching trains:", err);
     sendError(res, 500, "Failed to search trains", err.message);
@@ -175,10 +187,14 @@ trainRouter.get("/train/live-status/:train_input", async (req, res) => {
       return sendError(res, 404, `Train "${train_input}" not found`);
     }
 
-    sendSuccess(res, { 
-      train_input,
-      live_status: status 
-    }, "Live train status fetched successfully");
+    sendSuccess(
+      res,
+      {
+        train_input,
+        live_status: status,
+      },
+      "Live train status fetched successfully"
+    );
   } catch (err) {
     console.error("Error fetching live train status:", err);
     sendError(res, 500, "Failed to fetch live train status", err.message);
@@ -197,13 +213,19 @@ trainRouter.get("/train/station/:station_code", async (req, res) => {
       return sendError(res, 400, "Station code is required");
     }
 
-    const trains = await trainRepo.getTrainsAtStation(station_code.toUpperCase());
+    const trains = await trainRepo.getTrainsAtStation(
+      station_code.toUpperCase()
+    );
 
-    sendSuccess(res, { 
-      station_code: station_code.toUpperCase(),
-      trains_count: trains.length,
-      trains 
-    }, "Trains at station fetched successfully");
+    sendSuccess(
+      res,
+      {
+        station_code: station_code.toUpperCase(),
+        trains_count: trains.length,
+        trains,
+      },
+      "Trains at station fetched successfully"
+    );
   } catch (err) {
     console.error("Error fetching trains at station:", err);
     sendError(res, 500, "Failed to fetch trains at station", err.message);
@@ -221,19 +243,30 @@ trainRouter.get("/train/station/:station_code", async (req, res) => {
  */
 trainRouter.post("/train/calculate-fare", async (req, res) => {
   try {
-    const { 
-      train_number, 
-      source_code, 
-      destination_code, 
-      doj, 
-      coach_code, 
-      reservation_type, 
-      passengers 
+    const {
+      train_number,
+      source_code,
+      destination_code,
+      doj,
+      coach_code,
+      reservation_type,
+      passengers,
     } = req.body;
 
     // Validation
-    if (!train_number || !source_code || !destination_code || !doj || !coach_code || !reservation_type) {
-      return sendError(res, 400, "Missing required fields: train_number, source_code, destination_code, doj, coach_code, reservation_type");
+    if (
+      !train_number ||
+      !source_code ||
+      !destination_code ||
+      !doj ||
+      !coach_code ||
+      !reservation_type
+    ) {
+      return sendError(
+        res,
+        400,
+        "Missing required fields: train_number, source_code, destination_code, doj, coach_code, reservation_type"
+      );
     }
 
     if (!passengers || !Array.isArray(passengers) || passengers.length === 0) {
@@ -270,23 +303,30 @@ trainRouter.post("/train/calculate-fare", async (req, res) => {
  * Confirm ticket booking
  * Body: { train_number, source_code, destination_code, doj, coach_code, reservation_type, passengers[], mobile_number, email, total_fare }
  */
-trainRouter.post("/train/book-ticket", checkServerPeUser, async (req, res) => {
+trainRouter.post("/train/book-ticket", async (req, res) => {
   try {
-    const { 
-      train_number, 
-      source_code, 
-      destination_code, 
-      doj, 
-      coach_code, 
-      reservation_type, 
+    const {
+      train_number,
+      source_code,
+      destination_code,
+      doj,
+      coach_code,
+      reservation_type,
       passengers,
       mobile_number,
       email,
-      total_fare
+      total_fare,
     } = req.body;
 
     // Validation
-    if (!train_number || !source_code || !destination_code || !doj || !coach_code || !reservation_type) {
+    if (
+      !train_number ||
+      !source_code ||
+      !destination_code ||
+      !doj ||
+      !coach_code ||
+      !reservation_type
+    ) {
       return sendError(res, 400, "Missing required journey details");
     }
 
@@ -310,13 +350,28 @@ trainRouter.post("/train/book-ticket", checkServerPeUser, async (req, res) => {
     for (let i = 0; i < passengers.length; i++) {
       const p = passengers[i];
       if (!p.passenger_name || p.passenger_name.trim().length < 2) {
-        return sendError(res, 400, `Passenger ${i + 1}: Name is required (min 2 characters)`);
+        return sendError(
+          res,
+          400,
+          `Passenger ${i + 1}: Name is required (min 2 characters)`
+        );
       }
       if (!p.passenger_age || p.passenger_age < 0 || p.passenger_age > 120) {
-        return sendError(res, 400, `Passenger ${i + 1}: Valid age is required (0-120)`);
+        return sendError(
+          res,
+          400,
+          `Passenger ${i + 1}: Valid age is required (0-120)`
+        );
       }
-      if (!p.passenger_gender || !["M", "F", "O"].includes(p.passenger_gender.toUpperCase())) {
-        return sendError(res, 400, `Passenger ${i + 1}: Gender must be M, F, or O`);
+      if (
+        !p.passenger_gender ||
+        !["M", "F", "O"].includes(p.passenger_gender.toUpperCase())
+      ) {
+        return sendError(
+          res,
+          400,
+          `Passenger ${i + 1}: Gender must be M, F, or O`
+        );
       }
     }
 
@@ -345,7 +400,7 @@ trainRouter.post("/train/book-ticket", checkServerPeUser, async (req, res) => {
  * Cancel ticket (full or partial)
  * Body: { pnr, passenger_ids[] }
  */
-trainRouter.post("/train/cancel-ticket", checkServerPeUser, async (req, res) => {
+trainRouter.post("/train/cancel-ticket", async (req, res) => {
   try {
     const { pnr, passenger_ids } = req.body;
 
@@ -354,8 +409,16 @@ trainRouter.post("/train/cancel-ticket", checkServerPeUser, async (req, res) => 
       return sendError(res, 400, "PNR is required");
     }
 
-    if (!passenger_ids || !Array.isArray(passenger_ids) || passenger_ids.length === 0) {
-      return sendError(res, 400, "At least one passenger ID is required for cancellation");
+    if (
+      !passenger_ids ||
+      !Array.isArray(passenger_ids) ||
+      passenger_ids.length === 0
+    ) {
+      return sendError(
+        res,
+        400,
+        "At least one passenger ID is required for cancellation"
+      );
     }
 
     const result = await trainRepo.cancelTicket(pnr, passenger_ids);
@@ -400,7 +463,7 @@ trainRouter.get("/train/pnr-status/:pnr", async (req, res) => {
  * GET /train/booking-history/:email
  * Get booking history for an email (Protected)
  */
-trainRouter.get("/train/booking-history/:email", checkServerPeUser, async (req, res) => {
+trainRouter.get("/train/booking-history/:email", async (req, res) => {
   try {
     const { email } = req.params;
 
@@ -410,11 +473,15 @@ trainRouter.get("/train/booking-history/:email", checkServerPeUser, async (req, 
 
     const history = await trainRepo.getBookingHistory(email);
 
-    sendSuccess(res, { 
-      email,
-      bookings_count: history.length,
-      bookings: history 
-    }, "Booking history fetched successfully");
+    sendSuccess(
+      res,
+      {
+        email,
+        bookings_count: history.length,
+        bookings: history,
+      },
+      "Booking history fetched successfully"
+    );
   } catch (err) {
     console.error("Error fetching booking history:", err);
     sendError(res, 500, "Failed to fetch booking history", err.message);
@@ -446,8 +513,8 @@ trainRouter.post("/train/send-otp", async (req, res) => {
 
     // Generate 6-digit OTP
     //const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otp = '1234';
-    
+    const otp = "1234";
+
     // OTP expires in 10 minutes
     const expires_at = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -487,11 +554,9 @@ trainRouter.post("/train/verify-otp", async (req, res) => {
     }
 
     // 🔐 Generate JWT token after successful OTP verification
-    const token = jwt.sign(
-      { email },
-      process.env.SECRET_KEY,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ email }, process.env.SECRET_KEY, {
+      expiresIn: "7d",
+    });
 
     // 🍪 Set token as HTTP-only cookie
     res.cookie("token", token, {
@@ -508,10 +573,10 @@ trainRouter.post("/train/verify-otp", async (req, res) => {
       status: "Success",
       successstatus: true,
       message: "OTP verified successfully",
-      data: { 
-        email, 
+      data: {
+        email,
         verified: true,
-        token_expires_in: "7 days"
+        token_expires_in: "7 days",
       },
     });
   } catch (err) {
@@ -524,12 +589,16 @@ trainRouter.post("/train/verify-otp", async (req, res) => {
  * GET /train/check-auth
  * Verify authentication status and return user data
  */
-trainRouter.get("/train/check-auth", checkServerPeUser, (req, res) => {
-  sendSuccess(res, { 
-    email: req.email,
-    mobile_number: req.mobile_number,
-    authenticated: true 
-  }, "Authenticated");
+trainRouter.get("/train/check-auth", (req, res) => {
+  sendSuccess(
+    res,
+    {
+      email: req.email,
+      mobile_number: req.mobile_number,
+      authenticated: true,
+    },
+    "Authenticated"
+  );
 });
 
 /**
