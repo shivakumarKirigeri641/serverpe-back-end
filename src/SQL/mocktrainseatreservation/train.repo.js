@@ -970,13 +970,12 @@ exports.cancelTicket = async (pnr, passenger_ids) => {
   }
 };
 
-exports.saveOtp = async (email, otp, expires_at) => {
+exports.saveOtp = async (email, otp, expires_at, ispayment = false) => {
   try {
     const pool = connectMockTrainTicketsDb();
-    // Nullify previous OTPs for this email to keep clean? Or just insert new.
-    // Let's insert new.
-    const query = `INSERT INTO email_otps (email, otp, expires_at) VALUES ($1, $2, $3) RETURNING id`;
-    const result = await pool.query(query, [email, otp, expires_at]);
+    // Insert new OTP with ispayment flag
+    const query = `INSERT INTO email_otps (email, otp, expires_at, ispayment) VALUES ($1, $2, $3, $4) RETURNING id`;
+    const result = await pool.query(query, [email, otp, expires_at, ispayment]);
     return result.rows[0];
   } catch (err) {
     console.error("PG ERROR:", err);
@@ -1168,6 +1167,77 @@ exports.getPnrStatus = async (pnr) => {
         berth_type: p.berth_type,
       })),
     };
+  } catch (err) {
+    console.error("PG ERROR:", err);
+    throw mapPgError(err);
+  }
+};
+
+/**
+ * Get booking details by PNR for ticket generation
+ */
+exports.getBookingByPNR = async (pnr) => {
+  const query = `
+    SELECT
+      b.id,
+      b.pnr,
+      b.train_number,
+      t.train_name,
+      b.source_code,
+      ss.station_name AS source_station_name,
+      b.destination_code,
+      ds.station_name AS destination_station_name,
+      ts.departure_time,
+      ts.arrival_time,
+      TO_CHAR(b.journey_date, 'DD-MM-YYYY') AS journey_date,
+      b.coach_code,
+      ct.description AS coach_type,
+      b.reservation_type,
+      rt.description AS reservation_type,
+      b.total_fare,
+      b.booking_status,
+      b.mobile_number,
+      b.email,
+      TO_CHAR(b.booking_date, 'DD-MM-YYYY HH24:MI:SS') AS booking_date,
+      b.fk_user_id
+    FROM bookings b
+    INNER JOIN trains t ON b.train_number = t.train_number
+    INNER JOIN stations ss ON b.source_code = ss.code
+    INNER JOIN stations ds ON b.destination_code = ds.code
+    LEFT JOIN coachtype ct ON b.coach_code = ct.coach_code
+    LEFT JOIN reservationtype rt ON b.reservation_type = rt.type_code
+    LEFT JOIN trainschedules ts ON b.train_number = ts.train_number
+      AND b.source_code = ts.station_code
+    WHERE b.pnr = $1
+    LIMIT 1
+  `;
+
+  try {
+    const pool = connectMockTrainTicketsDb();
+    const result = await pool.query(query, [pnr]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const booking = result.rows[0];
+
+    // Get passengers for this booking
+    const passengersQuery = `
+      SELECT
+        passenger_name AS name,
+        passenger_age AS age,
+        passenger_gender AS gender,
+        seat_number
+      FROM passengers
+      WHERE fk_booking_id = $1
+      ORDER BY id
+    `;
+
+    const passengersResult = await pool.query(passengersQuery, [booking.id]);
+    booking.passengers = passengersResult.rows;
+
+    return booking;
   } catch (err) {
     console.error("PG ERROR:", err);
     throw mapPgError(err);
