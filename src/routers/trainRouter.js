@@ -6,6 +6,7 @@ require("dotenv").config();
 
 // Import repository functions
 const trainRepo = require("../SQL/mocktrainseatreservation/train.repo");
+const { sendMail } = require("../utils/emails/sendMail");
 
 /* ============================================================
    🛠️ ERROR RESPONSE HELPER
@@ -556,9 +557,15 @@ trainRouter.post("/train/send-otp", async (req, res) => {
       return sendError(res, 400, "Invalid email format");
     }
 
-    // Generate 6-digit OTP
+    // Generate 4-digit OTP
     //const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otp = "1234";
+    //const otp = "1234";
+    await sendMail({
+      to: email,
+      subject: "Your OTP for Mock Train Reservation Login",
+      html: await sendOtpMailTemplate({ otp }),
+      text: `Your OTP for login is ${otp}. Valid for 5 minutes.`,
+    });
 
     // OTP expires in 10 minutes
     const expires_at = new Date(Date.now() + 10 * 60 * 1000);
