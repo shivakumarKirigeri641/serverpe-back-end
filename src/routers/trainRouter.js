@@ -5,7 +5,6 @@ const sendOtpMailTemplate = require("../utils/emails/sendOtpMailTemplate");
 const jwt = require("jsonwebtoken");
 const { generateTrainTicketPdf } = require("../utils/generateTrainTicketPdf");
 const trainRouter = express.Router();
-const checkServerPeUser = require("../middleware/checkServerPeUser");
 const checkStudentAPIKey = require("../middleware/checkStudentAPIKey");
 require("dotenv").config();
 
@@ -608,9 +607,10 @@ trainRouter.post("/train/send-otp", checkStudentAPIKey, async (req, res) => {
     }
 
     // Generate 4-digit OTP for login, 6-digit OTP for payment
-    const otp = ispayment
-      ? Math.floor(100000 + Math.random() * 900000).toString() // 6-digit for payment
-      : Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit for login
+    const otp = ispayment ? "123456" : "1234";
+    /*const otp = ispayment
+      ? Math.floor(100000 + Math.random() * 900000).toString()
+      : Math.floor(1000 + Math.random() * 9000).toString();
 
     // Send email based on OTP type
     if (false == ispayment) {
@@ -638,7 +638,7 @@ trainRouter.post("/train/send-otp", checkStudentAPIKey, async (req, res) => {
           },
         ],
       });
-    }
+    }*/
 
     // OTP expires in 10 minutes
     const expires_at = new Date(Date.now() + 10 * 60 * 1000);
@@ -790,9 +790,8 @@ trainRouter.post("/train/logout", checkStudentAPIKey, (req, res) => {
    📥 DOWNLOAD TICKET PDF
    ============================================================ */
 trainRouter.get(
-  "/download-ticket/:pnr",
+  "/train/download-ticket/:pnr",
   checkStudentAPIKey,
-  checkServerPeUser,
   async (req, res) => {
     try {
       const { pnr } = req.params;

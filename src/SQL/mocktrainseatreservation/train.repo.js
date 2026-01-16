@@ -1179,37 +1179,55 @@ exports.getPnrStatus = async (pnr) => {
 exports.getBookingByPNR = async (pnr) => {
   const query = `
     SELECT
-      b.id,
-      b.pnr,
-      b.train_number,
-      t.train_name,
-      b.source_code,
-      ss.station_name AS source_station_name,
-      b.destination_code,
-      ds.station_name AS destination_station_name,
-      ts.departure_time,
-      ts.arrival_time,
-      TO_CHAR(b.journey_date, 'DD-MM-YYYY') AS journey_date,
-      b.coach_code,
-      ct.description AS coach_type,
-      b.reservation_type,
-      rt.description AS reservation_type,
-      b.total_fare,
-      b.booking_status,
-      b.mobile_number,
-      b.email,
-      TO_CHAR(b.booking_date, 'DD-MM-YYYY HH24:MI:SS') AS booking_date,
-      b.fk_user_id
-    FROM bookings b
-    INNER JOIN trains t ON b.train_number = t.train_number
-    INNER JOIN stations ss ON b.source_code = ss.code
-    INNER JOIN stations ds ON b.destination_code = ds.code
-    LEFT JOIN coachtype ct ON b.coach_code = ct.coach_code
-    LEFT JOIN reservationtype rt ON b.reservation_type = rt.type_code
-    LEFT JOIN trainschedules ts ON b.train_number = ts.train_number
-      AND b.source_code = ts.station_code
-    WHERE b.pnr = $1
-    LIMIT 1
+    b.id,
+    b.pnr,
+    t.train_number,
+    tt.train_name,
+
+    s_src.code AS source_code,
+    s_src.station_name AS source_station_name,
+
+    s_dest.code AS destination_code,
+    s_dest.station_name AS destination_station_name,
+
+    sch_src.departure AS source_departure_time,
+    sch_dest.arrival AS destination_arrival_time,
+
+    TO_CHAR(b.date_of_journey, 'DD-MM-YYYY') AS journey_date,
+    b.pnr_status,
+    rt.description AS reservation_type_description,
+
+    b.created_at AS booking_date,
+    b.id
+
+FROM bookingdata b
+
+JOIN coaches t
+    ON t.id = b.fktrain_number
+JOIN trains tt
+    ON tt.train_number = t.train_number
+
+JOIN stations s_src
+    ON s_src.id = b.fksource_code
+
+JOIN stations s_dest
+    ON s_dest.id = b.fkdestination_code
+
+-- Source station schedule
+LEFT JOIN schedules sch_src
+    ON sch_src.train_number = t.train_number
+   AND sch_src.station_code = s_src.code
+
+-- Destination station schedule
+LEFT JOIN schedules sch_dest
+    ON sch_dest.train_number = t.train_number
+   AND sch_dest.station_code = s_dest.code
+
+LEFT JOIN reservationtype rt
+    ON rt.id = b.fkreservation_type
+
+WHERE b.pnr = $1
+LIMIT 1;
   `;
 
   try {
@@ -1225,12 +1243,12 @@ exports.getBookingByPNR = async (pnr) => {
     // Get passengers for this booking
     const passengersQuery = `
       SELECT
-        passenger_name AS name,
-        passenger_age AS age,
-        passenger_gender AS gender,
-        seat_number
-      FROM passengers
-      WHERE fk_booking_id = $1
+        p_name AS name,
+        p_age AS age,
+        p_gender AS gender,
+        updated_seat_status
+      FROM passengerdata
+      WHERE fkbookingdata = $1
       ORDER BY id
     `;
 
