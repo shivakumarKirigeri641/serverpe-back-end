@@ -31,9 +31,9 @@ const checkStudentAPIKey = async (req, res, next) => {
         license_key,
         status,
         expiry_date
-      FROM student_licenses
-      WHERE license_key = $1 
-        AND status = 'active'
+      FROM licenses
+      WHERE api_key = $1 
+        AND status = true
         AND (expiry_date IS NULL OR expiry_date > NOW())
       LIMIT 1
     `;
