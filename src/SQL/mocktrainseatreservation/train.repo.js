@@ -79,6 +79,48 @@ exports.getCoachTypes = async () => {
     throw mapPgError(err); // 🔥 convert to AppError
   }
 };
+exports.autocompleteTrains = async (searchQuery) => {
+  // 🔄 Normalize input to uppercase
+  const normalizedQuery = searchQuery?.toUpperCase();
+
+  console.log("🔍 Autocomplete Query:", normalizedQuery);
+
+  const query = `
+    SELECT DISTINCT
+      t.train_number,
+      t.train_name
+    FROM train t
+    WHERE 
+      CAST(t.train_number AS TEXT) LIKE $1 || '%'
+      OR UPPER(t.train_name) LIKE '%' || $1 || '%'
+    ORDER BY 
+      CASE 
+        WHEN CAST(t.train_number AS TEXT) = $1 THEN 1
+        WHEN CAST(t.train_number AS TEXT) LIKE $1 || '%' THEN 2
+        ELSE 3
+      END,
+      t.train_number
+    LIMIT 10
+  `;
+
+  try {
+    const pool = connectMockTrainTicketsDb();
+    console.log("🗄️  Executing autocomplete query...");
+    const result = await pool.query({
+      text: query,
+      values: [normalizedQuery],
+      statement_timeout: 5000,
+    });
+    console.log("✅ Autocomplete results:", result.rows.length, "trains found");
+    return result.rows;
+  } catch (err) {
+    console.error("❌ PG AUTOCOMPLETE ERROR:", err);
+    console.error("Query:", query);
+    console.error("Values:", [normalizedQuery]);
+    throw mapPgError(err);
+  }
+};
+
 exports.getTrains = async (source_code, destination_code, doj) => {
   // 🔄 Normalize inputs to uppercase
   source_code = source_code?.toUpperCase();
@@ -647,26 +689,98 @@ exports.getLiveTrainStatus = async (train_input) => {
 
     const train_number = trainLookup.rows[0].train_number;
 
-    const query = `
-      SELECT
+    const query = `WITH schedule_base AS (
+    SELECT
         s.station_code,
         st.station_name,
+        s.station_sequence,
         s.arrival,
         s.departure,
         s.running_day,
-        s.station_sequence,
-        t.train_runs_on_mon,
-        t.train_runs_on_tue,
-        t.train_runs_on_wed,
-        t.train_runs_on_thu,
-        t.train_runs_on_fri,
-        t.train_runs_on_sat,
-        t.train_runs_on_sun
-      FROM schedules s
-      JOIN stations st ON s.station_code = st.code
-      JOIN trains t ON s.train_number = t.train_number
-      WHERE s.train_number = $1
-      ORDER BY s.station_sequence
+
+        -- Base progressive delay (increases with journey)
+        (s.station_sequence * 1.2) AS base_delay,
+
+        -- Small random jitter (-3 to +5)
+        FLOOR(random() * 9 - 3) AS jitter_delay
+
+    FROM schedules s
+    JOIN stations st ON s.station_code = st.code
+    WHERE s.train_number = $1
+),
+
+schedule_ts AS (
+    SELECT
+        *,
+        -- Final delay per station (0–20 mins)
+        LEAST(
+            GREATEST(base_delay + jitter_delay, 0),
+            20
+        )::INT AS delay_minutes,
+
+        date_trunc('day', NOW())
+        + ((running_day - 1) || ' day')::interval
+        + arrival
+        + (LEAST(GREATEST(base_delay + jitter_delay, 0), 20) || ' minutes')::interval
+        AS arrival_ts,
+
+        date_trunc('day', NOW())
+        + ((running_day - 1) || ' day')::interval
+        + departure
+        + (LEAST(GREATEST(base_delay + jitter_delay, 0), 20) || ' minutes')::interval
+        AS departure_ts
+    FROM schedule_base
+),
+
+status_calc AS (
+    SELECT *,
+        CASE
+            WHEN NOW() < arrival_ts THEN 'UPCOMING'
+            WHEN NOW() BETWEEN arrival_ts AND departure_ts THEN 'HALTED'
+            ELSE 'DEPARTED'
+        END AS live_status
+    FROM schedule_ts
+),
+
+current_station AS (
+    SELECT *
+    FROM status_calc
+    WHERE
+        live_status = 'HALTED'
+        OR (
+            live_status = 'DEPARTED'
+            AND arrival_ts = (
+                SELECT MAX(arrival_ts)
+                FROM status_calc
+                WHERE arrival_ts <= NOW()
+            )
+        )
+    ORDER BY station_sequence DESC
+    LIMIT 1
+)
+
+SELECT
+    sc.station_code,
+    sc.station_name,
+    sc.station_sequence,
+    sc.arrival,
+    sc.departure,
+    sc.running_day,
+    sc.delay_minutes,
+    sc.live_status,
+
+    CASE
+        WHEN sc.station_code = cs.station_code THEN TRUE
+        ELSE FALSE
+    END AS is_current_station
+
+FROM status_calc sc
+LEFT JOIN current_station cs
+    ON sc.station_code = cs.station_code
+
+ORDER BY sc.station_sequence;
+
+
     `;
     const result = await pool.query(query, [train_number]);
     return result.rows;
@@ -675,12 +789,39 @@ exports.getLiveTrainStatus = async (train_input) => {
     throw mapPgError(err);
   }
 };
+exports.getTrainsList = async (train_input) => {
+  try {
+    const pool = connectMockTrainTicketsDb();
 
-exports.getTrainsAtStation = async (station_code) => {
+    // 🔄 Normalize input - could be train number or name
+    const searchValue = train_input?.trim().toUpperCase();
+
+    // First find the train to get its train_number
+    const trainLookup = await pool.query(
+      `
+      SELECT c.train_number, t.train_name FROM trains t join
+coaches c on c.train_number=t.train_number
+      WHERE UPPER(t.train_name) ILIKE '%' || $1 || '%' or
+	  UPPER(c.train_number) ILIKE '%' || $1 || '%'
+    `,
+      [searchValue]
+    );
+
+    if (trainLookup.rows.length === 0) {
+      return [];
+    }
+    return trainLookup.rows;
+  } catch (err) {
+    console.error("PG ERROR:", err);
+    throw mapPgError(err);
+  }
+};
+exports.getTrainsAtStation = async (station_code, next_hours = 2) => {
   try {
     const pool = connectMockTrainTicketsDb();
     const query = `
-      SELECT
+    WITH base_times AS (
+    SELECT
         s.train_number,
         t.train_name,
         t.train_type,
@@ -688,18 +829,125 @@ exports.getTrainsAtStation = async (station_code) => {
         s.departure,
         s.running_day,
         s.station_sequence,
+
         t.train_runs_on_mon,
         t.train_runs_on_tue,
         t.train_runs_on_wed,
         t.train_runs_on_thu,
         t.train_runs_on_fri,
         t.train_runs_on_sat,
-        t.train_runs_on_sun
-      FROM schedules s
-      JOIN trains t ON s.train_number = t.train_number
-      WHERE s.station_code = $1
+        t.train_runs_on_sun,
+
+        -- Arrival timestamp
+        date_trunc('day', NOW())
+        + ((s.running_day - 1) || ' day')::interval
+        + s.arrival AS arrival_ts,
+
+        -- Departure timestamp
+        date_trunc('day', NOW())
+        + ((s.running_day - 1) || ' day')::interval
+        + s.departure AS departure_ts
+
+    FROM schedules s
+    JOIN trains t ON s.train_number = t.train_number
+    WHERE s.station_code = $1
+),
+
+events AS (
+    -- =========================
+    -- DEPARTURES
+    -- =========================
+    SELECT
+        'DEPARTING' AS section_type,
+        train_number,
+        train_name,
+        train_type,
+        departure AS scheduled_time,
+        departure_ts AS event_time,
+        running_day,
+        station_sequence,
+
+        train_runs_on_mon,
+        train_runs_on_tue,
+        train_runs_on_wed,
+        train_runs_on_thu,
+        train_runs_on_fri,
+        train_runs_on_sat,
+        train_runs_on_sun
+
+    FROM base_times
+    WHERE departure_ts BETWEEN NOW() - INTERVAL '2 hours'
+        AND NOW() + ($2 || ' hours')::interval
+
+    UNION ALL
+
+    -- =========================
+    -- ARRIVALS
+    -- =========================
+    SELECT
+        'ARRIVING' AS section_type,
+        train_number,
+        train_name,
+        train_type,
+        arrival AS scheduled_time,
+        arrival_ts AS event_time,
+        running_day,
+        station_sequence,
+
+        train_runs_on_mon,
+        train_runs_on_tue,
+        train_runs_on_wed,
+        train_runs_on_thu,
+        train_runs_on_fri,
+        train_runs_on_sat,
+        train_runs_on_sun
+
+    FROM base_times
+    WHERE arrival_ts BETWEEN NOW() - INTERVAL '2 hours'
+        AND NOW() + ($2 || ' hours')::interval
+)
+
+SELECT
+    section_type,
+    train_number,
+    train_name,
+    train_type,
+    scheduled_time,
+    event_time,
+
+    -- =========================
+    -- RELATIVE TIME STRING
+    -- =========================
+    CASE
+        WHEN event_time > NOW() THEN
+            'in ' ||
+            FLOOR(EXTRACT(EPOCH FROM (event_time - NOW())) / 3600)::INT || ' hr ' ||
+            FLOOR(MOD(EXTRACT(EPOCH FROM (event_time - NOW())), 3600) / 60)::INT || ' mins'
+
+        ELSE
+            FLOOR(EXTRACT(EPOCH FROM (NOW() - event_time)) / 3600)::INT || ' hr ' ||
+            FLOOR(MOD(EXTRACT(EPOCH FROM (NOW() - event_time)), 3600) / 60)::INT || ' mins ago'
+    END AS relative_time,
+
+    running_day,
+    station_sequence,
+
+    train_runs_on_mon,
+    train_runs_on_tue,
+    train_runs_on_wed,
+    train_runs_on_thu,
+    train_runs_on_fri,
+    train_runs_on_sat,
+    train_runs_on_sun
+
+FROM events
+
+ORDER BY
+    section_type,
+    event_time DESC;
+
     `;
-    const result = await pool.query(query, [station_code]);
+    const result = await pool.query(query, [station_code, next_hours]);
     return result.rows;
   } catch (err) {
     console.error("PG ERROR:", err);

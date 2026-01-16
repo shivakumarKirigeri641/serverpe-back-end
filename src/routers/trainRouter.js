@@ -104,6 +104,41 @@ trainRouter.get("/train/coach-types", async (req, res) => {
    ============================================================ */
 
 /**
+ * GET /train/autocomplete
+ * Autocomplete train search by train number or name
+ * Query params: q (search query)
+ */
+trainRouter.get("/train/autocomplete", async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    console.log("🔍 Autocomplete request received. Query:", q);
+
+    // Validation
+    if (!q || q.length < 2) {
+      console.log("❌ Query too short:", q);
+      return sendError(res, 400, "Search query must be at least 2 characters");
+    }
+
+    console.log("✅ Calling trainRepo.getTrainsList...");
+    const trains = await trainRepo.getTrainsList(q);
+    console.log("✅ Got trains:", trains.length);
+    sendSuccess(
+      res,
+      {
+        query: q,
+        count: trains.length,
+        suggestions: trains,
+      },
+      "Train suggestions fetched successfully"
+    );
+  } catch (err) {
+    console.error("Error autocompleting trains:", err);
+    sendError(res, 500, "Failed to fetch train suggestions", err.message);
+  }
+});
+
+/**
  * GET /train/search
  * Search trains between source and destination on a specific date
  * Query params: source, destination, doj (date of journey - YYYY-MM-DD)
@@ -203,24 +238,34 @@ trainRouter.get("/train/live-status/:train_input", async (req, res) => {
 
 /**
  * GET /train/station/:station_code
- * Get all trains passing through a specific station
+ * Get all trains arriving/departing at a specific station in next N hours
+ * Query params: next_hours (optional, default: 2, allowed: 2, 4, 8)
  */
 trainRouter.get("/train/station/:station_code", async (req, res) => {
   try {
     const { station_code } = req.params;
+    let { next_hours } = req.query;
 
     if (!station_code) {
       return sendError(res, 400, "Station code is required");
     }
 
+    // Validate and set default for next_hours
+    next_hours = parseInt(next_hours) || 2;
+    if (![2, 4, 8].includes(next_hours)) {
+      return sendError(res, 400, "next_hours must be 2, 4, or 8");
+    }
+
     const trains = await trainRepo.getTrainsAtStation(
-      station_code.toUpperCase()
+      station_code.toUpperCase(),
+      next_hours
     );
 
     sendSuccess(
       res,
       {
         station_code: station_code.toUpperCase(),
+        next_hours,
         trains_count: trains.length,
         trains,
       },
