@@ -2,6 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const archiver = require("archiver");
 const os = require("os");
+const doc = require("pdfkit");
 
 /**
  * =====================================================
@@ -145,9 +146,17 @@ async function createMockTrainZip(
       projectRoot,
       "src/student_projects/mock-train-reservations/student-front-end",
     );
+    const docs = path.join(
+      projectRoot,
+      "src/student_projects/mock-train-reservations/docs",
+    );
 
     // Check source directories exist
-    if (!fs.existsSync(sourceBackend) || !fs.existsSync(sourceFrontend)) {
+    if (
+      !fs.existsSync(sourceBackend) ||
+      !fs.existsSync(sourceFrontend) ||
+      !fs.existsSync(docs)
+    ) {
       return {
         statuscode: 404,
         successstatus: false,
@@ -170,6 +179,7 @@ async function createMockTrainZip(
       path.join(tempDir, "student-front-end"),
       ["node_modules", ".git", "build"],
     );
+    await copyDirectory(docs, path.join(tempDir, "docs"), []);
 
     // Update .env file with actual API key
     const envPath = path.join(tempDir, "student-back-end", ".env");
