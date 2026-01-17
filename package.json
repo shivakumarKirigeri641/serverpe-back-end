@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/shivakumarKirigeri641/serverpe-back-end#readme",
   "dependencies": {
+    "archiver": "^7.0.1",
     "axios": "^1.12.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

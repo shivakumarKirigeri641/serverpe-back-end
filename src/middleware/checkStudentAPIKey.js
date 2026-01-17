@@ -26,13 +26,9 @@ const checkStudentAPIKey = async (req, res, next) => {
     // Check API key in license table
     const pool = connectMainDB();
     const query = `
-      SELECT 
-        id,
-        license_key,
-        status,
-        expiry_date
-      FROM licenses
-      WHERE api_key = $1 
+      SELECT l.*,u.email
+      FROM licenses l join users u on u.id=l.fk_user_id
+      WHERE api_key = $1
         AND status = true
         AND (expiry_date IS NULL OR expiry_date > NOW())
       LIMIT 1
@@ -73,13 +69,11 @@ const checkStudentAPIKey = async (req, res, next) => {
       key: license.license_key,
       student_name: license.student_name,
       student_email: license.student_email,
-      expires_at: license.expires_at,
+      expires_at: license.expiry_date,
     };
 
     // Log successful API key validation
-    console.log(
-      `✅ Valid API key used by: ${license.student_name} (${license.student_email})`
-    );
+    console.log(`✅ Valid API key used by: ${license.email})`);
 
     next();
   } catch (error) {
