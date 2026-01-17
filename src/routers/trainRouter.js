@@ -607,8 +607,8 @@ trainRouter.post("/train/send-otp", checkStudentAPIKey, async (req, res) => {
     }
 
     // Generate 4-digit OTP for login, 6-digit OTP for payment
-    const otp = ispayment ? "123456" : "1234";
-    /*const otp = ispayment
+    //const otp = ispayment ? "123456" : "1234";
+    const otp = ispayment
       ? Math.floor(100000 + Math.random() * 900000).toString()
       : Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -638,7 +638,7 @@ trainRouter.post("/train/send-otp", checkStudentAPIKey, async (req, res) => {
           },
         ],
       });
-    }*/
+    }
 
     // OTP expires in 10 minutes
     const expires_at = new Date(Date.now() + 10 * 60 * 1000);
@@ -653,9 +653,9 @@ trainRouter.post("/train/send-otp", checkStudentAPIKey, async (req, res) => {
     // TODO: Send OTP via email service (Nodemailer)
     // For now, in development, we return the OTP
     const response = { email, expires_in: "10 minutes" };
-    if (process.env.NODE_ENV === "development") {
+    /*if (process.env.NODE_ENV === "development") {
       response.otp = otp; // Only in development
-    }
+    }*/
 
     sendSuccess(res, response, "OTP sent successfully");
   } catch (err) {

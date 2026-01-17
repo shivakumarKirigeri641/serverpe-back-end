@@ -12,6 +12,9 @@ const allocateSeat_FC = require("../../utils/mocktrainreservations/allocateSeat_
 const calculateInternalTotalFare = require("../../utils/mocktrainreservations/calculateInternalTotalFare");
 const getSearchQueryText = require("../../utils/mocktrainreservations/getSearchQueryText");
 const mapPgError = require("../../utils/mocktrainreservations/pgErrorMapper");
+const sendConfirmTicketSMS = require("../../utils/sendConfirmTicketSMS");
+const sendMockTrainTicketMailTemplate = require("../../utils/emails/sendMockTrainTicketMailTemplate");
+const { sendMail } = require("../../utils/emails/sendMail");
 
 exports.getReservedStations = async () => {
   const query = `
@@ -268,7 +271,7 @@ exports.confirmTicket = async (
 
     // --- FARE CALCULATION PREP ---
     // 1. Get Journey KM
-    const journeyKmSql = `SELECT (s2.kilometer - s1.kilometer) AS journey_km 
+    const journeyKmSql = `SELECT (s2.kilometer - s1.kilometer) AS journey_km, s1.departure as departure, s1.arrival as arrival 
                           FROM schedules s1 JOIN schedules s2 ON s2.train_number = s1.train_number 
                           WHERE s1.train_number = $1 AND s1.station_code = $2 AND s2.station_code = $3 AND s1.station_sequence < s2.station_sequence`;
     const kmResult = await pool.query(journeyKmSql, [
@@ -524,6 +527,37 @@ exports.confirmTicket = async (
     const { pnr, pnr_status } = result_final_booking.rows[0] || {};
 
     // FINAL JSON RESPONSE STRUCTURE
+    //send sms
+    await sendConfirmTicketSMS(
+      mobile_number,
+      pnr,
+      train_number,
+      result_train_info.rows[0].train_name,
+      doj,
+      kmResult.rows[0].departure
+    );
+    //send mail
+    await sendMail({
+      to: email,
+      subject: "Your QuickSmart Mock Train Ticket – Practice Reservation",
+      html: await sendMockTrainTicketMailTemplate({
+        pnr,
+        train_number,
+        train_name: result_train_info.rows[0].train_name,
+        source_station: result_src.rows[0].station_name,
+        destination_station: result_dest.rows[0].station_name,
+        journey_date: doj,
+        departure_time: kmResult.rows[0].departure,
+        arrival_time: kmResult.rows[0].arrival,
+        coach_type: coach_code,
+        booking_status: pnr_status,
+        passengers,
+        total_fare,
+        contact_email: email,
+        contact_mobile: mobile_number,
+      }),
+      text: "Your QuickSmart Mock Train Ticket – Practice Reservation",
+    });
     return {
       pnr: pnr,
       pnr_status: pnr_status,
