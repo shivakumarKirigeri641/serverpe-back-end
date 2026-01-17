@@ -813,37 +813,59 @@ trainRouter.get(
         return sendError(res, 403, "Unauthorized access to ticket");
       }
 
-      // Check if PDF already exists
-      const existingPdfPath = path.join(
+      // Always regenerate PDF to ensure fresh content
+      const ticketsDir = path.join(
         __dirname,
-        "../../src/secure-storage/downloads/projects/mock-train-reservation/tickets",
-        `ticket_${pnr}.pdf`
+        "../../src/secure-storage/downloads/projects/mock-train-reservation/tickets"
       );
 
-      let pdfPath;
+      // Create directory if it doesn't exist
+      if (!require("fs").existsSync(ticketsDir)) {
+        require("fs").mkdirSync(ticketsDir, { recursive: true });
+      }
 
+      // Delete existing PDF if it exists (to regenerate fresh)
+      const existingPdfPath = path.join(ticketsDir, `ticket_${pnr}.pdf`);
       if (require("fs").existsSync(existingPdfPath)) {
-        pdfPath = existingPdfPath;
-      } else {
-        // Generate PDF
-        pdfPath = await generateTrainTicketPdf({
-          pnr: booking.pnr,
-          train_number: booking.train_number,
-          train_name: booking.train_name,
-          source_station: booking.source_station_name,
-          destination_station: booking.destination_station_name,
-          departure_time: booking.departure_time,
-          arrival_time: booking.arrival_time,
-          journey_date: booking.journey_date,
-          coach_type: booking.coach_type,
-          reservation_type: booking.reservation_type,
-          passengers: booking.passengers || [],
-          total_fare: booking.total_fare,
-          booking_date: booking.booking_date,
-          booking_status: booking.booking_status,
-          contact_mobile: booking.mobile_number,
-          contact_email: booking.email,
-        });
+        require("fs").unlinkSync(existingPdfPath);
+      }
+
+      // Generate new PDF
+      const pdfPath = await generateTrainTicketPdf({
+        pnr: booking.pnr,
+        train_number: booking.train_number,
+        train_name: booking.train_name,
+        source_station: booking.source_station_name,
+        destination_station: booking.destination_station_name,
+        departure_time: booking.source_departure_time || "N/A",
+        arrival_time: booking.destination_arrival_time || "N/A",
+        journey_date: booking.journey_date,
+        coach_type: booking.coach_type || "SL",
+        reservation_type:
+          booking.reservation_type_description ||
+          booking.reservation_type ||
+          "General",
+        passengers: (booking.passengers || []).map((p) => ({
+          passenger_name: p.name || p.passenger_name || "Passenger",
+          passenger_age: p.age || p.passenger_age || 0,
+          passenger_gender: p.gender || p.passenger_gender || "M",
+          status: p.updated_seat_status || p.status || "CNF",
+          seat_number: p.updated_seat_status || "N/A",
+        })),
+        total_fare: booking.total_fare || 0,
+        booking_date: booking.booking_date
+          ? new Date(booking.booking_date).toLocaleString("en-IN")
+          : new Date().toLocaleString("en-IN"),
+        booking_status:
+          booking.pnr_status || booking.booking_status || "CONFIRMED",
+        contact_mobile: booking.mobile_number || "N/A",
+        contact_email: booking.email || "N/A",
+      });
+
+      // Verify PDF was created
+      if (!require("fs").existsSync(pdfPath)) {
+        console.error("PDF file was not created:", pdfPath);
+        return sendError(res, 500, "Failed to generate ticket PDF");
       }
 
       // Send file for download

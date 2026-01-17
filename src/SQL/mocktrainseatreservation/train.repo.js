@@ -1135,7 +1135,7 @@ exports.getPnrStatus = async (pnr) => {
             LEFT JOIN stations s2 ON b.fkdestination_code = s2.id
             LEFT JOIN passengerdata pd ON pd.fkbookingdata = b.id
             WHERE b.pnr = $1
-            GROUP BY b.id, b.pnr, pd.pid, b.pnr_status, b.date_of_journey, t.train_number, t.train_name, s1.station_name, s2.station_name, c.train_number
+            GROUP BY b.id, b.pnr, pid, b.pnr_status, b.date_of_journey, t.train_number, t.train_name, s1.station_name, s2.station_name, c.train_number
         `;
     const bookingResult = await pool.query(bookingQuery, [pnr]);
 
@@ -1196,6 +1196,9 @@ exports.getBookingByPNR = async (pnr) => {
     TO_CHAR(b.date_of_journey, 'DD-MM-YYYY') AS journey_date,
     b.pnr_status,
     rt.description AS reservation_type_description,
+    ct.coach_code AS coach_type,    
+    b.mobile_number,
+    b.email,
 
     b.created_at AS booking_date,
     b.id
@@ -1225,6 +1228,9 @@ LEFT JOIN schedules sch_dest
 
 LEFT JOIN reservationtype rt
     ON rt.id = b.fkreservation_type
+
+LEFT JOIN coachtype ct
+    ON ct.id = b.fkcoach_type
 
 WHERE b.pnr = $1
 LIMIT 1;
