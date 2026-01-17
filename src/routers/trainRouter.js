@@ -841,10 +841,7 @@ trainRouter.get(
         arrival_time: booking.destination_arrival_time || "N/A",
         journey_date: booking.journey_date,
         coach_type: booking.coach_type || "SL",
-        reservation_type:
-          booking.reservation_type_description ||
-          booking.reservation_type ||
-          "General",
+        reservation_type: booking.reservation_type_description,
         passengers: (booking.passengers || []).map((p) => ({
           passenger_name: p.name || p.passenger_name || "Passenger",
           passenger_age: p.age || p.passenger_age || 0,
@@ -856,10 +853,9 @@ trainRouter.get(
         booking_date: booking.booking_date
           ? new Date(booking.booking_date).toLocaleString("en-IN")
           : new Date().toLocaleString("en-IN"),
-        booking_status:
-          booking.pnr_status || booking.booking_status || "CONFIRMED",
-        contact_mobile: booking.mobile_number || "N/A",
-        contact_email: booking.email || "N/A",
+        booking_status: booking.pnr_status,
+        contact_mobile: booking.mobile_number,
+        contact_email: booking.email,
       });
 
       // Verify PDF was created

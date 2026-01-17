@@ -1178,7 +1178,8 @@ exports.getPnrStatus = async (pnr) => {
  */
 exports.getBookingByPNR = async (pnr) => {
   const query = `
-    SELECT
+    
+  SELECT
     b.id,
     b.pnr,
     t.train_number,
@@ -1201,7 +1202,9 @@ exports.getBookingByPNR = async (pnr) => {
     b.email,
 
     b.created_at AS booking_date,
-    b.id
+
+    /* 🔥 TOTAL BASE FARE FROM PASSENGERS */
+    COALESCE(SUM(p.base_fare), 0) AS total_fare
 
 FROM bookingdata b
 
@@ -1232,8 +1235,33 @@ LEFT JOIN reservationtype rt
 LEFT JOIN coachtype ct
     ON ct.id = b.fkcoach_type
 
+/* 👇 JOIN passengerdata */
+LEFT JOIN passengerdata p
+    ON p.fkbookingdata = b.id
+
 WHERE b.pnr = $1
+
+GROUP BY
+    b.id,
+    b.pnr,
+    t.train_number,
+    tt.train_name,
+    s_src.code,
+    s_src.station_name,
+    s_dest.code,
+    s_dest.station_name,
+    sch_src.departure,
+    sch_dest.arrival,
+    b.date_of_journey,
+    b.pnr_status,
+    rt.description,
+    ct.coach_code,
+    b.mobile_number,
+    b.email,
+    b.created_at
+
 LIMIT 1;
+
   `;
 
   try {

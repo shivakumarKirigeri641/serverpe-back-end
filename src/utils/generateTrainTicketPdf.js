@@ -3,79 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const QRCode = require("qrcode");
 
-// Color Palette - Professional Railway Theme
-const COLORS = {
-  primary: "#1e3a5f", // Deep navy blue
-  secondary: "#2563eb", // Bright blue
-  accent: "#059669", // Green for confirmed status
-  warning: "#d97706", // Orange for waitlist
-  danger: "#dc2626", // Red for cancelled
-  dark: "#1f2937", // Dark gray for text
-  medium: "#4b5563", // Medium gray
-  light: "#9ca3af", // Light gray
-  border: "#e5e7eb", // Border color
-  background: "#f8fafc", // Light background
-  white: "#ffffff",
-  gold: "#b8860b", // Gold accent
-};
-
 /**
- * Draw a rounded rectangle with optional shadow effect
- */
-const drawRoundedRect = (doc, x, y, width, height, radius, options = {}) => {
-  const { fill, stroke, shadow } = options;
-
-  // Simulate shadow
-  if (shadow) {
-    doc.save();
-    doc.fillColor("#00000010");
-    doc.roundedRect(x + 3, y + 3, width, height, radius).fill();
-    doc.restore();
-  }
-
-  doc.roundedRect(x, y, width, height, radius);
-
-  if (fill) {
-    doc.fillColor(fill).fill();
-  }
-  if (stroke) {
-    doc
-      .strokeColor(stroke.color || COLORS.border)
-      .lineWidth(stroke.width || 1)
-      .stroke();
-  }
-};
-
-/**
- * Draw a section header with decorative line
- */
-const drawSectionHeader = (doc, text, x, y, width) => {
-  doc.save();
-
-  // Decorative left bar
-  doc.rect(x, y, 4, 20).fill(COLORS.secondary);
-
-  // Header text
-  doc
-    .fontSize(11)
-    .font("Helvetica-Bold")
-    .fillColor(COLORS.primary)
-    .text(text.toUpperCase(), x + 12, y + 4);
-
-  // Underline
-  doc
-    .strokeColor(COLORS.border)
-    .lineWidth(1)
-    .moveTo(x, y + 24)
-    .lineTo(x + width, y + 24)
-    .stroke();
-
-  doc.restore();
-  return y + 30;
-};
-
-/**
- * Generate a professional enterprise-level train ticket PDF
+ * Generate a professional single-page train ticket PDF
  * @param {Object} bookingData - Booking details
  * @returns {Promise<string>} - Path to generated PDF
  */
@@ -92,7 +21,7 @@ exports.generateTrainTicketPdf = async (bookingData) => {
       journey_date,
       coach_type,
       reservation_type,
-      passengers,
+      passengers = [],
       total_fare,
       booking_date,
       booking_status,
@@ -100,7 +29,7 @@ exports.generateTrainTicketPdf = async (bookingData) => {
       contact_email,
     } = bookingData;
 
-    // Create output directory if it doesn't exist
+    // Create output directory
     const ticketsDir = path.join(
       __dirname,
       "../../src/secure-storage/downloads/projects/mock-train-reservation/tickets"
@@ -112,638 +41,462 @@ exports.generateTrainTicketPdf = async (bookingData) => {
 
     const outputPath = path.join(ticketsDir, `ticket_${pnr}.pdf`);
 
-    // Generate QR code for PNR
+    // Generate QR code
     const qrCodeDataUrl = await QRCode.toDataURL(
       JSON.stringify({ pnr, train: train_number, date: journey_date }),
-      { errorCorrectionLevel: "H", width: 200, margin: 1 }
+      { errorCorrectionLevel: "M", width: 120, margin: 1 }
     );
 
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({
         size: "A4",
-        margins: { top: 40, bottom: 40, left: 40, right: 40 },
+        margin: 40,
+        bufferPages: true,
       });
 
       const stream = fs.createWriteStream(outputPath);
       doc.pipe(stream);
 
       const pageWidth = 515;
-      const startX = 40;
+      const leftMargin = 40;
+      let y = 40;
 
-      // ══════════════════════════════════════════════════════════════
-      // HEADER SECTION - Enterprise Branding
-      // ══════════════════════════════════════════════════════════════
+      // Colors
+      const navy = "#1a365d";
+      const blue = "#2563eb";
+      const green = "#059669";
+      const gray = "#6b7280";
+      const lightGray = "#f3f4f6";
 
-      // Header background with gradient effect (simulated)
-      doc.rect(0, 0, 595, 100).fill(COLORS.primary);
-      doc.rect(0, 95, 595, 5).fill(COLORS.secondary);
+      // ═══════════════════════════════════════════════════════════
+      // HEADER
+      // ═══════════════════════════════════════════════════════════
+      doc.rect(0, 0, 595, 70).fill(navy);
 
-      // Company Logo Area (placeholder circle)
-      doc.circle(70, 50, 25).fill(COLORS.white);
       doc
         .fontSize(20)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.primary)
-        .text("QS", 55, 40);
-
-      // Company Name
-      doc
-        .fontSize(22)
-        .font("Helvetica-Bold")
-        .fillColor(COLORS.white)
-        .text("QuickSmart Railways", 110, 30);
+        .fillColor("#ffffff")
+        .text("QuickSmart Railways", leftMargin, 20);
 
       doc
         .fontSize(10)
         .font("Helvetica")
         .fillColor("#94a3b8")
-        .text("Electronic Reservation Slip (ERS)", 110, 55);
+        .text("Electronic Reservation Slip (ERS)", leftMargin, 45);
 
-      // Ticket Type Badge
-      doc.roundedRect(450, 30, 100, 30, 5).fill(COLORS.gold);
+      // E-Ticket badge
+      doc.roundedRect(450, 20, 90, 28, 4).fill("#b8860b");
       doc
-        .fontSize(9)
+        .fontSize(10)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.white)
-        .text("E-TICKET", 465, 40);
+        .fillColor("#ffffff")
+        .text("E-TICKET", 465, 30);
 
-      // Booking Reference
-      doc
-        .fontSize(8)
-        .fillColor("#94a3b8")
-        .text(`Ref: ${pnr}`, 450, 65, { width: 100, align: "center" });
+      y = 85;
 
-      let currentY = 115;
-
-      // ══════════════════════════════════════════════════════════════
-      // PNR & STATUS BAR
-      // ══════════════════════════════════════════════════════════════
-
-      // PNR Box with shadow
-      drawRoundedRect(doc, startX, currentY, 250, 50, 8, {
-        fill: COLORS.white,
-        shadow: true,
-      });
-      doc
-        .roundedRect(startX, currentY, 250, 50, 8)
-        .strokeColor(COLORS.border)
-        .lineWidth(1)
-        .stroke();
-
+      // ═══════════════════════════════════════════════════════════
+      // PNR & STATUS ROW
+      // ═══════════════════════════════════════════════════════════
+      doc.rect(leftMargin, y, 240, 45).fill(lightGray).stroke("#e5e7eb");
       doc
         .fontSize(9)
         .font("Helvetica")
-        .fillColor(COLORS.medium)
-        .text("PNR NUMBER", startX + 15, currentY + 10);
+        .fillColor(gray)
+        .text("PNR NUMBER", leftMargin + 15, y + 8);
+      doc
+        .fontSize(18)
+        .font("Helvetica-Bold")
+        .fillColor(navy)
+        .text(pnr, leftMargin + 15, y + 22);
 
       doc
-        .fontSize(22)
-        .font("Helvetica-Bold")
-        .fillColor(COLORS.primary)
-        .text(pnr, startX + 15, currentY + 24);
+        .rect(leftMargin + 255, y, 260, 45)
+        .fill(lightGray)
+        .stroke("#e5e7eb");
+      doc
+        .fontSize(9)
+        .font("Helvetica")
+        .fillColor(gray)
+        .text("BOOKING STATUS", leftMargin + 270, y + 8);
 
-      // Status Box
       const statusColor =
         booking_status === "CANCELLED"
-          ? COLORS.danger
+          ? "#dc2626"
           : booking_status === "WAITLIST"
-          ? COLORS.warning
-          : COLORS.accent;
-
-      drawRoundedRect(doc, startX + 265, currentY, 250, 50, 8, {
-        fill: COLORS.white,
-        shadow: true,
-      });
-      doc
-        .roundedRect(startX + 265, currentY, 250, 50, 8)
-        .strokeColor(COLORS.border)
-        .lineWidth(1)
-        .stroke();
-
+          ? "#d97706"
+          : green;
+      doc.roundedRect(leftMargin + 270, y + 22, 80, 18, 3).fill(statusColor);
       doc
         .fontSize(9)
-        .font("Helvetica")
-        .fillColor(COLORS.medium)
-        .text("BOOKING STATUS", startX + 280, currentY + 10);
-
-      // Status badge
-      doc
-        .roundedRect(startX + 280, currentY + 26, 100, 18, 4)
-        .fill(statusColor);
-      doc
-        .fontSize(10)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.white)
-        .text(booking_status || "CONFIRMED", startX + 285, currentY + 29);
+        .fillColor("#ffffff")
+        .text(booking_status || "CONFIRMED", leftMargin + 278, y + 26);
 
-      currentY += 65;
+      y += 55;
 
-      // ══════════════════════════════════════════════════════════════
-      // TRAIN DETAILS CARD
-      // ══════════════════════════════════════════════════════════════
-
-      // Main card with shadow
-      drawRoundedRect(doc, startX, currentY, pageWidth, 130, 10, {
-        fill: COLORS.white,
-        shadow: true,
-      });
-      doc
-        .roundedRect(startX, currentY, pageWidth, 130, 10)
-        .strokeColor(COLORS.border)
-        .lineWidth(1)
-        .stroke();
-
-      // Train info header bar
-      doc.rect(startX, currentY, pageWidth, 35).fill(COLORS.background);
-      doc.roundedRect(startX, currentY, pageWidth, 35, 10);
-
-      // Train icon (circle with T)
-      doc.circle(startX + 25, currentY + 17, 12).fill(COLORS.secondary);
+      // ═══════════════════════════════════════════════════════════
+      // TRAIN INFO
+      // ═══════════════════════════════════════════════════════════
+      doc.rect(leftMargin, y, pageWidth, 35).fill(navy);
       doc
         .fontSize(12)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.white)
-        .text("T", startX + 20, currentY + 11);
+        .fillColor("#ffffff")
+        .text(`${train_number} - ${train_name}`, leftMargin + 15, y + 10);
 
-      // Train Number & Name
-      doc
-        .fontSize(14)
-        .font("Helvetica-Bold")
-        .fillColor(COLORS.primary)
-        .text(`${train_number}`, startX + 50, currentY + 8);
-
-      doc
-        .fontSize(11)
-        .font("Helvetica")
-        .fillColor(COLORS.dark)
-        .text(`${train_name}`, startX + 120, currentY + 10);
-
-      // Class & Quota badges
-      doc
-        .roundedRect(startX + 380, currentY + 7, 60, 20, 4)
-        .fill(COLORS.secondary);
+      // Class badges
+      doc.roundedRect(leftMargin + 380, y + 8, 55, 18, 3).fill(blue);
       doc
         .fontSize(9)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.white)
-        .text(coach_type, startX + 390, currentY + 12);
+        .fillColor("#ffffff")
+        .text(coach_type || "SL", leftMargin + 390, y + 12);
 
       doc
-        .roundedRect(startX + 445, currentY + 7, 60, 20, 4)
-        .strokeColor(COLORS.secondary)
+        .roundedRect(leftMargin + 445, y + 8, 55, 18, 3)
+        .strokeColor("#ffffff")
         .lineWidth(1)
         .stroke();
       doc
         .fontSize(9)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.secondary)
-        .text(reservation_type, startX + 450, currentY + 12);
+        .fillColor("#ffffff")
+        .text(reservation_type || "GN", leftMargin + 452, y + 12);
 
-      // Journey Details - Two Column Layout
-      const journeyY = currentY + 50;
+      y += 45;
 
-      // FROM Section
+      // ═══════════════════════════════════════════════════════════
+      // JOURNEY DETAILS
+      // ═══════════════════════════════════════════════════════════
+      doc.rect(leftMargin, y, pageWidth, 75).stroke("#e5e7eb");
+
+      // FROM
       doc
         .fontSize(9)
         .font("Helvetica")
-        .fillColor(COLORS.light)
-        .text("FROM", startX + 20, journeyY);
-
+        .fillColor(gray)
+        .text("FROM", leftMargin + 20, y + 10);
+      doc
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .fillColor("#1f2937")
+        .text(source_station, leftMargin + 20, y + 24, { width: 180 });
       doc
         .fontSize(16)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.dark)
-        .text(source_station, startX + 20, journeyY + 14, { width: 180 });
+        .fillColor(navy)
+        .text(departure_time || "N/A", leftMargin + 20, y + 48);
 
+      // Journey date (center)
+      doc.roundedRect(leftMargin + 215, y + 28, 85, 22, 4).fill(lightGray);
       doc
-        .fontSize(20)
+        .fontSize(10)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.primary)
-        .text(departure_time, startX + 20, journeyY + 55);
-
-      doc
-        .fontSize(9)
-        .font("Helvetica")
-        .fillColor(COLORS.medium)
-        .text("Departure", startX + 20, journeyY + 75);
-
-      // Arrow/Journey indicator
-      const arrowX = startX + 230;
-      doc
-        .strokeColor(COLORS.secondary)
-        .lineWidth(2)
-        .moveTo(arrowX, journeyY + 40)
-        .lineTo(arrowX + 50, journeyY + 40)
-        .stroke();
-
-      // Arrow head
-      doc
-        .moveTo(arrowX + 45, journeyY + 35)
-        .lineTo(arrowX + 55, journeyY + 40)
-        .lineTo(arrowX + 45, journeyY + 45)
-        .fill(COLORS.secondary);
-
-      // Journey date in center
-      doc
-        .roundedRect(arrowX + 5, journeyY + 50, 50, 20, 4)
-        .fill(COLORS.background);
-      doc
-        .fontSize(8)
-        .font("Helvetica-Bold")
-        .fillColor(COLORS.medium)
-        .text(journey_date, arrowX + 7, journeyY + 55, {
-          width: 46,
+        .fillColor(navy)
+        .text(journey_date, leftMargin + 222, y + 33, {
+          width: 70,
           align: "center",
         });
 
-      // TO Section
+      // Arrow
+      doc
+        .strokeColor(blue)
+        .lineWidth(2)
+        .moveTo(leftMargin + 200, y + 40)
+        .lineTo(leftMargin + 210, y + 40)
+        .stroke();
+      doc
+        .strokeColor(blue)
+        .lineWidth(2)
+        .moveTo(leftMargin + 305, y + 40)
+        .lineTo(leftMargin + 315, y + 40)
+        .stroke();
+      doc
+        .moveTo(leftMargin + 310, y + 35)
+        .lineTo(leftMargin + 320, y + 40)
+        .lineTo(leftMargin + 310, y + 45)
+        .fill(blue);
+
+      // TO
       doc
         .fontSize(9)
         .font("Helvetica")
-        .fillColor(COLORS.light)
-        .text("TO", startX + 320, journeyY);
-
+        .fillColor(gray)
+        .text("TO", leftMargin + 340, y + 10);
+      doc
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .fillColor("#1f2937")
+        .text(destination_station, leftMargin + 340, y + 24, { width: 160 });
       doc
         .fontSize(16)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.dark)
-        .text(destination_station, startX + 320, journeyY + 14, { width: 180 });
+        .fillColor(navy)
+        .text(arrival_time || "N/A", leftMargin + 340, y + 48);
 
+      y += 85;
+
+      // ═══════════════════════════════════════════════════════════
+      // PASSENGER TABLE
+      // ═══════════════════════════════════════════════════════════
       doc
-        .fontSize(20)
+        .fontSize(11)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.primary)
-        .text(arrival_time, startX + 320, journeyY + 55);
+        .fillColor(navy)
+        .text("PASSENGER DETAILS", leftMargin, y);
+      y += 18;
 
-      doc
-        .fontSize(9)
-        .font("Helvetica")
-        .fillColor(COLORS.medium)
-        .text("Arrival", startX + 320, journeyY + 75);
+      // Table header
+      doc.rect(leftMargin, y, pageWidth, 22).fill(navy);
+      doc.fontSize(8).font("Helvetica-Bold").fillColor("#ffffff");
+      doc.text("S.No", leftMargin + 10, y + 7, { width: 35 });
+      doc.text("Passenger Name", leftMargin + 50, y + 7, { width: 180 });
+      doc.text("Age", leftMargin + 235, y + 7, { width: 40 });
+      doc.text("Gender", leftMargin + 280, y + 7, { width: 55 });
+      doc.text("Berth/Seat", leftMargin + 345, y + 7, { width: 80 });
+      doc.text("Status", leftMargin + 435, y + 7, { width: 60 });
+      y += 22;
 
-      currentY += 145;
+      // Passenger rows (limit to 6 for single page)
+      const maxPassengers = Math.min(passengers.length, 6);
+      for (let i = 0; i < maxPassengers; i++) {
+        const p = passengers[i];
+        const rowBg = i % 2 === 0 ? lightGray : "#ffffff";
 
-      // ══════════════════════════════════════════════════════════════
-      // PASSENGER DETAILS TABLE
-      // ══════════════════════════════════════════════════════════════
-
-      currentY = drawSectionHeader(
-        doc,
-        "Passenger Details",
-        startX,
-        currentY,
-        pageWidth
-      );
-
-      // Table container with shadow
-      const tableHeight = 30 + passengers.length * 28;
-      drawRoundedRect(doc, startX, currentY, pageWidth, tableHeight, 8, {
-        fill: COLORS.white,
-        shadow: true,
-      });
-      doc
-        .roundedRect(startX, currentY, pageWidth, tableHeight, 8)
-        .strokeColor(COLORS.border)
-        .lineWidth(1)
-        .stroke();
-
-      // Table Header
-      doc
-        .rect(startX + 1, currentY + 1, pageWidth - 2, 28)
-        .fill(COLORS.primary);
-
-      const headers = [
-        { text: "S.No", x: startX + 15, width: 40 },
-        { text: "Passenger Name", x: startX + 55, width: 180 },
-        { text: "Age", x: startX + 235, width: 50 },
-        { text: "Gender", x: startX + 285, width: 60 },
-        { text: "Seat/Berth", x: startX + 355, width: 80 },
-        { text: "Status", x: startX + 440, width: 70 },
-      ];
-
-      doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.white);
-      headers.forEach((h) => {
-        doc.text(h.text, h.x, currentY + 10, { width: h.width });
-      });
-
-      // Table Rows
-      let rowY = currentY + 32;
-      passengers.forEach((passenger, index) => {
-        const isEven = index % 2 === 0;
-
-        // Row background
-        if (isEven) {
-          doc
-            .rect(startX + 1, rowY - 2, pageWidth - 2, 26)
-            .fill(COLORS.background);
-        }
-
-        // Row data
-        doc.fontSize(9).font("Helvetica").fillColor(COLORS.dark);
-        doc.text(String(index + 1).padStart(2, "0"), startX + 15, rowY + 5, {
-          width: 40,
-        });
+        doc.rect(leftMargin, y, pageWidth, 22).fill(rowBg).stroke("#e5e7eb");
+        doc.fontSize(9).font("Helvetica").fillColor("#1f2937");
+        doc.text(String(i + 1), leftMargin + 15, y + 7, { width: 30 });
         doc
           .font("Helvetica-Bold")
           .text(
-            passenger.passenger_name || passenger.name,
-            startX + 55,
-            rowY + 5,
+            p.passenger_name || p.name || "Passenger",
+            leftMargin + 50,
+            y + 7,
             { width: 180 }
           );
         doc
           .font("Helvetica")
           .text(
-            String(passenger.passenger_age || passenger.age),
-            startX + 235,
-            rowY + 5,
-            { width: 50 }
+            String(p.passenger_age || p.age || "-"),
+            leftMargin + 240,
+            y + 7,
+            { width: 35 }
           );
 
-        const genderText =
-          (passenger.passenger_gender || passenger.gender) === "M"
+        const gender =
+          (p.passenger_gender || p.gender) === "M"
             ? "Male"
-            : (passenger.passenger_gender || passenger.gender) === "F"
+            : (p.passenger_gender || p.gender) === "F"
             ? "Female"
             : "Other";
-        doc.text(genderText, startX + 285, rowY + 5, { width: 60 });
+        doc.text(gender, leftMargin + 285, y + 7, { width: 50 });
         doc.text(
-          passenger.seat_number || `${coach_type}-${index + 1}`,
-          startX + 355,
-          rowY + 5,
-          { width: 80 }
+          p.seat_number || p.updated_seat_status || "---",
+          leftMargin + 350,
+          y + 7,
+          { width: 75 }
         );
 
-        // Status badge in row
-        const passengerStatus = passenger.status || "CNF";
-        const statusBgColor = passengerStatus === "CNF" ? "#dcfce7" : "#fef3c7";
-        const statusTextColor =
-          passengerStatus === "CNF" ? COLORS.accent : COLORS.warning;
-
-        doc.roundedRect(startX + 440, rowY + 2, 50, 18, 3).fill(statusBgColor);
+        const pStatus = p.status || p.updated_seat_status || "CNF";
+        const sColor = pStatus.includes("CNF") ? green : "#d97706";
+        doc.roundedRect(leftMargin + 438, y + 4, 45, 14, 2).fill(sColor);
         doc
-          .fontSize(8)
+          .fontSize(7)
           .font("Helvetica-Bold")
-          .fillColor(statusTextColor)
-          .text(passengerStatus, startX + 445, rowY + 6, {
-            width: 40,
+          .fillColor("#ffffff")
+          .text(pStatus.substring(0, 6), leftMargin + 442, y + 7, {
+            width: 38,
             align: "center",
           });
 
-        rowY += 28;
-      });
+        y += 22;
+      }
 
-      currentY = rowY + 10;
+      y += 10;
 
-      // ══════════════════════════════════════════════════════════════
-      // FARE DETAILS & QR CODE SECTION
-      // ══════════════════════════════════════════════════════════════
-
-      currentY = drawSectionHeader(
-        doc,
-        "Payment Summary",
-        startX,
-        currentY,
-        pageWidth
-      );
-
-      // Two column layout
-      // Left: QR Code
-      drawRoundedRect(doc, startX, currentY, 150, 140, 8, {
-        fill: COLORS.white,
-        shadow: true,
-      });
-      doc
-        .roundedRect(startX, currentY, 150, 140, 8)
-        .strokeColor(COLORS.border)
-        .lineWidth(1)
-        .stroke();
-
-      // QR Code
+      // ═══════════════════════════════════════════════════════════
+      // FARE & QR CODE SECTION
+      // ═══════════════════════════════════════════════════════════
+      // QR Code (left side)
+      doc.rect(leftMargin, y, 110, 110).stroke("#e5e7eb");
       const qrImage = qrCodeDataUrl.split(",")[1];
       const qrBuffer = Buffer.from(qrImage, "base64");
-      doc.image(qrBuffer, startX + 25, currentY + 10, {
-        width: 100,
-        height: 100,
-      });
-
+      doc.image(qrBuffer, leftMargin + 10, y + 5, { width: 90, height: 90 });
       doc
-        .fontSize(8)
+        .fontSize(7)
         .font("Helvetica")
-        .fillColor(COLORS.medium)
-        .text("Scan for verification", startX + 25, currentY + 115, {
-          width: 100,
+        .fillColor(gray)
+        .text("Scan for details", leftMargin + 20, y + 96, {
+          width: 70,
           align: "center",
         });
 
-      // Right: Fare breakdown
-      const fareBoxX = startX + 165;
-      const fareBoxWidth = pageWidth - 165;
-
-      drawRoundedRect(doc, fareBoxX, currentY, fareBoxWidth, 140, 8, {
-        fill: COLORS.white,
-        shadow: true,
-      });
+      // Fare details (right side)
       doc
-        .roundedRect(fareBoxX, currentY, fareBoxWidth, 140, 8)
-        .strokeColor(COLORS.border)
-        .lineWidth(1)
-        .stroke();
+        .rect(leftMargin + 125, y, pageWidth - 125, 110)
+        .fill(lightGray)
+        .stroke("#e5e7eb");
 
-      const baseFare = Math.round(total_fare / 1.18);
-      const gst = total_fare - baseFare;
+      const fareX = leftMargin + 140;
+      let fareY = y + 12;
+
+      doc
+        .fontSize(10)
+        .font("Helvetica-Bold")
+        .fillColor(navy)
+        .text("FARE SUMMARY", fareX, fareY);
+      fareY += 20;
+
+      const baseFare = Math.round((total_fare || 0) / 1.05);
+      const gst = (total_fare || 0) - baseFare;
 
       const fareItems = [
         { label: "Base Fare", value: baseFare },
-        { label: "Reservation Charge", value: Math.round(baseFare * 0.02) },
-        { label: "Superfast Charge", value: Math.round(baseFare * 0.03) },
-        { label: "GST @ 5%", value: gst },
+        { label: "GST (5%)", value: gst },
       ];
 
-      let fareY = currentY + 15;
       fareItems.forEach((item) => {
         doc
-          .fontSize(10)
+          .fontSize(9)
           .font("Helvetica")
-          .fillColor(COLORS.medium)
-          .text(item.label, fareBoxX + 20, fareY);
+          .fillColor(gray)
+          .text(item.label, fareX, fareY, { width: 150 });
         doc
-          .font("Helvetica-Bold")
-          .fillColor(COLORS.dark)
-          .text(
-            `₹ ${item.value.toLocaleString("en-IN")}`,
-            fareBoxX + fareBoxWidth - 100,
-            fareY,
-            { width: 80, align: "right" }
-          );
-        fareY += 22;
+          .font("Helvetica")
+          .fillColor("#1f2937")
+          .text(`₹ ${item.value.toLocaleString("en-IN")}`, fareX + 260, fareY, {
+            width: 80,
+            align: "right",
+          });
+        fareY += 16;
       });
 
-      // Total divider
+      // Divider
       doc
-        .strokeColor(COLORS.border)
+        .strokeColor("#d1d5db")
         .lineWidth(1)
-        .moveTo(fareBoxX + 20, fareY)
-        .lineTo(fareBoxX + fareBoxWidth - 20, fareY)
+        .moveTo(fareX, fareY + 2)
+        .lineTo(fareX + 350, fareY + 2)
         .stroke();
-
       fareY += 10;
 
-      // Total amount with highlight
-      doc
-        .rect(fareBoxX + 10, fareY - 2, fareBoxWidth - 20, 30)
-        .fill(COLORS.background);
-
+      // Total
       doc
         .fontSize(12)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.dark)
-        .text("Total Amount", fareBoxX + 20, fareY + 5);
-
+        .fillColor(navy)
+        .text("Total Amount", fareX, fareY);
       doc
-        .fontSize(18)
+        .fontSize(16)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.primary)
+        .fillColor(green)
         .text(
-          `₹ ${total_fare.toLocaleString("en-IN")}`,
-          fareBoxX + fareBoxWidth - 120,
-          fareY + 2,
+          `₹ ${(total_fare || 0).toLocaleString("en-IN")}`,
+          fareX + 240,
+          fareY - 2,
           { width: 100, align: "right" }
         );
 
-      currentY += 155;
+      y += 120;
 
-      // ══════════════════════════════════════════════════════════════
-      // CONTACT & BOOKING INFO
-      // ══════════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════════
+      // CONTACT INFO
+      // ═══════════════════════════════════════════════════════════
+      doc.rect(leftMargin, y, pageWidth, 35).fill(lightGray).stroke("#e5e7eb");
 
-      currentY = drawSectionHeader(
-        doc,
-        "Contact & Booking Information",
-        startX,
-        currentY,
-        pageWidth
-      );
-
-      drawRoundedRect(doc, startX, currentY, pageWidth, 50, 8, {
-        fill: COLORS.background,
-      });
+      doc.fontSize(8).font("Helvetica").fillColor(gray);
+      doc.text("Mobile:", leftMargin + 15, y + 8);
       doc
-        .roundedRect(startX, currentY, pageWidth, 50, 8)
-        .strokeColor(COLORS.border)
-        .lineWidth(1)
-        .stroke();
+        .font("Helvetica-Bold")
+        .fillColor("#1f2937")
+        .text(contact_mobile || "N/A", leftMargin + 15, y + 19);
 
-      // Contact info in grid
-      const infoItems = [
-        { icon: "📱", label: "Mobile", value: contact_mobile },
-        { icon: "📧", label: "Email", value: contact_email },
-        {
-          icon: "📅",
-          label: "Booked On",
-          value: booking_date || new Date().toLocaleDateString("en-IN"),
-        },
-        { icon: "🎫", label: "Transaction ID", value: `TXN${pnr}` },
-      ];
-
-      const infoColWidth = pageWidth / 4;
-      infoItems.forEach((item, i) => {
-        const infoX = startX + i * infoColWidth + 10;
-        doc
-          .fontSize(8)
-          .font("Helvetica")
-          .fillColor(COLORS.light)
-          .text(item.label, infoX, currentY + 10);
-        doc
-          .fontSize(9)
-          .font("Helvetica-Bold")
-          .fillColor(COLORS.dark)
-          .text(item.value, infoX, currentY + 24, { width: infoColWidth - 20 });
-      });
-
-      currentY += 65;
-
-      // ══════════════════════════════════════════════════════════════
-      // IMPORTANT INSTRUCTIONS
-      // ══════════════════════════════════════════════════════════════
-
-      drawRoundedRect(doc, startX, currentY, pageWidth, 70, 8, {
-        fill: "#fef3c7",
-      });
       doc
-        .roundedRect(startX, currentY, pageWidth, 70, 8)
-        .strokeColor("#f59e0b")
-        .lineWidth(1)
-        .stroke();
+        .font("Helvetica")
+        .fillColor(gray)
+        .text("Email:", leftMargin + 150, y + 8);
+      doc
+        .font("Helvetica-Bold")
+        .fillColor("#1f2937")
+        .text(contact_email || "N/A", leftMargin + 150, y + 19, { width: 180 });
+
+      doc
+        .font("Helvetica")
+        .fillColor(gray)
+        .text("Booked On:", leftMargin + 380, y + 8);
+      doc
+        .font("Helvetica-Bold")
+        .fillColor("#1f2937")
+        .text(
+          booking_date || new Date().toLocaleDateString("en-IN"),
+          leftMargin + 380,
+          y + 19
+        );
+
+      y += 45;
+
+      // ═══════════════════════════════════════════════════════════
+      // INSTRUCTIONS
+      // ═══════════════════════════════════════════════════════════
+      doc.rect(leftMargin, y, pageWidth, 55).fill("#fef3c7").stroke("#f59e0b");
 
       doc
         .fontSize(9)
         .font("Helvetica-Bold")
-        .fillColor(COLORS.warning)
-        .text("⚠️ IMPORTANT INSTRUCTIONS", startX + 15, currentY + 10);
+        .fillColor("#92400e")
+        .text("IMPORTANT INSTRUCTIONS", leftMargin + 15, y + 8);
 
+      doc.fontSize(7).font("Helvetica").fillColor("#78350f");
       const instructions = [
-        "• Carry a valid government-issued photo ID (Aadhaar, Passport, Driving License, etc.) during the journey.",
-        "• This e-ticket is valid only for the person(s) mentioned above. ID proof is mandatory.",
-        "• Please arrive at the station at least 30 minutes before departure time.",
-        "• This is a DEMO/MOCK ticket generated for testing purposes only - NOT valid for actual travel.",
+        "• This is the mock ticket information and demo purpose only, do not relate to any real world scenarios!",
+        "• Mock email/sms will be sent on the day mock departure, you can mention this in demo.",
       ];
-
-      doc.fontSize(8).font("Helvetica").fillColor(COLORS.dark);
-
-      let instrY = currentY + 25;
+      let instY = y + 22;
       instructions.forEach((instr) => {
-        doc.text(instr, startX + 15, instrY, { width: pageWidth - 30 });
-        instrY += 11;
+        doc.text(instr, leftMargin + 15, instY, { width: pageWidth - 30 });
+        instY += 12;
       });
 
-      // ══════════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════════
       // FOOTER
-      // ══════════════════════════════════════════════════════════════
-
-      const footerY = 780;
-
-      doc.rect(0, footerY, 595, 62).fill(COLORS.primary);
+      // ═══════════════════════════════════════════════════════════
+      doc.rect(0, 780, 595, 62).fill(navy);
 
       doc
-        .fontSize(8)
-        .font("Helvetica")
-        .fillColor("#94a3b8")
+        .fontSize(9)
+        .font("Helvetica-Bold")
+        .fillColor("#ffffff")
         .text(
           "QuickSmart Railways - Mock Train Reservation System",
-          startX,
-          footerY + 15,
+          leftMargin,
+          793,
           { width: pageWidth, align: "center" }
         );
 
       doc
         .fontSize(7)
+        .font("Helvetica")
+        .fillColor("#94a3b8")
         .text(
-          "This is a demonstration ticket for educational purposes. Not valid for actual railway travel.",
-          startX,
-          footerY + 28,
+          "This is a demonstration ticket for educational purposes only. Not valid for railway travel.",
+          leftMargin,
+          808,
           { width: pageWidth, align: "center" }
         );
 
       doc.text(
-        `Generated on: ${new Date().toLocaleString(
-          "en-IN"
-        )} | Document ID: ${pnr}-${Date.now()}`,
-        startX,
-        footerY + 42,
+        `Generated: ${new Date().toLocaleString("en-IN")} | Ref: ${pnr}`,
+        leftMargin,
+        820,
         { width: pageWidth, align: "center" }
       );
 
-      // Finalize PDF
+      // Finalize
       doc.end();
 
-      stream.on("finish", () => {
-        resolve(outputPath);
-      });
-
-      stream.on("error", (err) => {
-        reject(err);
-      });
+      stream.on("finish", () => resolve(outputPath));
+      stream.on("error", (err) => reject(err));
     });
   } catch (error) {
     console.error("PDF Generation Error:", error);
