@@ -9,6 +9,7 @@ const getLicenseDetails = async (pool, licenseKey) => {
   try {
     /* ------------------------------------
        1️⃣ GET LICENSE INFO
+       Using broader SELECT to avoid errors if new columns don't exist
     ------------------------------------ */
     const licenseResult = await pool.query(
       `SELECT 
@@ -17,15 +18,14 @@ const getLicenseDetails = async (pool, licenseKey) => {
         l.fk_user_id,
         l.fk_project_id,
         l.status,
-        l.device_fingerprint,
-        l.fingerprint_bound_at,
         l.created_at as license_created_at,
         u.user_name,
         u.email,
         u.mobile_number,
         p.title as project_title,
         p.project_code,
-        p.description as project_description
+        p.description as project_description,
+        p.*
        FROM licenses l
        JOIN users u ON u.id = l.fk_user_id
        JOIN projects p ON p.id = l.fk_project_id
@@ -92,12 +92,9 @@ const getLicenseDetails = async (pool, licenseKey) => {
         license: {
           license_key: license.license_key,
           status: license.status,
-          created_at: license.license_created_at,
-          fingerprint: {
-            is_bound: !!license.device_fingerprint,
-            bound_at: license.fingerprint_bound_at,
-            hash: license.device_fingerprint ? license.device_fingerprint.substring(0, 16) + "..." : null
-          }
+          api_key: license.api_key || null,
+          api_key_status: license.api_key_status || null,
+          created_at: license.license_created_at
         },
         user: {
           id: license.fk_user_id,
@@ -109,6 +106,7 @@ const getLicenseDetails = async (pool, licenseKey) => {
           id: license.fk_project_id,
           title: license.project_title,
           code: license.project_code,
+          project_type: license.project_type || 'FULL_STACK',
           description: license.project_description
         },
         order: orderResult.rowCount > 0 ? {

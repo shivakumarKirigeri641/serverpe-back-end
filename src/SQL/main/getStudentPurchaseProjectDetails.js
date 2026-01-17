@@ -32,11 +32,19 @@ const gstPercent = Number(result_project.rows[0].gst_percent);
 const total_payment =
   basePrice + (basePrice * gstPercent / 100);
 
+  const project = result_project.rows[0];
+  if (project && !project.project_type) {
+    project.project_type = 'FULL_STACK';
+  }
+
   return {
     statuscode: 200,
     successstatus: true,
-    data: {user_details: result_user.rows[0], project_details: result_project.rows[0], 
-      total_payment: total_payment},
+    data: {
+      user_details: result_user.rows[0], 
+      project_details: project, 
+      total_payment: total_payment
+    },
   };
 };
 module.exports = getStudentPurchaseProjectDetails;

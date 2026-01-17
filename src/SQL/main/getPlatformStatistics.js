@@ -22,9 +22,7 @@ const getPlatformStatistics = async (pool) => {
       SELECT 
         COUNT(*) as licenses,
         COUNT(*) FILTER (WHERE status = true) as active_licenses,
-        COUNT(*) FILTER (WHERE status = false) as inactive_licenses,
-        COUNT(*) FILTER (WHERE device_fingerprint IS NOT NULL) as bound_licenses,
-        COUNT(*) FILTER (WHERE device_fingerprint IS NULL) as unbound_licenses
+        COUNT(*) FILTER (WHERE status = false) as inactive_licenses
       FROM licenses
     `);
 
@@ -107,9 +105,7 @@ const getPlatformStatistics = async (pool) => {
         licenses: {
           total: parseInt(licensesResult.rows[0].licenses),
           active: parseInt(licensesResult.rows[0].active_licenses),
-          inactive: parseInt(licensesResult.rows[0].inactive_licenses),
-          bound_to_device: parseInt(licensesResult.rows[0].bound_licenses),
-          not_yet_used: parseInt(licensesResult.rows[0].unbound_licenses)
+          inactive: parseInt(licensesResult.rows[0].inactive_licenses)
         },
         revenue: {
           total_orders: parseInt(revenueResult.rows[0].orders),

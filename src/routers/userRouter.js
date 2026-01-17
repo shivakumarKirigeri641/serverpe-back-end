@@ -14,6 +14,8 @@ const getStudentPurchaseProjectDetails = require("../SQL/main/getStudentPurchase
 const getStudentPurchasedDetails = require("../SQL/main/getPurchasedDetails");
 const validateForAmount = require("../utils/validateForAmount");
 const inserTransactions = require("../SQL/main/inserTransactions");
+const downloadProjectZipByLicense = require("../SQL/main/downloadProjectZipByLicense");
+
 const poolMain = connectMainDB();
 
 
@@ -315,10 +317,11 @@ userRouter.post(
       //create invoice pdf here and store it in docs/invoices.
       //const { filePath, fileName } = generateInvoicePdf(result);
       console.log(result_status);
-      res.status(200).json({
+      return res.status(200).json({
         poweredby: "serverpe.in",
-        mock_data: true,
-        successstatus: true,
+        mock_data: false,
+        successstatus: result_status.successstatus,
+        statuscode: result_status.statuscode,
         data: result_status,
       });
     } catch (err) {      

@@ -1,4 +1,5 @@
-// services/invoice.service.js
+const fs = require('fs');
+const path = require('path');
 
 exports.downloadInvoicePdf = async (
   pool,
@@ -8,14 +9,16 @@ exports.downloadInvoicePdf = async (
 ) => {
   try {
     // 1️⃣ Validate invoice ownership
+    // Using COALESCE for fallback if migration hasn't been run yet, though 
+    // for download we really need a path.
     const invoiceQuery = `
       SELECT
         i.id,
         i.invoice_number,
-        i.file_path
+        COALESCE(i.invoice_pdf_path, i.file_path) as path
       FROM invoices i
-      INNER JOIN serverpe_users u
-        ON i.fk_user = u.id
+      INNER JOIN users u
+        ON i.fk_user_id = u.id
       WHERE i.id = $1
         AND u.mobile_number = $2;
     `;
@@ -35,20 +38,51 @@ exports.downloadInvoicePdf = async (
 
     const invoice = rows[0];
 
-    // 2️⃣ Audit log (recommended)
-    await pool.query(
-      `
-      INSERT INTO invoice_download_logs
-        (fk_invoice, mobile_number, ip_address)
-      VALUES ($1, $2, $3)
-      `,
-      [invoiceId, mobileNumber, ipAddress]
-    );
+    // 2️⃣ Audit log (optional - wrap in try/catch in case table doesn't exist)
+    try {
+      await pool.query(
+        `
+        INSERT INTO invoice_download_logs
+          (fk_invoice, mobile_number, ip_address)
+        VALUES ($1, $2, $3)
+        `,
+        [invoiceId, mobileNumber, ipAddress]
+      );
+    } catch (logErr) {
+      console.warn("Could not log invoice download:", logErr.message);
+    }
+
+    if (!invoice.path) {
+      return {
+        successstatus: false,
+        statuscode: 404,
+        message: "Invoice file not found (no path in DB)"
+      };
+    }
+
+    // 3️⃣ Resolve absolute path
+    // Navigate to project root (up 2 levels from src/utils)
+    const projectRoot = path.join(__dirname, '../..');
+    
+    // Resolve full path (if stored path is relative like 'src/secure-storage/...')
+    const fullPath = path.isAbsolute(invoice.path)
+       ? invoice.path
+       : path.join(projectRoot, invoice.path);
+
+    if (!fs.existsSync(fullPath)) {
+      return {
+        successstatus: false,
+        statuscode: 404,
+        message: "Invoice file not found on server",
+        debug_path: fullPath
+      };
+    }
+
 
     return {
       successstatus: true,
       statuscode: 200,
-      file_path: invoice.file_path,
+      file_path: fullPath,
       file_name: `invoice_${invoice.invoice_number}.pdf`
     };
 

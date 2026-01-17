@@ -23,16 +23,16 @@ const getTestimonials = async (client, req) => {
     : /tablet/i.test(devicetype)
     ? "Tablet"
     : "Desktop/Laptop";
-  /*await sendMail({
+  await sendMail({
     to: process.env.ADMINMAIL,
     subject: "An user landing page visit alert",
-    html: userVisitLandingPageAlertTemplate({
+    html: await userVisitLandingPageAlertTemplate({
       ipAddress,
       visitTime,
       devicename,
     }),
     text: "Alert! User visited landing page",
-  });*/
+  });
   return {
     statuscode: 200,
     successstatus: true,

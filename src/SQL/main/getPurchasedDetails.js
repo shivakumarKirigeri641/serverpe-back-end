@@ -32,6 +32,7 @@ const getStudentPurchasedDetails = async (client, order_number) => {
     p.title AS project_title,
     p.technology,
     p.difficulty,
+    p.*,
 
     -- Project Version
     pv.version AS project_version,
@@ -50,6 +51,7 @@ const getStudentPurchasedDetails = async (client, order_number) => {
     o.payable_amount     AS total_paid,
 
     -- Invoice
+    i.id AS invoice_id,
     i.invoice_number,
     i.invoice_date,
     i.invoice_pdf_path,
@@ -96,10 +98,15 @@ LEFT JOIN project_versions pv
 WHERE o.order_number = $1;`,
         [order_number]
     );
+  const data = result.rows.map(row => ({
+    ...row,
+    project_type: row.project_type || 'FULL_STACK'
+  }));
+
   return {
     statuscode: 200,
     successstatus: true,
-    data: result.rows,
+    data: data,
   };
 };
 module.exports = getStudentPurchasedDetails;

@@ -22,14 +22,14 @@ const getStatesAndTerritories = async (client, req) => {
     : "Desktop/Laptop";
   const result = await client.query(
     `select id, state_name, state_code from states order by state_name`
-  );
-  //send sms alert
-  //send email to alert
+  );  
+  //send sms alert  
   try{
+  //send email to alert
   await sendMail({
     to: process.env.ADMINMAIL,
     subject: "An user landing page visit alert",
-    html: userVisitLandingPageAlertTemplate({
+    html: await userVisitLandingPageAlertTemplate({
       ipAddress,
       visitTime,
       devicename,

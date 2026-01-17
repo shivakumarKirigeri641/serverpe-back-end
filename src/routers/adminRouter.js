@@ -4,7 +4,6 @@ const checkAdmin = require("../middleware/checkAdmin");
 const { getMainPool } = require("../database/connectDB");
 
 // Import SQL functions
-const resetLicenseFingerprint = require("../SQL/main/resetLicenseFingerprint");
 const getPlatformStatistics = require("../SQL/main/getPlatformStatistics");
 const getAllUsers = require("../SQL/main/getAllUsers");
 const getLicenseDetails = require("../SQL/main/getLicenseDetails");
@@ -58,13 +57,12 @@ adminRouter.get("/analytics/overview", async (req, res) => {
 adminRouter.get("/licenses", async (req, res) => {
   try {
     const pool = getMainPool();
-    const { page, limit, status, bound, search } = req.query;
+    const { page, limit, status, search } = req.query;
 
     const result = await getAllLicenses(pool, {
       page: parseInt(page) || 1,
       limit: parseInt(limit) || 20,
       status,
-      bound,
       search
     });
 
@@ -111,36 +109,6 @@ adminRouter.get("/licenses/:license_key", async (req, res) => {
       status: "Failed",
       successstatus: false,
       message: "Failed to fetch license details"
-    });
-  }
-});
-
-/**
- * POST /admin/licenses/:license_key/reset-fingerprint
- * Reset device fingerprint for a license
- */
-adminRouter.post("/licenses/:license_key/reset-fingerprint", async (req, res) => {
-  try {
-    const pool = getMainPool();
-    const { license_key } = req.params;
-    const adminUserId = req.user.id;
-
-    const result = await resetLicenseFingerprint(pool, license_key, adminUserId);
-
-    res.status(result.statuscode).json({
-      poweredby: "serverpe.in",
-      status: result.status,
-      successstatus: result.successstatus,
-      message: result.message,
-      data: result.data
-    });
-  } catch (error) {
-    console.error("Error resetting fingerprint:", error);
-    res.status(500).json({
-      poweredby: "serverpe.in",
-      status: "Failed",
-      successstatus: false,
-      message: "Failed to reset fingerprint"
     });
   }
 });
@@ -258,7 +226,6 @@ adminRouter.get("/users/:user_id/purchases", async (req, res) => {
         l.license_key,
         l.status,
         l.created_at as purchased_at,
-        l.device_fingerprint IS NOT NULL as is_bound,
         p.title as project_title,
         p.project_code,
         o.order_number,
@@ -269,7 +236,7 @@ adminRouter.get("/users/:user_id/purchases", async (req, res) => {
        LEFT JOIN orders o ON o.fk_user_id = l.fk_user_id AND o.fk_user_id = $1
        LEFT JOIN downloads d ON d.fk_license_id = l.id
        WHERE l.fk_user_id = $1
-       GROUP BY l.license_key, l.status, l.created_at, l.device_fingerprint,
+       GROUP BY l.license_key, l.status, l.created_at,
                 p.title, p.project_code, o.order_number, o.payable_amount
        ORDER BY l.created_at DESC`,
       [user_id]
@@ -395,6 +362,82 @@ adminRouter.get("/system/health", async (req, res) => {
       status: "Failed",
       successstatus: false,
       message: "System health check failed"
+    });
+  }
+});
+
+/**
+ * GET /admin/api-logs
+ * Get API call logs with pagination and filters
+ * Query params: page, limit, method, statusCode, startDate, endDate
+ */
+adminRouter.get("/api-logs", async (req, res) => {
+  try {
+    const pool = getMainPool();
+    const { page, limit, method, statusCode, startDate, endDate } = req.query;
+    
+    const p = parseInt(page) || 1;
+    const l = parseInt(limit) || 20;
+    const offset = (p - 1) * l;
+
+    let query = `
+      SELECT 
+        al.id, al.method, al.path, al.query_params, al.body, al.headers, 
+        al.status_code, al.latency_ms, al.created_at,
+        idp.ip_address, idp.city, idp.region_name, idp.country, idp.isp,
+        u.user_name as user_name
+      FROM api_logs al
+      LEFT JOIN ip_details idp ON al.fk_ip_details_id = idp.id
+      LEFT JOIN users u ON al.fk_user_id = u.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (method) {
+      params.push(method);
+      query += ` AND al.method = $${params.length}`;
+    }
+    if (statusCode) {
+      params.push(parseInt(statusCode));
+      query += ` AND al.status_code = $${params.length}`;
+    }
+    if (startDate) {
+      params.push(startDate);
+      query += ` AND al.created_at >= $${params.length}`;
+    }
+    if (endDate) {
+      params.push(endDate);
+      query += ` AND al.created_at <= $${params.length}`;
+    }
+
+    // Get total count for pagination
+    const countResult = await pool.query(`SELECT COUNT(*) FROM (${query}) as sub`, params);
+    const totalCount = parseInt(countResult.rows[0].count);
+
+    query += ` ORDER BY al.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(l, offset);
+
+    const result = await pool.query(query, params);
+
+    res.status(200).json({
+      poweredby: "serverpe.in",
+      status: "Success",
+      successstatus: true,
+      data: result.rows,
+      pagination: {
+        total: totalCount,
+        page: p,
+        limit: l,
+        totalPages: Math.ceil(totalCount / l)
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching api logs:", error);
+    res.status(500).json({
+      poweredby: "serverpe.in",
+      status: "Failed",
+      successstatus: false,
+      message: "Failed to fetch api logs"
     });
   }
 });

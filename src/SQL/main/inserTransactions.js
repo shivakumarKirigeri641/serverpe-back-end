@@ -1,4 +1,6 @@
-const generateOrderNumber = require("./generateOrderNumber");   
+const generateOrderNumber = require("./generateOrderNumber");
+const { generateApiKey } = require("./generateApiKey");
+const generateInvoicePdf = require("./generateInvoicePdf");   
 const inserTransactions = async (
   client,  // CRITICAL: Must be a dedicated client from pool.connect(), NOT the pool itself
   transaction_data,   // Razorpay payment object
@@ -27,6 +29,17 @@ const inserTransactions = async (
   }
 
   const user = result_user.rows[0];
+
+  /* -----------------------------------------
+   1.5️⃣ FETCH PROJECT TYPE
+   Determines if API key should be generated
+  ------------------------------------------*/
+  const result_project = await client.query(
+    `SELECT * FROM projects WHERE id = $1`,
+    [summaryFormData?.project?.id]
+  );
+  // Fallback to FULL_STACK if project_type column doesn't exist
+  const projectType = result_project.rows[0]?.project_type || 'FULL_STACK';
 
   /* -----------------------------------------
    2️⃣ CREATE ORDER (PAID)
@@ -82,29 +95,38 @@ const inserTransactions = async (
 
   /* -----------------------------------------
    4️⃣ GENERATE LICENSE (PROJECT ACCESS)
+   For UI_ONLY projects, also generate API key
   ------------------------------------------*/
   const licenseKey = `LIC-${user.id}-${Date.now()}`;
+  
+  // Generate API key only for UI_ONLY projects
+  const apiKey = projectType === 'UI_ONLY' ? generateApiKey() : null;
 
   const result_license = await client.query(
     `INSERT INTO licenses (
         fk_user_id,
         fk_project_id,
-        license_key
-     ) VALUES ($1,$2,$3)
+        license_key,
+        api_key,
+        api_key_status
+     ) VALUES ($1,$2,$3,$4,$5)
      RETURNING *`,
     [
       user.id,
       summaryFormData?.project?.id,
-      licenseKey
+      licenseKey,
+      apiKey,
+      apiKey ? 'ACTIVE' : null
     ]
   );
+
 
   /* -----------------------------------------
    5️⃣ GENERATE INVOICE (GST COMPLIANT)
   ------------------------------------------*/
   const invoiceNumber = `SVRP/${new Date().getFullYear()}/${order.id}`;
 
-  await client.query(
+  const invoiceResult = await client.query(
     `INSERT INTO invoices (
         fk_order_id,
         invoice_number,
@@ -112,7 +134,8 @@ const inserTransactions = async (
         taxable_amount,
         gst_amount,
         total_amount
-     ) VALUES ($1,$2,$3,$4,$5,$6)`,
+     ) VALUES ($1,$2,$3,$4,$5,$6)
+     RETURNING id`,
     [
       order.id,
       invoiceNumber,
@@ -123,31 +146,52 @@ const inserTransactions = async (
     ]
   );
   
+  const invoiceId = invoiceResult.rows[0].id;
+  
   // ============================================================
   // COMMIT TRANSACTION
   // All inserts above were NOT committed yet. This commits them atomically.
   // If we reached here, everything succeeded.
   // ============================================================  
+  await client.query('COMMIT');
 
   /* -----------------------------------------
-   6️⃣ EMAIL CONFIRMATION
+   6️⃣ GENERATE INVOICE PDF (after commit)
   ------------------------------------------*/
-  /*await sendMail({
-    to: user.email,
-    subject: "Project Purchase Successful – ServerPe",
-    html: projectPurchaseTemplate({
-      userName: user.user_name,
-      amount: transaction_data.amount / 100,
-      licenseKey
-    }),
-    text: `Your project purchase was successful. License Key: ${licenseKey}`
-  });*/
-await client.query('COMMIT');
+  let invoicePdfPath = null;
+  try {
+    const pdfResult = await generateInvoicePdf({
+      invoice_number: invoiceNumber,
+      buyer_name: summaryFormData?.userDetails?.user_name || user.user_name,
+      buyer_email: user.email,
+      buyer_mobile: mobile_number,
+      project_title: summaryFormData?.project?.title || 'Project Purchase',
+      project_type: projectType,
+      taxable_amount: baseAmount,
+      gst_amount: gstAmount,
+      total_amount: transaction_data.amount / 100,
+      payment_id: transaction_data.id,
+      invoice_date: new Date()
+    });
+    
+    if (pdfResult.success) {
+      invoicePdfPath = pdfResult.relative_path;
+      // Update invoice with PDF path
+      await client.query(
+        `UPDATE invoices SET invoice_pdf_path = $1 WHERE id = $2`,
+        [invoicePdfPath, invoiceId]
+      );
+    }
+  } catch (pdfError) {
+    console.error('PDF generation error (non-critical):', pdfError.message);
+    // Don't fail the transaction for PDF errors
+  }
+
   /* -----------------------------------------
    ✅ FINAL RESPONSE
   ------------------------------------------*/
   return {
-    status: 200,
+    statuscode: 200,
     successstatus: true,
     message: "Project purchase completed successfully",
     // Mapping for PaymentSuccessSummaryPage.js
@@ -168,7 +212,14 @@ await client.query('COMMIT');
     },
     // Keep original for debugging/completeness if needed, or remove if sensitive
     order,
-    license: result_license.rows[0]
+    license: result_license.rows[0],
+    // Project type info - for UI to display API key if UI_ONLY
+    project_type: projectType,
+    api_key: apiKey,
+    // Invoice details for download
+    invoice_id: invoiceId,
+    invoice_number: invoiceNumber,
+    invoice_pdf_path: invoicePdfPath
   };  
 }
 catch(err){
