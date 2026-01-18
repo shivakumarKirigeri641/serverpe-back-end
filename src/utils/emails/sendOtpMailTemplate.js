@@ -1,4 +1,4 @@
-const sendOtpMailTemplate = ({ otp, expiryMinutes = 10 }) => {
+const sendOtpMailTemplate = ({ result_otp_email, expiryMinutes = 10 }) => {
   return `
   <!DOCTYPE html>
   <html lang="en">
@@ -301,7 +301,7 @@ const sendOtpMailTemplate = ({ otp, expiryMinutes = 10 }) => {
         <!-- OTP Display -->
         <div class="otp-container">
           <div class="otp-label">Your Verification Code</div>
-          <div class="otp-code">${otp}</div>
+          <div class="otp-code">${result_otp_email}</div>
           <div class="otp-divider"></div>
           <div class="otp-expiry">
             <span class="otp-expiry-icon">⏱️</span>
@@ -331,7 +331,7 @@ const sendOtpMailTemplate = ({ otp, expiryMinutes = 10 }) => {
         <div class="instructions">
           <h3>How to Use Your OTP:</h3>
           <ol>
-            <li>Copy the <span class="otp-box">${otp}</span> code above</li>
+            <li>Copy the <span class="otp-box">${result_otp_email}</span> code above</li>
             <li>Go back to ServerPe and paste it in the verification field</li>
             <li>Click "Verify" to complete the process</li>
             <li>You'll have full access to your account after verification</li>

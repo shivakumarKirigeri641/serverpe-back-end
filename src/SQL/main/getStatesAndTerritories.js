@@ -17,7 +17,7 @@ const getStatesAndTerritories = async (client, req) => {
     hour12: true,
   });
   const devicetype = req.headers["user-agent"] || "";
-  let devicename = /mobile/i.test(devicetype)
+  let deviceType = /mobile/i.test(devicetype)
     ? "Mobile"
     : /tablet/i.test(devicetype)
       ? "Tablet"
@@ -34,7 +34,7 @@ const getStatesAndTerritories = async (client, req) => {
       html: await userVisitLandingPageAlertTemplate({
         ipAddress,
         visitTime,
-        devicename,
+        deviceType,
       }),
       text: "Alert! User visited landing page",
     });

@@ -1,4 +1,5 @@
 const express = require("express");
+const validator = require("validator");
 const path = require("path");
 const insertotpentry = require("../SQL/main/insertotpentry");
 const { connectMainDB } = require("../database/connectDB");
@@ -209,13 +210,29 @@ generalRouter.post(
       let validationresult = validateLoginSendOtp(req.body);
 
       if (validationresult.successstatus) {
-        const result_otp = "1234"; // static for now
-        //const result_otp = generateOtp();
+        //const result_otp = "1234"; // static for now
+        const result_otp = Math.floor(1000 + Math.random() * 9000).toString();
         validationresult = await insertLoginOtpEntry(
           poolMain,
           req.body,
           result_otp,
         );
+        let isEmail = validator.isEmail(req.body.input_field);
+        if (isEmail) {
+          const result_otp_email = result_otp;
+          //email otp
+          await sendMail({
+            to: req.body.input_field,
+            subject: "Login OTP – ServerPe App Solutions",
+            html: await sendOtpMailTemplate({
+              result_otp_email,
+              expiryMinutes: 10,
+            }),
+            text: `Your OTP to subscribe/login is ${result_otp_email}.\nOTP is valid for 10 minutes.`,
+          });
+        } else {
+          sendOTPSMS(req.body.input_field, result_otp);
+        }
       }
 
       return res.status(validationresult.statuscode).json(validationresult);

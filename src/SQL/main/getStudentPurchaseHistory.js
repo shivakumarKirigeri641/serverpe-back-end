@@ -1,15 +1,21 @@
 const getStudentPurchaseHistory = async (client, req) => {
-    const result_user= await client.query('select id from users where mobile_number=$1;', [req.mobile_number]);
-    const result_projectpurchase = await client.query('select id from orders where fk_user_id = $1  ', [result_user.rows[0].id]);
-    if(0 === result_projectpurchase.rows.length){
-        return {
-            statuscode: 200,
-            successstatus: true,
-            data: [],
-        };
-    }
-    const result = await client.query(    
-        `SELECT
+  const result_user = await client.query(
+    "select id from users where mobile_number=$1;",
+    [req.mobile_number],
+  );
+  const result_projectpurchase = await client.query(
+    "select id from orders where fk_user_id = $1  ",
+    [result_user.rows[0].id],
+  );
+  if (0 === result_projectpurchase.rows.length) {
+    return {
+      statuscode: 200,
+      successstatus: true,
+      data: [],
+    };
+  }
+  const result = await client.query(
+    `SELECT 
     -- USER DETAILS
     u.id                    AS user_id,
     u.user_name,
@@ -75,11 +81,11 @@ LEFT JOIN projects pr
 
 WHERE
     u.id = $1`,
-        [result_user.rows[0].id]
-    );
-  const data = result.rows.map(row => ({
+    [result_user.rows[0].id],
+  );
+  const data = result.rows.map((row) => ({
     ...row,
-    project_type: row.project_type || 'FULL_STACK'
+    project_type: row.project_type || "FULL_STACK",
   }));
 
   return {
