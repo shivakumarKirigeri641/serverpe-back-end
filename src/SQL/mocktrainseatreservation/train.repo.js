@@ -152,7 +152,7 @@ exports.calculateTotalFare = async (
   doj,
   coach_code,
   reservation_type,
-  passengers
+  passengers,
 ) => {
   // 🔄 Normalize inputs to uppercase
   train_number = train_number?.toUpperCase();
@@ -233,7 +233,7 @@ exports.confirmTicket = async (
   passengers,
   mobile_number,
   total_fare,
-  email
+  email,
 ) => {
   // 🔄 Normalize inputs to uppercase
   train_number = train_number?.toUpperCase();
@@ -248,30 +248,30 @@ exports.confirmTicket = async (
     // FETCH IDs for Booking AND DETAILS for Response
     const result_train_info = await pool.query(
       `select c.id, t.train_name from coaches c join trains t on c.train_number = t.train_number where c.train_number = $1`,
-      [train_number]
+      [train_number],
     );
     const result_reservation_type = await pool.query(
       `select id from reservationtype where type_code = $1`,
-      [reservation_type]
+      [reservation_type],
     );
     //check coach_code
     const result_coach_type = await pool.query(
       `select id from coachtype where coach_code = $1`,
-      [coach_code]
+      [coach_code],
     );
     // Fetch Station IDs and Names
     const result_src = await pool.query(
       `select id, station_name from stations where code = $1`,
-      [source_code]
+      [source_code],
     );
     const result_dest = await pool.query(
       `select id, station_name from stations where code = $1`,
-      [destination_code]
+      [destination_code],
     );
 
     // --- FARE CALCULATION PREP ---
     // 1. Get Journey KM
-    const journeyKmSql = `SELECT (s2.kilometer - s1.kilometer) AS journey_km, s1.departure as departure, s1.arrival as arrival 
+    const journeyKmSql = `SELECT (s2.kilometer - s1.kilometer) AS journey_km, s1.departure as departure, s2.arrival as arrival 
                           FROM schedules s1 JOIN schedules s2 ON s2.train_number = s1.train_number 
                           WHERE s1.train_number = $1 AND s1.station_code = $2 AND s2.station_code = $3 AND s1.station_sequence < s2.station_sequence`;
     const kmResult = await pool.query(journeyKmSql, [
@@ -302,10 +302,10 @@ exports.confirmTicket = async (
 
     //filter adults
     const adultcount = passengers.filter(
-      (passenger) => passenger.passenger_age >= 6
+      (passenger) => passenger.passenger_age >= 6,
     ).length;
     const childcount = passengers.filter(
-      (passenger) => passenger.passenger_age < 6
+      (passenger) => passenger.passenger_age < 6,
     ).length;
 
     //bookingdata
@@ -328,7 +328,7 @@ exports.confirmTicket = async (
         email,
         adultcount,
         childcount,
-      ]
+      ],
     );
 
     //insert passengerdata
@@ -369,7 +369,7 @@ exports.confirmTicket = async (
           pass.passenger_issenior,
           pass.passenger_ispwd,
           finalFareWithGst,
-        ]
+        ],
       );
 
       //insert to seats (TRANSACTION + LOCK inside SQL function handles concurrency if implemented, but here explicit lock is safer or redundant depending on implementation)
@@ -388,7 +388,7 @@ exports.confirmTicket = async (
           reservation_type,
           doj,
           result_passengerdata.rows[0].id,
-        ]
+        ],
       );
 
       await pool.query(`COMMIT`);
@@ -412,70 +412,70 @@ exports.confirmTicket = async (
             result_allocated_seat = allocateSeat_SL(
               coach_code,
               seatSequence,
-              reservation_type
+              reservation_type,
             );
             break;
           case "2A":
             result_allocated_seat = allocateSeat_2A(
               coach_code,
               seatSequence,
-              reservation_type
+              reservation_type,
             );
             break;
           case "3A":
             result_allocated_seat = allocateSeat_3A(
               coach_code,
               seatSequence,
-              reservation_type
+              reservation_type,
             );
             break;
           case "1A":
             result_allocated_seat = allocateSeat_1A(
               coach_code,
               seatSequence,
-              reservation_type
+              reservation_type,
             );
             break;
           case "CC":
             result_allocated_seat = allocateSeat_CC(
               coach_code,
               seatSequence,
-              reservation_type
+              reservation_type,
             );
             break;
           case "EC":
             result_allocated_seat = allocateSeat_EC(
               coach_code,
               seatSequence,
-              reservation_type
+              reservation_type,
             );
             break;
           case "EA":
             result_allocated_seat = allocateSeat_EA(
               coach_code,
               seatSequence,
-              reservation_type
+              reservation_type,
             );
             break;
           case "E3":
             result_allocated_seat = allocateSeat_E3(
               coach_code,
               seatSequence,
-              reservation_type
+              reservation_type,
             );
             break;
           case "FC":
             result_allocated_seat = allocateSeat_FC(
               coach_code,
               seatSequence,
-              reservation_type
+              reservation_type,
             );
             break;
           case "2S":
             result_allocated_seat = allocateSeat_2S(
               coach_code,
               seatSequence,
-              reservation_type
+              reservation_type,
             );
             break;
           default:
@@ -510,7 +510,7 @@ exports.confirmTicket = async (
 
       const result_updated_passengerdata = await pool.query(
         `update passengerdata set current_seat_status=$1, updated_seat_status=$2 where id=$3 returning *;`,
-        [seatStatusStr, seatStatusStr, result_passengerdata.rows[0].id]
+        [seatStatusStr, seatStatusStr, result_passengerdata.rows[0].id],
       );
 
       allocated_passengerdata.push({
@@ -522,7 +522,7 @@ exports.confirmTicket = async (
     // Fetch PNR and Status from Booking Data
     const result_final_booking = await pool.query(
       `SELECT pnr, pnr_status FROM bookingdata WHERE id = $1`,
-      [result_bookingdata.rows[0].id]
+      [result_bookingdata.rows[0].id],
     );
     const { pnr, pnr_status } = result_final_booking.rows[0] || {};
 
@@ -534,7 +534,7 @@ exports.confirmTicket = async (
       train_number,
       result_train_info.rows[0].train_name,
       doj,
-      kmResult.rows[0].departure
+      kmResult.rows[0].departure,
     );
     //send mail
     await sendMail({
@@ -714,7 +714,7 @@ exports.getLiveTrainStatus = async (train_input) => {
       WHERE train_number = $1 OR UPPER(train_name) ILIKE '%' || $1 || '%'
       LIMIT 1
     `,
-      [searchValue]
+      [searchValue],
     );
 
     if (trainLookup.rows.length === 0) {
@@ -838,7 +838,7 @@ coaches c on c.train_number=t.train_number
       WHERE UPPER(t.train_name) ILIKE '%' || $1 || '%' or
 	  UPPER(c.train_number) ILIKE '%' || $1 || '%'
     `,
-      [searchValue]
+      [searchValue],
     );
 
     if (trainLookup.rows.length === 0) {

@@ -1,5 +1,5 @@
 const express = require("express");
-const {downloadInvoicePdf}=require("../utils/downloadInvoicePdf");
+const { downloadInvoicePdf } = require("../utils/downloadInvoicePdf");
 const crypto = require("crypto");
 const razorpay = require("../utils/razorpay");
 const updateStudentProfileByMobile = require("../SQL/main/updateStudentProfileByMobile");
@@ -18,14 +18,13 @@ const downloadProjectZipByLicense = require("../SQL/main/downloadProjectZipByLic
 
 const poolMain = connectMainDB();
 
-
 // ======================================================
 //                student-user profile
 // ======================================================
 userRouter.get(
-  "/serverpeuser/loggedinstudent/user-profile",  
+  "/serverpeuser/loggedinstudent/user-profile",
   checkServerPeUser,
-  async (req, res) => {    
+  async (req, res) => {
     try {
       if (!validateStudentMobileNumber(poolMain, req.mobile_number)) {
         res.status(401).json({
@@ -49,7 +48,7 @@ userRouter.get(
     } finally {
       //if (poolMain) client.release();
     }
-  }
+  },
 );
 // ======================================================
 //                update student-user profile
@@ -62,7 +61,7 @@ userRouter.patch(
       // 🔐 Validate logged-in student by mobile number
       const isValidUser = await validateStudentMobileNumber(
         poolMain,
-        req.mobile_number
+        req.mobile_number,
       );
 
       if (!isValidUser) {
@@ -78,7 +77,7 @@ userRouter.patch(
       // 🔄 Update profile using mobile number
       const result_updateProfile = await updateStudentProfileByMobile(
         poolMain,
-        req
+        req,
       );
 
       return res.status(result_updateProfile.statuscode).json({
@@ -86,7 +85,6 @@ userRouter.patch(
         mock_data: false,
         ...result_updateProfile,
       });
-
     } catch (err) {
       console.error("Update Profile Error:", err);
 
@@ -99,13 +97,13 @@ userRouter.patch(
         message: err.message,
       });
     }
-  }
+  },
 );
 // ======================================================
 //                student-purchase history
 // ======================================================
 userRouter.get(
-  "/serverpeuser/loggedinstudent/purchase-history",  
+  "/serverpeuser/loggedinstudent/purchase-history",
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -123,18 +121,18 @@ userRouter.get(
     } finally {
       //if (poolMain) client.release();
     }
-  }
+  },
 );
 
 // ======================================================
 //                student-purchase details
 // ======================================================
 userRouter.get(
-  "/serverpeuser/loggedinstudent/purchase-details/:project_id",  
+  "/serverpeuser/loggedinstudent/purchase-details/:project_id",
   checkServerPeUser,
-  async (req, res) => {    
+  async (req, res) => {
     try {
-      if(!req.params.project_id){
+      if (!req.params.project_id) {
         return res.status(400).json({
           poweredby: "serverpe.in",
           mock_data: true,
@@ -143,7 +141,11 @@ userRouter.get(
           message: "Invalid project_id number!",
         });
       }
-      const result_userprofile = await getStudentPurchaseProjectDetails(poolMain, req, req.params.project_id);
+      const result_userprofile = await getStudentPurchaseProjectDetails(
+        poolMain,
+        req,
+        req.params.project_id,
+      );
       return res.status(result_userprofile.statuscode).json(result_userprofile);
     } catch (err) {
       console.error(err);
@@ -156,18 +158,18 @@ userRouter.get(
     } finally {
       //if (poolMain) client.release();
     }
-  }
+  },
 );
 // ======================================================
 //                student-purchased details
 // ======================================================
 userRouter.get(
-  "/serverpeuser/loggedinstudent/purchased-details/:order_number",  
+  "/serverpeuser/loggedinstudent/purchased-details/:order_number",
   checkServerPeUser,
   async (req, res) => {
     let client;
     try {
-      if(!req.params.order_number){
+      if (!req.params.order_number) {
         return res.status(400).json({
           poweredby: "serverpe.in",
           mock_data: true,
@@ -176,8 +178,13 @@ userRouter.get(
           message: "Invalid order number!",
         });
       }
-      const result_purchaseddetails = await getStudentPurchasedDetails(poolMain, req.params.order_number);
-      return res.status(result_purchaseddetails.statuscode).json(result_purchaseddetails);
+      const result_purchaseddetails = await getStudentPurchasedDetails(
+        poolMain,
+        req.params.order_number,
+      );
+      return res
+        .status(result_purchaseddetails.statuscode)
+        .json(result_purchaseddetails);
     } catch (err) {
       console.error(err);
       return res.status(500).json({
@@ -189,13 +196,13 @@ userRouter.get(
     } finally {
       //if (poolMain) client.release();
     }
-  }
+  },
 );
 // ======================================================
 //                student-logout
 // ======================================================
 userRouter.post(
-  "/serverpeuser/loggedinstudent/logout",  
+  "/serverpeuser/loggedinstudent/logout",
   checkServerPeUser,
   async (req, res) => {
     let client;
@@ -206,7 +213,9 @@ userRouter.post(
         sameSite: "lax",
         path: "/",
       });
-      return res.status(200).json({status:'ok', message:'Logged out successfully'});
+      return res
+        .status(200)
+        .json({ status: "ok", message: "Logged out successfully" });
     } catch (err) {
       console.error(err);
       return res.status(500).json({
@@ -218,7 +227,7 @@ userRouter.post(
     } finally {
       //if (poolMain) client.release();
     }
-  }
+  },
 );
 // ======================================================
 //                razorpay order
@@ -252,7 +261,7 @@ userRouter.post(
     } finally {
       //if (poolMain) client.release();
     }
-  }
+  },
 );
 // ======================================================
 //                razorpay verify
@@ -268,7 +277,8 @@ userRouter.post(
 
       const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-      const expectedSignature = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      const expectedSignature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(body)
         .digest("hex");
 
@@ -296,7 +306,7 @@ userRouter.post(
     } finally {
       //if (poolMain) client.release();
     }
-  }
+  },
 );
 // ======================================================
 //                razorpay order-status
@@ -304,16 +314,16 @@ userRouter.post(
 userRouter.post(
   "/serverpeuser/loggedinuser/razorpay/status",
   checkServerPeUser,
-  async (req, res) => {    
+  async (req, res) => {
     try {
       const { razorpay_payment_id, summaryFormData } = req.body;
-      let result = await razorpay.payments.fetch(razorpay_payment_id);      
+      let result = await razorpay.payments.fetch(razorpay_payment_id);
       let result_status = await inserTransactions(
         poolMain,
         result,
         req.mobile_number,
-        summaryFormData
-      );      
+        summaryFormData,
+      );
       //create invoice pdf here and store it in docs/invoices.
       //const { filePath, fileName } = generateInvoicePdf(result);
       console.log(result_status);
@@ -324,7 +334,7 @@ userRouter.post(
         statuscode: result_status.statuscode,
         data: result_status,
       });
-    } catch (err) {      
+    } catch (err) {
       console.error(err);
       return res.status(500).json({
         poweredby: "serverpe.in",
@@ -334,7 +344,7 @@ userRouter.post(
       });
     } finally {
     }
-  }
+  },
 );
 // ======================================================
 //                download .zip project
@@ -351,20 +361,27 @@ userRouter.get(
         poolMain,
         license_key,
         mobile_number,
-        req.ip
+        req.ip,
       );
 
       if (!result.successstatus) {
         return res.status(result.statuscode).json({
           poweredby: "serverpe.in",
           mock_data: false,
-          ...result
+          ...result,
         });
       }
 
       // 🔽 Send ZIP securely
-      return res.download(result.file_path, result.file_name);
-
+      res.download(result.file_path, result.file_name, (err) => {
+        // Cleanup temp file after download (for dynamically generated zips)
+        if (result.cleanup && require("fs").existsSync(result.file_path)) {
+          require("fs").unlinkSync(result.file_path);
+        }
+        if (err) {
+          console.error("Download send error:", err);
+        }
+      });
     } catch (err) {
       console.error("ZIP Download Error:", err);
       return res.status(500).json({
@@ -372,10 +389,10 @@ userRouter.get(
         mock_data: true,
         status: "Failed",
         successstatus: false,
-        message: "Internal Server Error"
+        message: "Internal Server Error",
       });
     }
-  }
+  },
 );
 // ======================================================
 //                download invoice (PDF)
@@ -393,7 +410,7 @@ userRouter.get(
           poweredby: "serverpe.in",
           mock_data: false,
           successstatus: false,
-          message: "Invalid invoice id"
+          message: "Invalid invoice id",
         });
       }
 
@@ -401,20 +418,19 @@ userRouter.get(
         poolMain,
         invoice_id,
         mobile_number,
-        req.ip
+        req.ip,
       );
 
       if (!result.successstatus) {
         return res.status(result.statuscode).json({
           poweredby: "serverpe.in",
           mock_data: false,
-          ...result
+          ...result,
         });
       }
 
       // 🔽 Send PDF securely
       return res.download(result.file_path, result.file_name);
-
     } catch (err) {
       console.error("Invoice Download Error:", err);
       return res.status(500).json({
@@ -422,10 +438,10 @@ userRouter.get(
         mock_data: true,
         status: "Failed",
         successstatus: false,
-        message: "Internal Server Error"
+        message: "Internal Server Error",
       });
     }
-  }
+  },
 );
 
 module.exports = userRouter;
