@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 8888;
 const app = express();
 
 /* 🔐 MUST be before CORS & cookies */
-app.set("trust proxy", 1);
+//app.set("trust proxy", 1);
 
 app.use(express.json());
 
@@ -24,18 +24,18 @@ app.use(express.json());
 app.use(apiLogger);
 
 /* ✅ CORS for cross-subdomain cookies */
-app.use(
+/*app.use(
   cors({
     origin: ["https://serverpe.in", "https://admin.serverpe.in"],
     credentials: true,
   }),
-);
-/*app.use(
+);*/
+app.use(
   cors({
     origin: ["http://localhost:1234", "http://localhost:3001"],
     credentials: true,
-  })
-);*/
+  }),
+);
 app.use(cookieParser());
 
 /* Health check */

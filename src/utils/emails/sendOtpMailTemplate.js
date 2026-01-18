@@ -1,4 +1,4 @@
-const sendOtpMailTemplate = ({ otp = "0000", expiryMinutes = 10 }) => {
+const sendOtpMailTemplate = ({ otp, expiryMinutes = 10 }) => {
   return `
   <!DOCTYPE html>
   <html lang="en">
@@ -426,7 +426,7 @@ const getSendOtpMailTemplateWithAttachment = (params) => {
     "..",
     "images",
     "logos",
-    "ServerPe_Logo.jpg"
+    "ServerPe_Logo.jpg",
   );
 
   return {
@@ -442,5 +442,3 @@ const getSendOtpMailTemplateWithAttachment = (params) => {
 };
 
 module.exports = sendOtpMailTemplate;
-module.exports.getSendOtpMailTemplateWithAttachment =
-  getSendOtpMailTemplateWithAttachment;

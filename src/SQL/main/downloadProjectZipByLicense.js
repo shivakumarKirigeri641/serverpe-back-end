@@ -150,6 +150,10 @@ async function createMockTrainZip(
       projectRoot,
       "src/student_projects/mock-train-reservations/docs",
     );
+    const start_all_batFile = path.join(
+      projectRoot,
+      "src/student_projects/mock-train-reservations/start_all.bat",
+    );
 
     // Check source directories exist
     if (
@@ -180,6 +184,7 @@ async function createMockTrainZip(
       ["node_modules", ".git", "build"],
     );
     await copyDirectory(docs, path.join(tempDir, "docs"), []);
+    await copyFile(start_all_batFile, tempDir, []);
 
     // Update .env file with actual API key
     const envPath = path.join(tempDir, "student-back-end", ".env");
@@ -241,6 +246,20 @@ async function copyDirectory(src, dest, excludeFolders = []) {
       fs.copyFileSync(srcPath, destPath);
     }
   }
+}
+async function copyFile(srcFile, destDir, excludeFiles = []) {
+  const fileName = path.basename(srcFile);
+
+  if (excludeFiles.includes(fileName)) {
+    return;
+  }
+
+  // Ensure destination directory exists
+  fs.mkdirSync(destDir, { recursive: true });
+
+  // Create full destination path
+  const destPath = path.join(destDir, fileName);
+  fs.copyFileSync(srcFile, destPath);
 }
 
 /**
