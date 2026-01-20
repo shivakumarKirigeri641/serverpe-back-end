@@ -1,57 +1,41 @@
 const express = require("express");
-const path = require("path");
-const multer = require("multer");
-const axios = require("axios");
-const FormData = require("form-data");
-const fs = require("fs");
-const parkingRouter = express.Router();
-const checkStudentAPIKey = require("../middleware/checkStudentAPIKey");
-require("dotenv").config();
+const photobasedVehicleMgmtRouter = express.Router();
 
-// Import repository functions
-const parkingRepo = require("../SQL/photobasedvehiclemgmt/photobasedvehiclemgmt.repo");
+// Import individual routers
+const parkingRouter = require("./parkingRouter");
+const tollRouter = require("./tollRouter");
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "../../images/parking");
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, "vehicle-" + uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only image files are allowed"));
-    }
-  },
-});
 /**
- * GET /parking/health
- * API health check endpoint
+ * Photo Based Vehicle Management System - Combined Router
+ * 
+ * This router combines all endpoints from:
+ * - parkingRouter: /parking/* endpoints for parking field, staff, fees, and vehicle management
+ * - tollRouter: /toll/* endpoints for vehicle registry, toll plaza, lanes, and wallet management
  */
-parkingRouter.get("/parking/health", (req, res) => {
-  sendSuccess(
-    res,
-    {
-      service: "Photo Based Vehicle Parking Management",
+
+// Mount parking routes
+photobasedVehicleMgmtRouter.use("/", parkingRouter);
+
+// Mount toll routes
+photobasedVehicleMgmtRouter.use("/", tollRouter);
+
+/**
+ * GET /photovehicle/health
+ * Combined API health check endpoint
+ */
+photobasedVehicleMgmtRouter.get("/photovehicle/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: "Service is healthy",
+    data: {
+      service: "Photo Based Vehicle Management System",
+      modules: ["Parking Management", "Toll Management"],
       status: "operational",
       timestamp: new Date().toISOString(),
     },
-    "Service is healthy",
-  );
+    timestamp: new Date().toISOString(),
+  });
 });
 
-module.exports = parkingRouter;
+module.exports = photobasedVehicleMgmtRouter;
