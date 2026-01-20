@@ -4,10 +4,15 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
-const { connectTrainSeatDb, connectMainDB } = require("./database/connectDB");
+const {
+  connectTrainSeatDb,
+  connectMainDB,
+  connectPhotoBasedVehicleParkingDb,
+} = require("./database/connectDB");
 
 const generalRouter = require("./routers/generalRouter");
 const userRouter = require("./routers/userRouter");
+const parkingRouter = require("./routers/photobasedvehicleparkingmgmtRouter");
 const adminRouter = require("./routers/adminRouter");
 const trainRouter = require("./routers/trainRouter");
 const apiLogger = require("./middleware/apiLogger");
@@ -32,7 +37,13 @@ app.use(apiLogger);
 );*/
 app.use(
   cors({
-    origin: ["http://localhost:1234", "http://localhost:3001"],
+    origin: [
+      "http://localhost:1234",
+      "http://localhost:3001",
+      ,
+      "http://localhost:3002",
+      "http://localhost:5002",
+    ],
     credentials: true,
   }),
 );
@@ -61,12 +72,14 @@ app.use("/images", express.static(path.join(__dirname, "images")));
 /* Routes */
 app.use("/", generalRouter);
 app.use("/", userRouter);
+app.use("/", parkingRouter);
 app.use("/", trainRouter);
 app.use("/admin", adminRouter);
 
 /* DB connections */
 connectMainDB();
 connectTrainSeatDb();
+connectPhotoBasedVehicleParkingDb();
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);

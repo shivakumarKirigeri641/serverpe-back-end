@@ -5,6 +5,7 @@ require("dotenv").config();
 types.setTypeParser(1082, (val) => val);
 let poolmain = null;
 let poolTrain = null;
+let poolPhotoBasedVehicleParking = null;
 
 // 🔥 Common function to test pool connection once
 function testConnection(pool, label) {
@@ -56,10 +57,37 @@ const connectTrainSeatDb = () => {
   return poolTrain;
 };
 
+/* ============================================
+   PHOTO BASED VEHICLE PARKING DB
+============================================ */
+const connectPhotoBasedVehicleParkingDb = () => {
+  if (!poolPhotoBasedVehicleParking) {
+    poolPhotoBasedVehicleParking = new Pool({
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASEPHOTOBASEDVEHICLEPARKINGMGMT,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      port: process.env.PGPORT,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+      keepAlive: true,
+    });
+
+    testConnection(
+      poolPhotoBasedVehicleParking,
+      "PHOTO BASED VEHICLE PARKING DB",
+    );
+  }
+  return poolPhotoBasedVehicleParking;
+};
+
 module.exports = {
   connectMainDB,
   connectTrainSeatDb,
   connectMockTrainTicketsDb: connectTrainSeatDb, // Alias for train.repo.js compatibility
+  connectPhotoBasedVehicleParkingDb,
   getMainPool: () => poolmain,
-  getTrainPool: () => poolTrain
+  getTrainPool: () => poolTrain,
+  getPhotoBasedVehicleParkingPool: () => poolPhotoBasedVehicleParking,
 };
