@@ -802,11 +802,11 @@ exports.getWalletTransactionHistory = async (fkmock_vahan, limit = 50) => {
     WITH credits AS (
       SELECT 
         pktag_wallet_credits as id,
-        'CREDIT' as transaction_type,
+        'CREDIT'::TEXT as transaction_type,
         credit_amount as amount,
-        pay_type,
-        NULL as plaza_name,
-        NULL as laneid,
+        pay_type::TEXT,
+        NULL::VARCHAR as plaza_name,
+        NULL::VARCHAR as laneid,
         created_at
       FROM tag_wallet_credits
       WHERE fkmock_vahan = $1
@@ -814,11 +814,11 @@ exports.getWalletTransactionHistory = async (fkmock_vahan, limit = 50) => {
     debits AS (
       SELECT 
         twd.pktag_wallet_deductions as id,
-        'DEBIT' as transaction_type,
+        'DEBIT'::TEXT as transaction_type,
         twd.amount_deducted as amount,
-        'TOLL' as pay_type,
-        tp.plaza_name,
-        tpl.laneid,
+        'TOLL'::TEXT as pay_type,
+        tp.plaza_name::VARCHAR,
+        tpl.laneid::VARCHAR,
         twd.created_at
       FROM tag_wallet_deductions twd
       JOIN toll_plaza_lane tpl ON twd.fktoll_plaza_lane = tpl.pktoll_plaza_lane
