@@ -12,7 +12,7 @@ const {
 
 const generalRouter = require("./routers/generalRouter");
 const userRouter = require("./routers/userRouter");
-const parkingRouter = require("./routers/photobasedvehicleparkingmgmtRouter");
+const parkingRouter = require("./routers/photobasedvehiclemgmtRouter");
 const adminRouter = require("./routers/adminRouter");
 const trainRouter = require("./routers/trainRouter");
 const apiLogger = require("./middleware/apiLogger");

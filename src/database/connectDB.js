@@ -64,7 +64,7 @@ const connectPhotoBasedVehicleParkingDb = () => {
   if (!poolPhotoBasedVehicleParking) {
     poolPhotoBasedVehicleParking = new Pool({
       host: process.env.PGHOST,
-      database: process.env.PGDATABASEPHOTOBASEDVEHICLEPARKINGMGMT,
+      database: process.env.PGDATABASEPHOTOBASEDVEHICLEMGMT,
       user: process.env.PGUSER,
       password: process.env.PGPASSWORD,
       port: process.env.PGPORT,
