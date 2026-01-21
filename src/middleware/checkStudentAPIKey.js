@@ -8,6 +8,13 @@ const {
  * This ensures only valid licensed users can access the serverpe-back-end APIs
  */
 const checkStudentAPIKey = async (req, res, next) => {
+  // TEMPORARY BYPASS FOR TESTING - REMOVE IN PRODUCTION
+  const BYPASS_AUTH = false;
+  if (BYPASS_AUTH) {
+    console.log("⚠️ AUTH BYPASSED FOR TESTING");
+    return next();
+  }
+  
   try {
     const apiKey = req.headers["x-api-key"] || req.headers["X-API-Key"];
 

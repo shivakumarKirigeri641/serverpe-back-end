@@ -1,0 +1,239 @@
+========================================================
+PARKING MANAGEMENT SYSTEM – FULL DATABASE SCHEMA
+========================================================
+
+--------------------------------------------------------
+TABLE: parkingfields
+--------------------------------------------------------
+CREATE TABLE IF NOT EXISTS parkingfields (
+    pkparkingfield BIGSERIAL PRIMARY KEY,
+    field_name VARCHAR(150) NOT NULL,
+    place_name VARCHAR(150),
+    city VARCHAR(100),
+    district VARCHAR(100),
+    state_union VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_parkingfields_field_name
+ON parkingfields (field_name);
+
+CREATE INDEX IF NOT EXISTS idx_parkingfields_location
+ON parkingfields (state_union, district, city);
+
+--------------------------------------------------------
+TABLE: staffs
+--------------------------------------------------------
+CREATE TABLE IF NOT EXISTS staffs (
+    pkstaff BIGSERIAL PRIMARY KEY,
+    fkparkingfield BIGINT NOT NULL REFERENCES parkingfields(pkparkingfield),
+    ipaddress INET NOT NULL,
+    login_code VARCHAR(20) NOT NULL,
+    is_checkin BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_staffs_fkparkingfield
+ON staffs (fkparkingfield);
+
+CREATE INDEX IF NOT EXISTS idx_staffs_ipaddress
+ON staffs (ipaddress);
+
+CREATE INDEX IF NOT EXISTS idx_staffs_login_code
+ON staffs (login_code);
+
+--------------------------------------------------------
+TABLE: staff_logs
+--------------------------------------------------------
+CREATE TABLE IF NOT EXISTS staff_logs (
+    pkstaff_log BIGSERIAL PRIMARY KEY,
+    fkstaff BIGINT NOT NULL REFERENCES staffs(pkstaff),
+    login_date_time TIMESTAMP NOT NULL,
+    logout_date_time TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_staff_logs_fkstaff
+ON staff_logs (fkstaff);
+
+CREATE INDEX IF NOT EXISTS idx_staff_logs_login_time
+ON staff_logs (login_date_time);
+
+--------------------------------------------------------
+TABLE: mock_vahan
+--------------------------------------------------------
+CREATE TABLE IF NOT EXISTS mock_vahan (
+    pkmock_vahan BIGSERIAL PRIMARY KEY,
+    vehicle_number VARCHAR(20) NOT NULL,
+    tag_balance NUMERIC(10,2) DEFAULT 0.00,
+    mobile_number VARCHAR(15) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mock_vahan_vehicle_number
+ON mock_vahan (vehicle_number);
+
+CREATE INDEX IF NOT EXISTS idx_mock_vahan_mobile
+ON mock_vahan (mobile_number);
+
+--------------------------------------------------------
+TABLE: toll_plaza
+--------------------------------------------------------
+CREATE TABLE IF NOT EXISTS toll_plaza (
+    pktoll_plaza BIGSERIAL PRIMARY KEY,
+    plaza_id VARCHAR(30) NOT NULL,
+    plaza_name VARCHAR(150) NOT NULL,
+    place_name VARCHAR(150),
+    district VARCHAR(100),
+    state_union VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_toll_plaza_plaza_id
+ON toll_plaza (plaza_id);
+
+--------------------------------------------------------
+TABLE: toll_plaza_lane
+--------------------------------------------------------
+CREATE TABLE IF NOT EXISTS toll_plaza_lane (
+    pktoll_plaza_lane BIGSERIAL PRIMARY KEY,
+    fktoll_plaza BIGINT NOT NULL REFERENCES toll_plaza(pktoll_plaza),
+    laneid VARCHAR(30) NOT NULL,
+    ip_address INET NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tpl_lane_plaza
+ON toll_plaza_lane (fktoll_plaza);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tpl_lane_unique
+ON toll_plaza_lane (fktoll_plaza, laneid);
+
+--------------------------------------------------------
+TABLE: parking_fees
+--------------------------------------------------------
+CREATE TABLE IF NOT EXISTS parking_fees (
+    pkparking_fees BIGSERIAL PRIMARY KEY,
+    fkparkingfield BIGINT NOT NULL REFERENCES parkingfields(pkparkingfield),
+
+    two_wheeler_minimum NUMERIC(10,2) DEFAULT 10.00,
+    three_wheeler_minimum NUMERIC(10,2) DEFAULT 15.00,
+    four_wheeler_minimum NUMERIC(10,2) DEFAULT 20.00,
+    others_minimum NUMERIC(10,2) DEFAULT 25.00,
+
+    two_wheeler_per_hour NUMERIC(10,2) DEFAULT 10.00,
+    three_wheeler_per_hour NUMERIC(10,2) DEFAULT 15.00,
+    four_wheeler_per_hour NUMERIC(10,2) DEFAULT 20.00,
+    others_wheeler_per_hour NUMERIC(10,2) DEFAULT 25.00,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_parking_fees_unique_field
+ON parking_fees (fkparkingfield);
+
+--------------------------------------------------------
+TABLE: tag_wallet_deductions
+--------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tag_wallet_deductions (
+    pktag_wallet_deductions BIGSERIAL PRIMARY KEY,
+    fkmock_vahan BIGINT NOT NULL REFERENCES mock_vahan(pkmock_vahan),
+    fktoll_plaza_lane BIGINT NOT NULL REFERENCES toll_plaza_lane(pktoll_plaza_lane),
+    amount_deducted NUMERIC(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_twd_vahan
+ON tag_wallet_deductions (fkmock_vahan);
+
+--------------------------------------------------------
+TABLE: tag_wallet_credits
+--------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tag_wallet_credits (
+    pktag_wallet_credits BIGSERIAL PRIMARY KEY,
+    fkmock_vahan BIGINT NOT NULL REFERENCES mock_vahan(pkmock_vahan),
+    credit_amount NUMERIC(10,2) NOT NULL,
+    pay_type VARCHAR(20) DEFAULT 'UPI',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_twc_vahan
+ON tag_wallet_credits (fkmock_vahan);
+
+--------------------------------------------------------
+TABLE: vehicle_entry_exits
+--------------------------------------------------------
+CREATE TABLE IF NOT EXISTS vehicle_entry_exits (
+    pkvehicle_entry_exit BIGSERIAL PRIMARY KEY,
+    fkmock_vahan BIGINT NOT NULL REFERENCES mock_vahan(pkmock_vahan),
+    fkparkingfield BIGINT NOT NULL REFERENCES parkingfields(pkparkingfield),
+    fkstaff BIGINT NOT NULL REFERENCES staffs(pkstaff),
+    exit_otp CHAR(4) NOT NULL,
+    entry_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    exit_date_time TIMESTAMP,
+    payment NUMERIC(10,2) DEFAULT 0.00,
+    pay_type VARCHAR(20) DEFAULT 'UPI',
+    pay_status BOOLEAN DEFAULT FALSE,
+    is_otp_shared BOOLEAN DEFAULT FALSE,
+    is_blacklisted BOOLEAN DEFAULT FALSE,
+    blacklist_reason TEXT,
+    penalty NUMERIC(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_vee_vahan
+ON vehicle_entry_exits (fkmock_vahan);
+
+CREATE INDEX IF NOT EXISTS idx_vee_exitotp
+ON vehicle_entry_exits (exit_otp);
+
+--------------------------------------------------------
+TRIGGER: AUTO SET EXIT TIME & PAYMENT
+--------------------------------------------------------
+CREATE OR REPLACE FUNCTION fn_set_exit_time_and_payment()
+RETURNS TRIGGER AS $$
+DECLARE
+    total_minutes INT;
+    total_hours INT;
+    min_fee NUMERIC(10,2);
+    per_hour_fee NUMERIC(10,2);
+BEGIN
+    IF NEW.pay_status = TRUE AND OLD.pay_status = FALSE THEN
+        IF NEW.exit_date_time IS NULL THEN
+            NEW.exit_date_time := CURRENT_TIMESTAMP;
+        END IF;
+
+        total_minutes :=
+            EXTRACT(EPOCH FROM (NEW.exit_date_time - NEW.entry_date_time)) / 60;
+
+        total_hours := CEIL(total_minutes / 60.0);
+
+        SELECT four_wheeler_minimum, four_wheeler_per_hour
+        INTO min_fee, per_hour_fee
+        FROM parking_fees
+        WHERE fkparkingfield = NEW.fkparkingfield;
+
+        NEW.payment :=
+            GREATEST(min_fee, total_hours * per_hour_fee)
+            + COALESCE(NEW.penalty, 0);
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_set_exit_time_and_payment
+BEFORE UPDATE ON vehicle_entry_exits
+FOR EACH ROW
+EXECUTE FUNCTION fn_set_exit_time_and_payment();
+
+========================================================
+END OF FILE
+========================================================
