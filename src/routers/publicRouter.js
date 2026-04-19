@@ -49,20 +49,13 @@ publicRouter.post(
           message: result.message,
         });
       }
-      const { user_name, mobile_number, email, query_type_id, message } =
-        req.body;
-      result = await insertContactQuery(
-        user_name,
-        mobile_number,
-        email,
-        query_type_id,
-        message,
-      );
+      result = await insertContactQuery(req);
       return res.status(result.statuscode).json({
         statuscode: result.statuscode,
         powered_by: "ServerPe App Solutions",
         successstatus: result.successstatus,
         message: result.message,
+        data: result?.data,
       });
     } catch (err) {
       return res.status(500).json({
