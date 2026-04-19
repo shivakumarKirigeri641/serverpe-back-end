@@ -6,6 +6,7 @@ require("dotenv").config();
 const { connectDB } = require("./database/connectDB");
 const { globalLimiter } = require("./middlewares/rateLimiter");
 const publicRouter = require("./routers/publicRouter");
+const encryptResponse = require("./middlewares/encryptResponse");
 const PORT = process.env.PORT;
 const app = express();
 
@@ -40,6 +41,9 @@ app.use(cookieParser());
 
 /* 🛡️ Global rate limiter – 200 requests/min per IP */
 app.use(globalLimiter);
+
+/* 🔐 Encrypt all JSON responses */
+app.use(encryptResponse);
 
 /* Health check */
 app.get("/", (req, res) => {
