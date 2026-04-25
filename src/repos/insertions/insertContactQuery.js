@@ -1,4 +1,9 @@
+const SendmailTransport = require("nodemailer/lib/sendmail-transport");
+const contactThankYouTemplate = require("../../utils/email/contactThankYouTemplate");
 const { connectDB } = require("../../database/connectDB");
+const contactRequestAlertTemplate = require("../../utils/email/contactRequestAlertTemplate");
+const { sendMail } = require("../../utils/email/sendMail");
+const sendWhatsAppMessage = require("../comms/sendWhatsAppMessage");
 const pool = connectDB();
 const insertContactQuery = async (req) => {
   try {
@@ -8,6 +13,11 @@ const insertContactQuery = async (req) => {
       req.socket?.remoteAddress ||
       null;
     const user_agent = req.headers["user-agent"];
+    const result_query_type = await pool.query(
+      `select *from contact_query_types where id=$1`,
+      [req.body.query_type_id],
+    );
+    const query_name = result_query_type.rows[0].query_type;
     const result = await pool.query(
       `INSERT INTO contact_queries (user_name, mobile_number, email, query_type_id, message, ip_address, user_agent)
        VALUES ($1, $2, $3, $4, $5,$6,$7) returning *`,
@@ -21,6 +31,33 @@ const insertContactQuery = async (req) => {
         user_agent,
       ],
     );
+    //send mail to user
+
+    if (req.body.email) {
+      await sendMail({
+        to: req.body.email,
+        subject: "Thank you for contacting ServerPe",
+        html: contactThankYouTemplate({
+          user_name: req.body.user_name,
+          query_type: result_query_type.rows[0].query_type,
+          message: req.body.message,
+        }),
+      });
+    }
+    //whatsapp
+    await sendWhatsAppMessage(req.body.mobile_number);
+    //contact from user
+    await sendMail({
+      to: process.env.ADMINMAIL,
+      subject: "User contacted alert",
+      html: contactRequestAlertTemplate({
+        mobile_number: req.body.mobile_number,
+        user_name: req.body.user_name,
+        query_type: result_query_type.rows[0].query_type,
+        message: req.body.message,
+      }),
+      text: "Alert! User conatcted page",
+    });
     return {
       statuscode: 201,
       successstatus: true,

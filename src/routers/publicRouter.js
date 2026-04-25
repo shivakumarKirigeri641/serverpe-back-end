@@ -12,6 +12,7 @@ const validateForContactUs = require("../validators/validateForContactUs");
 const insertContactQuery = require("../repos/insertions/insertContactQuery");
 const getTermsAndConditions = require("../repos/gets/getTermsAndConditions");
 const getRequestDetails = require("../utils/getRequestDetails");
+const getProjectPricings = require("../repos/gets/getProjectPricings");
 // ======================================================
 //                QUERY-TYPES
 // ======================================================
@@ -117,6 +118,31 @@ publicRouter.get(
   async (req, res) => {
     try {
       const result = await getTermsAndConditions();
+      return res.status(result.statuscode).json({
+        statuscode: result.statuscode,
+        powered_by: "ServerPe App Solutions",
+        successstatus: result.successstatus,
+        message: result.message,
+        data: result?.data,
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Internal Server Error",
+        successstatus: false,
+        message: err.message,
+      });
+    }
+  },
+);
+// ======================================================
+//                PROJECT PRICING
+// ======================================================
+publicRouter.get(
+  "/serverpe/platform/public/project-pricings",
+  async (req, res) => {
+    try {
+      const result = await getProjectPricings();
       return res.status(result.statuscode).json({
         statuscode: result.statuscode,
         powered_by: "ServerPe App Solutions",
