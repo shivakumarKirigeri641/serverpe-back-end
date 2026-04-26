@@ -45,7 +45,8 @@ const insertContactQuery = async (req) => {
       });
     }
     //whatsapp
-    await sendWhatsAppMessage(req.body.mobile_number);
+    //commented for now as template & live mode not approved yet
+    //await sendWhatsAppMessage(req.body.mobile_number, req.body.user_name);
     //contact from user
     await sendMail({
       to: process.env.ADMINMAIL,
