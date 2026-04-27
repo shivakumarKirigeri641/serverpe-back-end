@@ -10,29 +10,23 @@ const sendWhatsAppMessage = async (mobile_number, user_name) => {
         to: `91${mobile_number}`,
         type: "template",
         template: {
-          name: "live_contact_acknowledgement",
+          name: "live_contact_from_user_alert ",
           language: {
-            code: "en_US",
+            code: "en",
           },
           components: [
             {
               type: "body",
-              parameters: [
-                {
-                  type: "text",
-                  text: "Shiva"
-                },
-              ]
-            }
-          ]
-        }
+            },
+          ],
+        },
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     console.log("Message sent:", response.data);

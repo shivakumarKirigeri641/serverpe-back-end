@@ -25,18 +25,18 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 /* ✅ CORS for cross-subdomain cookies */
-app.use(
+/*app.use(
   cors({
     origin: ["https://serverpe.in", "https://admin.serverpe.in"],
     credentials: true,
   }),
-);
-/*app.use(
+);*/
+app.use(
   cors({
     origin: "http://localhost:3000",
     credentials: true,
   }),
-);*/
+);
 app.use(cookieParser());
 
 /* 🛡️ Global rate limiter – 200 requests/min per IP */
