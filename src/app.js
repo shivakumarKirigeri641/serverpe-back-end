@@ -7,6 +7,7 @@ const { connectDB } = require("./database/connectDB");
 const { globalLimiter } = require("./middlewares/rateLimiter");
 const publicRouter = require("./routers/publicRouter");
 const encryptResponse = require("./middlewares/encryptResponse");
+const responseBranding = require("./middlewares/responseBranding");
 const PORT = process.env.PORT;
 const app = express();
 
@@ -25,22 +26,25 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 /* ✅ CORS for cross-subdomain cookies */
-app.use(
+/*app.use(
   cors({
     origin: ["https://serverpe.in", "https://admin.serverpe.in"],
     credentials: true,
   }),
-);
-/*app.use(
+);*/
+app.use(
   cors({
     origin: "http://localhost:3000",
     credentials: true,
   }),
-);*/
+);
 app.use(cookieParser());
 
 /* 🛡️ Global rate limiter – 200 requests/min per IP */
 app.use(globalLimiter);
+
+/* Inject API branding metadata into every JSON response */
+app.use(responseBranding);
 
 /* 🔐 Encrypt all JSON responses */
 app.use(encryptResponse);

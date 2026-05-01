@@ -10,7 +10,7 @@ const sendWhatsAppMessage = async (mobile_number, user_name) => {
         to: `91${mobile_number}`,
         type: "template",
         template: {
-          name: "live_contact_from_user_alert ",
+          name: "",
           language: {
             code: "en",
           },
