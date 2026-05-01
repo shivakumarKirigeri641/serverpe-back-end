@@ -10,13 +10,16 @@ const sendWhatsAppMessage = async (mobile_number, user_name) => {
         to: `91${mobile_number}`,
         type: "template",
         template: {
-          name: "",
+          name: "live_contact_acknowledgement ",
           language: {
             code: "en",
           },
           components: [
             {
               type: "body",
+              parameters: [
+                { type: "text", text: user_name }, // {{1}}
+              ],
             },
           ],
         },
