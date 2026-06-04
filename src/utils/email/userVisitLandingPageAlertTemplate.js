@@ -74,6 +74,12 @@ const userVisitLandingPageAlertTemplate = ({
           <p style="margin:0; color: #047857; font-weight: 600;">A new user just visited the ServerPe landing page.</p>
         </div>
 
+        <div class="section-title">From Website</div>
+        <div class="detail-row">
+          <div class="label">Website</div>
+          <div class="value"><a href="https://serverpe.in" style="color:#1e293b; text-decoration:none;">serverpe.in</a></div>
+        </div>
+
         <div class="section-title">Visitor Info</div>
         <div class="detail-row">
           <div class="label">IP Address</div>
