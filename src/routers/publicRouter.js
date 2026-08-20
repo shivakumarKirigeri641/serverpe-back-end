@@ -19,19 +19,8 @@ const getProjectPricings = require("../repos/gets/getProjectPricings");
 publicRouter.get("/serverpe/platform/public/query-types", async (req, res) => {
   try {
     const result = await getQueryTypes();
-    let { ipAddress, visitTime, devicename, result_ipdetails } =
-      await getRequestDetails(req);
-    await sendMail({
-      to: process.env.ADMINMAIL,
-      subject: "An user landing page visit alert",
-      html: userVisitLandingPageAlertTemplate({
-        ipAddress,
-        visitTime,
-        devicename,
-        result_ipdetails,
-      }),
-      text: "Alert! User visited landing page",
-    });
+    // Landing-page visit email DISABLED — it fired on every page load and spammed
+    // the admin inbox. (getRequestDetails + sendMail intentionally removed.)
     return res.status(result.statuscode).json({
       statuscode: result.statuscode,
       powered_by: "ServerPe App Solutions",
