@@ -18,6 +18,9 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const { query, one } = require('../src/gatepass/db');
 const settings = require('../src/gatepass/settings');
+const bc = require('../src/gatepass/businessCase');
+const { kn } = require('../src/gatepass/kn');
+const REQ = require('../src/gatepass/requirements');
 
 const OUT = process.argv[2]
   || path.join(process.cwd(), 'Mullayanagiri-entry-ticketing-proposal.pdf');
@@ -66,6 +69,12 @@ const TEXT_W = W - M * 2;
   // up: claiming a fraction of a vehicle would be silly.
   const breakEvenPerDay = Math.ceil((amcPaise / 100) / (carEntry * OPERATING_DAYS));
 
+  /* The commercial arithmetic, computed once and shared with the presentation. */
+  const settle = await bc.compareSettlement(
+    pricing.find((p) => p.code === 'CAR')?.entry_paise || 10000,
+    pricing.find((p) => p.code === 'CAR')?.platform_paise || 1000);
+  const invSummary = await bc.investment();
+
   /* Daily capacity, computed rather than asserted. */
   const perSlot = {};
   for (const c of caps) perSlot[c.code] = (perSlot[c.code] || 0) + 0;
@@ -78,6 +87,11 @@ const TEXT_W = W - M * 2;
   const dailyVehicles = Object.values(byCategory)
     .reduce((n, c) => n + c.per_slot * c.slots, 0);
 
+  const yearly = await bc.annual({
+    entryPaise: pricing.find((p) => p.code === 'CAR')?.entry_paise || 10000,
+    platformPaise: pricing.find((p) => p.code === 'CAR')?.platform_paise || 1300,
+    vehiclesPerDay: dailyVehicles, route: true });
+
   const dailyCollection = pricing.reduce((n, p) => {
     const cat = byCategory[p.code];
     return n + (cat ? p.entry_paise * cat.per_slot * cat.slots : 0);
@@ -89,6 +103,15 @@ const TEXT_W = W - M * 2;
       Author: cfg.merchant_name || 'ServerPe App Solutions',
       Subject: 'Preventing ticket alteration at the Mullayanagiri checkpost',
     } });
+  /* Kannada needs an embedded face: the PDF base fourteen has none, and would
+     silently drop every glyph rather than complain. */
+  const FONTS = path.join(__dirname, '..', 'assets', 'fonts');
+  const HAS_KN = fs.existsSync(path.join(FONTS, 'NotoSansKannada-Regular.ttf'));
+  if (HAS_KN) {
+    doc.registerFont('kn', path.join(FONTS, 'NotoSansKannada-Regular.ttf'));
+    doc.registerFont('kn-bold', path.join(FONTS, 'NotoSansKannada-Bold.ttf'));
+  }
+
   doc.pipe(fs.createWriteStream(OUT));
 
   let y = 0;
@@ -97,17 +120,38 @@ const TEXT_W = W - M * 2;
 
   doc.rect(0, 0, W, 6).fill(ACCENT);
 
-  y = 96;
-  doc.fillColor(MUTED).font('Helvetica').fontSize(9)
+  /* The department's own emblem, then the title in Kannada with the English
+     beneath it. A proposal to a state government that opens in English and
+     mentions Kannada later has the relationship the wrong way round. */
+  const EMBLEM = path.join(__dirname, '..', 'assets', 'logos', 'karnataka-tourism-emblem-192.png');
+  if (fs.existsSync(EMBLEM)) doc.image(EMBLEM, M, 40, { width: 54 });
+
+  y = 106;
+  if (HAS_KN) {
+    doc.fillColor(MUTED).font('kn').fontSize(10)
+       .text(kn('submitted_to'), M, y, { width: TEXT_W });
+    y = doc.y + 2;
+  }
+  doc.fillColor(MUTED).font('Helvetica').fontSize(8.5)
      .text('SUBMITTED TO THE OFFICE OF THE DEPUTY COMMISSIONER, CHIKKAMAGALURU',
            M, y, { width: TEXT_W, characterSpacing: 0.8 });
 
-  y += 34;
-  doc.fillColor(INK).font('Helvetica-Bold').fontSize(23)
-     .text('Vehicle entry ticketing for Mullayanagiri', M, y, { width: TEXT_W, lineGap: 3 });
+  y = doc.y + 24;
+  if (HAS_KN) {
+    doc.fillColor(INK).font('kn-bold').fontSize(21)
+       .text(kn('doc_title'), M, y, { width: TEXT_W, lineGap: 2 });
+    y = doc.y + 4;
+  }
+  doc.fillColor(INK).font('Helvetica-Bold').fontSize(16)
+     .text('Vehicle entry ticketing for Mullayanagiri', M, y, { width: TEXT_W, lineGap: 2 });
 
-  y = doc.y + 8;
-  doc.font('Helvetica').fontSize(13).fillColor(MUTED)
+  y = doc.y + 10;
+  if (HAS_KN) {
+    doc.font('kn').fontSize(11).fillColor(MUTED)
+       .text(kn('doc_subtitle'), M, y, { width: TEXT_W - 30, lineGap: 2 });
+    y = doc.y + 3;
+  }
+  doc.font('Helvetica').fontSize(11).fillColor(MUTED)
      .text('A proposal to replace the printed entry ticket with a digitally signed '
          + 'QR ticket that the checkpost verifies, rather than reads.',
            M, y, { width: TEXT_W - 40, lineGap: 2 });
@@ -136,7 +180,11 @@ const TEXT_W = W - M * 2;
 
   /* The summary, on the cover, because it may be the only part that is read. */
   y += 26;
-  doc.fillColor(INK).font('Helvetica-Bold').fontSize(11).text('In summary', M, y);
+  if (HAS_KN) {
+    doc.fillColor(INK).font('kn-bold').fontSize(12).text(kn('in_summary'), M, y);
+    y = doc.y + 1;
+  }
+  doc.fillColor(MUTED).font('Helvetica-Bold').fontSize(9.5).text('IN SUMMARY', M, y);
   y = doc.y + 8;
 
   const summary = [
@@ -155,10 +203,16 @@ const TEXT_W = W - M * 2;
     + 'refusal. The department gets a daily record of how many altered or duplicated '
     + 'tickets were stopped.',
 
-    'The department continues to collect the entry fee in full. Day-to-day operation is '
-    + 'funded by a separate booking fee paid by the visitor, not by the department. The only '
-    + `charge to the department is an annual maintenance fee of Rs. ${amcRs} per gate — `
-    + `recovered by stopping roughly ${breakEvenPerDay} altered car entries a day.`,
+    'The department receives the nominal entry fee in full, directly into its own account, with '
+    + 'nothing deducted — exactly as it does under the present arrangement. The payment is split '
+    + 'at the gateway itself, with the department as the linked account, so its share never '
+    + 'passes through ServerPe\'s hands. Nothing on the money side changes by switching; every '
+    + 'difference this proposal makes is at the barrier.',
+
+    `Operation is funded by a gross service and convenience fee of ${feePct}% of the entry fee, `
+    + 'paid by the visitor. Every payment gateway and transfer charge is met from that fee by '
+    + `ServerPe. The only charge to the department is an annual maintenance fee of Rs. ${amcRs} `
+    + `per gate — recovered by stopping roughly ${breakEvenPerDay} altered car entries a day.`,
 
     'The system is not specific to this site. It is designed for any ticketed entry point, and '
     + 'a second location can be added as configuration rather than as a new deployment.',
@@ -263,7 +317,7 @@ const TEXT_W = W - M * 2;
   doc.y = M;
 
   /* 1 ─────────────────────────────────────────────────────────────────── */
-  H(1, 'What is happening now');
+  H(1, 'What is happening now', kn('sec_today'));
 
   P('A visitor buys an entry ticket online and prints it, or shows it on a phone. At the '
   + 'checkpost a staff member looks at it, sees a plausible-looking ticket, and raises the '
@@ -282,7 +336,7 @@ const TEXT_W = W - M * 2;
   + 'anywhere.');
 
   /* 2 ─────────────────────────────────────────────────────────────────── */
-  H(2, 'What is proposed');
+  H(2, 'What is proposed', kn('sec_proposal'));
 
   P('A ticket booked on WhatsApp that carries a digitally signed QR code, and a checkpost '
   + 'application that verifies it rather than reads it.');
@@ -301,7 +355,7 @@ const TEXT_W = W - M * 2;
   ]);
 
   /* 3 ─────────────────────────────────────────────────────────────────── */
-  H(3, 'How the verification works, in plain terms');
+  H(3, 'How the verification works, in plain terms', kn('sec_verification'));
 
   P('The system holds a private key, kept on the server. When a ticket is paid for, the '
   + 'server writes the ticket\'s details into the QR code and signs them with that key.');
@@ -337,7 +391,7 @@ const TEXT_W = W - M * 2;
   + 'would leave the staff member to guess which they were looking at.');
 
   /* 4 ─────────────────────────────────────────────────────────────────── */
-  H(4, 'What the visitor does');
+  H(4, 'What the visitor does', kn('sec_visitor'));
 
   BULLETS([
     'Sends a message on WhatsApp to the published number. No application to install, no '
@@ -355,7 +409,7 @@ const TEXT_W = W - M * 2;
   + 'become a phone call to the department.');
 
   /* 5 ─────────────────────────────────────────────────────────────────── */
-  H(5, 'What the checkpost staff do');
+  H(5, 'What the checkpost staff do', kn('sec_staff'));
 
   BULLETS([
     ['Sign in with their own PIN', 'at the start of a shift. Every scan afterwards is '
@@ -375,7 +429,7 @@ const TEXT_W = W - M * 2;
 
   /* 6 ─────────────────────────────────────────────────────────────────── */
   doc.addPage(); doc.y = M;
-  H(6, 'Capacity and crowding');
+  H(6, 'Capacity and crowding', kn('sec_capacity'));
 
   P(`The day is divided into ${slots.length} slots, and each vehicle type has its own limit in `
   + 'each slot. A vehicle may enter once per day — the same vehicle cannot book the second '
@@ -399,7 +453,7 @@ const TEXT_W = W - M * 2;
   + 'people cannot be sold the same last place.', { muted: true });
 
   /* 7 ─────────────────────────────────────────────────────────────────── */
-  H(7, 'How the money is split');
+  H(7, 'How the money is split', kn('sec_money_split'));
 
   P('The visitor pays two separate amounts. They are shown separately at every stage — on the '
   + 'payment page, on the receipt, and in every report the department can download.');
@@ -407,7 +461,7 @@ const TEXT_W = W - M * 2;
   TABLE(
     [{ label: 'Vehicle type', w: 160 },
      { label: 'Entry fee', w: 95, align: 'right' },
-     { label: 'Booking fee', w: 95, align: 'right' },
+     { label: 'Service & convenience fee', w: 95, align: 'right' },
      { label: 'Visitor pays', w: TEXT_W - 350, align: 'right', bold: true }],
     pricing.map((p) => [
       p.label, `Rs. ${rs(p.entry_paise)}`, `Rs. ${rs(p.platform_paise)}`,
@@ -419,11 +473,11 @@ const TEXT_W = W - M * 2;
      + 'department\'s behalf and is excluded from ServerPe\'s taxable value as a pure agent '
      + 'under Rule 33 of the CGST Rules, 2017 — the department\'s collection is not our income '
      + 'and is not taxed as such.'],
-    ['The booking fee is ours.', `Set at ${feePct}% of the entry fee and paid by the visitor, `
+    ['The service and convenience fee is ours.', `Set at ${feePct}% of the entry fee and paid by the visitor, `
      + `not by the department. GST at ${gstPct}% applies to this fee alone and is discharged by `
      + 'ServerPe.'],
     ['Refunds return the whole amount.', 'A visitor refunded after a closure receives the entry '
-     + 'fee and the booking fee back in full. ServerPe absorbs the payment gateway charge on '
+     + 'fee and the service and convenience fee back in full. ServerPe absorbs the payment gateway charge on '
      + 'that refund.'],
   ]);
 
@@ -433,9 +487,9 @@ const TEXT_W = W - M * 2;
   + `last ticket.`, { bold: true });
 
   /* 8 ─────────────────────────────────────────────────────────────────── */
-  H(8, 'Commercial terms');
+  H(8, 'Commercial terms', kn('sec_commercial'));
 
-  P('Operations are funded by the visitor\'s booking fee. The department is asked for one '
+  P('Operations are funded by the visitor\'s service and convenience fee. The department is asked for one '
   + 'thing only: an annual maintenance charge covering support, updates and hosting.');
 
   TABLE(
@@ -445,7 +499,7 @@ const TEXT_W = W - M * 2;
     [
       ['Set-up and installation', 'Nil', '-'],
       ['Software licence', 'Nil', '-'],
-      ['Per-ticket booking fee', `${feePct}% of entry fee`, 'Visitor'],
+      ['Per-ticket service and convenience fee', `${feePct}% of entry fee`, 'Visitor'],
       ['Annual maintenance (per gate)', `Rs. ${amcRs}`, 'Department'],
       ['Payment gateway charges', 'Absorbed by ServerPe', '-'],
       ['WhatsApp and messaging', 'Absorbed by ServerPe', '-'],
@@ -470,7 +524,7 @@ const TEXT_W = W - M * 2;
     ]);
 
   /* 9 ─────────────────────────────────────────────────────────────────── */
-  H(9, 'What the charge is set against');
+  H(9, 'What the charge is set against', kn('sec_value'));
 
   P('The maintenance charge is small enough to be recovered by a very small reduction in '
   + 'leakage. The arithmetic below is illustrative, not a claim about the present scale of the '
@@ -494,8 +548,138 @@ const TEXT_W = W - M * 2;
   P('Beyond the recovery, the department gains something it does not have at all today: a '
   + 'daily, auditable count of how many attempts were refused and why.', { muted: true });
 
-  /* 8 ─────────────────────────────────────────────────────────────────── */
-  H(10, 'When a site must close');
+  /* 10 ────────────────────────────────────────────────────────────────── */
+  H(10, 'How the collected entry fee reaches the department', kn('sec_settlement'));
+
+  P('Nothing about the department\'s money changes. The full entry fee reaches the Tourism '
+  + 'Department with nothing deducted, exactly as it does under the present arrangement. This is '
+  + 'stated so that switching carries no financial change at all — it is not offered as a point '
+  + 'of difference. The payment is split through Razorpay Route, with the department configured '
+  + 'as the linked account, so its share does not pass through ServerPe\'s hands.',
+    { bold: true, size: 11 });
+
+  P('For completeness, both possible arrangements are set out below. The difference is not '
+  + 'presentational: it decides whose bank account the department\'s money sits in between the '
+  + 'sale and the settlement.');
+
+  TABLE(
+    [{ label: '', w: 112 },
+     { label: 'Collect and transfer', w: 175 },
+     { label: 'Split at the gateway', w: TEXT_W - 287 }],
+    [
+      ['How it works',
+       `The whole Rs. ${rs(settle.direct.collected)} settles to ServerPe's account; the `
+       + `department's share is transferred ${String(cfg.settlement_terms || 'weekly').toLowerCase()}.`,
+       `Razorpay Route splits each payment as it is made. Rs. ${rs(settle.split.entry_paise)} goes `
+       + 'directly to the department; only the service and convenience fee reaches ServerPe.'],
+      ['Whose account holds it', 'ServerPe\'s, until the transfer', 'Never ServerPe\'s at all'],
+      ['Razorpay charges',
+       `${settle.direct.gateway_percent}% + GST on the transaction`,
+       `${settle.split.gateway_percent}% + GST on the transaction, plus `
+       + `${settle.split.transfer_percent}% + GST to route the split`],
+      ['Cost to ServerPe per ticket',
+       `Rs. ${rs(settle.direct.charges_paise)}`,
+       `Rs. ${rs(settle.split.charges_paise)}, which is Rs. ${rs(settle.cost_of_split_paise)} more `
+       + 'and is absorbed by ServerPe rather than passed on'],
+      ['Reconciliation', 'A periodic statement for the department to agree',
+       'Nothing to agree; the split has already happened'],
+    ]);
+
+  P('ServerPe recommends the second arrangement, notwithstanding that it costs more on every '
+  + 'ticket. The department\'s collections never rest in a private account, the pure-agent '
+  + 'position under Rule 33 becomes unarguable, and a settlement dispute becomes close to '
+  + 'impossible. It requires a departmental bank account that Razorpay can pay into — the one '
+  + 'element ServerPe cannot arrange on its own.', { bold: true });
+
+  P('THE COMMERCIAL POSITION, STATED PLAINLY. A gross service and convenience fee of '
+  + `${feePct}% of the entry fee is collected from the visitor, and the applicable payment `
+  + 'gateway and Route transfer charges are deducted from that fee. The department receives '
+  + 'the entry fee in full, to the rupee, under either arrangement.');
+
+  P('One matter is not yet settled and is stated here rather than left to be discovered: whether '
+  + 'the gateway and transfer charges are deducted from the primary account or apportioned '
+  + 'against the linked account is a configuration decided with the payment gateway, and ServerPe '
+  + 'is confirming it in writing before any agreement is signed. Whichever way it is configured, '
+  + 'the commercial position above does not change — ServerPe bears those charges out of its '
+  + 'service fee, and the department\'s receipt is unaffected. If the gateway will not permit '
+  + 'that configuration, ServerPe will say so before signing rather than after.',
+    { muted: true });
+
+  /* 11 ────────────────────────────────────────────────────────────────── */
+  H(11, 'What the platform earns', kn('sec_earnings'));
+
+  P('Set out in full, unasked. A vendor unwilling to show their own margin is a vendor whose '
+  + 'other figures are worth checking.');
+
+  TABLE(
+    [{ label: 'On one car ticket', w: 232 },
+     { label: 'Collect and transfer', w: 118, align: 'right' },
+     { label: 'Split at the gateway', w: TEXT_W - 350, align: 'right' }],
+    [
+      ['Collected from the visitor',
+       `Rs. ${rs(settle.direct.collected)}`, `Rs. ${rs(settle.split.collected)}`],
+      ['Entry fee to the department',
+       `Rs. ${rs(settle.direct.entry_paise)}`, `Rs. ${rs(settle.split.entry_paise)}`],
+      ['ServerPe service and convenience fee, gross',
+       `Rs. ${rs(settle.direct.platform_paise)}`, `Rs. ${rs(settle.split.platform_paise)}`],
+      [`Less payment gateway (${settle.direct.gateway_effective}% including GST)`,
+       `- Rs. ${rs(settle.direct.gateway_paise)}`, `- Rs. ${rs(settle.split.gateway_paise)}`],
+      ['Less Route transfer charge', '-', `- Rs. ${rs(settle.split.transfer_paise)}`],
+      ['Less GST on the service and convenience fee, net of input credit',
+       `- Rs. ${rs(settle.direct.gst_payable_paise)}`, `- Rs. ${rs(settle.split.gst_payable_paise)}`],
+      ['Retained by ServerPe',
+       `Rs. ${rs(settle.direct.net_profit_paise)}`, `Rs. ${rs(settle.split.net_profit_paise)}`],
+    ]);
+
+  P('The GST inside the service and convenience fee is collected, not earned, and is remitted to '
+  + `the government. Describing Rs. ${rs(settle.split.cash_retained_paise)} as profit would `
+  + 'overstate it; the final line is the honest figure.', { muted: true });
+
+  P('Illustrative calculation based on Razorpay commercial rates communicated for this proposal: '
+  + `${settle.direct.gateway_percent}% payment gateway fee + ${settle.direct.gst_percent}% GST on `
+  + `the gateway fee, and ${settle.split.transfer_percent}% Route transfer fee + `
+  + `${settle.split.gst_percent}% GST on the transfer fee. The transfer fee is applied here to the `
+  + 'full transaction value, which is the dearest of the possible bases; if the gateway confirms a '
+  + 'narrower basis, ServerPe\'s margin improves and nothing else changes. Final charges and '
+  + 'settlement structure subject to the Razorpay agreement and applicable taxes.',
+    { muted: true, size: 7.5 });
+
+  P(`At ${inr(dailyVehicles)} vehicles a day over 300 operating days and a quarter of capacity `
+  + `taken up, the department collects approximately `
+  + `Rs. ${inr(Math.round(yearly.scenarios[0].department_paise / 100))} in a year and ServerPe `
+  + `retains approximately Rs. ${inr(Math.round(yearly.scenarios[0].net_profit_paise / 100))}.`,
+    { bold: true });
+
+  /* 12 ────────────────────────────────────────────────────────────────── */
+  H(12, 'What has been invested in the platform', kn('sec_investment'));
+
+  P('The system was built and is run by a proprietorship working from a home office. That is why '
+  + 'the charge to the department can be as small as it is, and these figures are given so the '
+  + 'claim can be checked rather than taken on trust.');
+
+  TABLE(
+    [{ label: 'Item', w: 132 },
+     { label: 'Expense range', w: 106, align: 'right' },
+     { label: 'Invested so far', w: 100, align: 'right' },
+     { label: 'Recurs', w: 56 },
+     { label: 'Status', w: TEXT_W - 394 }],
+    invSummary.rows.map((r) => [
+      r.item,
+      r.expense_max ? `Rs. ${inr(r.expense_min)}-${inr(r.expense_max)}` : '-',
+      r.invested_max ? `Rs. ${inr(r.invested_min)}-${inr(r.invested_max)}` : '-',
+      r.kind === 'annual' ? 'Yearly' : r.kind === 'monthly' ? 'Monthly' : 'Once',
+      { done: 'Done', in_place: 'In place', planned: 'Planned', needed: 'Needed' }[r.status]
+        || r.status,
+    ]));
+
+  P('Expense is what these items cost. Invested is what has actually been committed to this '
+  + 'project, which is lower because the laptop was already owned and the server, tooling and '
+  + `office are shared with ServerPe's first product. Running cost of operation is `
+  + `Rs. ${inr(invSummary.annual.min)} to Rs. ${inr(invSummary.annual.max)} a year, against the `
+  + `proposed maintenance charge of Rs. ${amcRs} per gate.`, { muted: true });
+
+  /* 13 ────────────────────────────────────────────────────────────────── */
+  H(13, 'When a site must close', kn('sec_closure'));
 
   P('Heavy rain, a landslide, a VIP visit or a maintenance day are handled as one procedure. '
   + 'An officer selects the date and, if required, a single slot, and writes the reason in '
@@ -517,7 +701,7 @@ const TEXT_W = W - M * 2;
 
   /* 9 ─────────────────────────────────────────────────────────────────── */
   doc.addPage(); doc.y = M;
-  H(11, 'What the department can see');
+  H(14, 'What the department can see', kn('sec_oversight'));
 
   P('A web-based administration panel, accessible to officers on any browser, with accounts '
   + 'that can view everything but change nothing where that is appropriate.');
@@ -527,7 +711,7 @@ const TEXT_W = W - M * 2;
      + 'many attempts the gate refused.'],
     ['The gate log', 'every scan with the staff member, checkpost and time — and a filter '
      + 'showing only the refusals, which is the measure of what the system is preventing.'],
-    ['Revenue and GST', 'the department\'s entry fee and the booking fee kept separate, day '
+    ['Revenue and GST', 'the department\'s entry fee and the service and convenience fee kept separate, day '
      + 'by day, with downloadable reports in a spreadsheet format.'],
     ['Audit trail', 'every action taken by every officer in the panel, with time and account.'],
   ]);
@@ -536,7 +720,7 @@ const TEXT_W = W - M * 2;
   + 'depend on ServerPe to produce a figure.');
 
   /* 10 ────────────────────────────────────────────────────────────────── */
-  H(12, 'Data protection');
+  H(15, 'Data protection', kn('sec_privacy'));
 
   P('The system holds the least it can:');
 
@@ -557,7 +741,7 @@ const TEXT_W = W - M * 2;
   + 'have written to it, or when their own booking is affected.');
 
   /* 11 ────────────────────────────────────────────────────────────────── */
-  H(13, 'What is required from the department');
+  H(16, 'What is required from the department', kn('sec_required'));
 
   BULLETS([
     'Approval to operate at the Mullayanagiri checkpost, and confirmation of the entry fee '
@@ -573,8 +757,46 @@ const TEXT_W = W - M * 2;
   P('Nothing else. There is no software to install, no server for the department to run and '
   + 'no recurring cost.');
 
-  /* 12 ────────────────────────────────────────────────────────────────── */
-  H(14, 'Present status');
+  /* 17 ────────────────────────────────────────────────────────────────── */
+  doc.addPage(); doc.y = M;
+  H(17, 'Decisions, permissions and information required',
+    'ಬೇಕಾದ ನಿರ್ಧಾರಗಳು, ಅನುಮತಿಗಳು ಮತ್ತು ಮಾಹಿತಿ');
+
+  P(`${REQ.REQUIREMENTS.length} items, grouped by who answers them. The right-hand column is left `
+  + 'blank deliberately: a sheet with empty boxes gets filled in, where agreement in principle '
+  + 'does not.');
+
+  P('Three of these have real lead time and are worth settling at the first meeting: which '
+  + 'WhatsApp number the public will use, a single named officer to deal with, and permission for '
+  + 'a live trial at the checkpost. Everything else can follow.', { bold: true });
+
+  for (const [key, g] of Object.entries(REQ.GROUPS)) {
+    const rows = REQ.byGroup(key);
+    if (!rows.length) continue;
+
+    if (doc.y > 620) { doc.addPage(); doc.y = M; }
+    doc.y += 12;
+    if (HAS_KN) {
+      doc.fillColor(ACCENT).font('kn-bold').fontSize(10.5)
+         .text(g.kn, M, doc.y, { width: TEXT_W });
+    }
+    doc.fillColor(MUTED).font('Helvetica-Bold').fontSize(8.5)
+       .text(g.en.toUpperCase(), M, doc.y + 1, { width: TEXT_W, characterSpacing: 0.8 });
+    doc.y += 6;
+
+    TABLE(
+      [{ label: 'What we need', w: 138 },
+       { label: 'Why', w: 218 },
+       { label: 'By when', w: 60 },
+       { label: 'Answer', w: TEXT_W - 416 }],
+      rows.map((r) => [r.item, r.why, r.needed, '']));
+  }
+
+  P('ServerPe will not issue staff PINs, nor print anything carrying the department emblem, until '
+  + 'the permissions above are held in writing.', { muted: true });
+
+  /* 18 ────────────────────────────────────────────────────────────────── */
+  H(18, 'Present status', kn('sec_status'));
 
   P('The system described here is built and working. A live demonstration can be given on '
   + 'request, covering:');
@@ -588,7 +810,7 @@ const TEXT_W = W - M * 2;
   ]);
 
   /* 15 ────────────────────────────────────────────────────────────────── */
-  H(15, 'Beyond this site');
+  H(19, 'Beyond this site', kn('sec_beyond'));
 
   P(`${PRODUCT} is not built for one hill. Places, time slots, vehicle types, prices and `
   + 'capacities are all configuration rather than software, so a second entry point — another '
@@ -608,8 +830,8 @@ const TEXT_W = W - M * 2;
   doc.moveTo(M, doc.y).lineTo(W - M, doc.y).lineWidth(1).strokeColor(ACCENT).stroke();
   doc.y += 16;
 
-  doc.fillColor(INK).font('Helvetica-Bold').fontSize(11)
-     .text('Acceptance', M, doc.y);
+  doc.fillColor(INK).font(HAS_KN ? 'kn-bold' : 'Helvetica-Bold').fontSize(12)
+     .text((HAS_KN ? kn('acceptance') + '  ·  ' : '') + 'Acceptance', M, doc.y);
   doc.y += 6;
   doc.fillColor(MUTED).font('Helvetica').fontSize(9.5)
      .text('Signed below, this proposal may be treated as the basis of the engagement for the '
@@ -621,14 +843,15 @@ const TEXT_W = W - M * 2;
   const sigBlock = (x, who, org) => {
     doc.moveTo(x, sigTop + 46).lineTo(x + colW, sigTop + 46)
        .lineWidth(0.75).strokeColor(RULE).stroke();
-    doc.fillColor(INK).font('Helvetica-Bold').fontSize(9.5)
+    doc.fillColor(INK).font(HAS_KN ? 'kn-bold' : 'Helvetica-Bold').fontSize(9.5)
        .text(who, x, sigTop + 52, { width: colW });
     doc.fillColor(MUTED).font('Helvetica').fontSize(8.5)
        .text(org, x, sigTop + 65, { width: colW });
     doc.fillColor(MUTED).font('Helvetica').fontSize(8.5)
        .text('Name, designation and date', x, sigTop + 82, { width: colW });
   };
-  sigBlock(M, 'For the Department', 'Karnataka Tourism Department, Chikkamagaluru');
+  sigBlock(M, (HAS_KN ? kn('for_department') + '  ·  ' : '') + 'For the Department',
+    'Karnataka Tourism Department, Chikkamagaluru');
   sigBlock(M + colW + 40, `For ${cfg.merchant_name || 'ServerPe App Solutions'}`,
     `${PRODUCT}${cfg.support_mobile ? '  ·  ' + cfg.support_mobile : ''}`);
 

@@ -3,25 +3,27 @@
  *
  *   node scripts/make-deck.js [outfile.pptx]
  *
- * KANNADA LEADS. This is a Karnataka Tourism proposal shown to officers of the
- * state government, and every headline carries the Kannada first with the
- * English beneath it. Not a translated deck — a Kannada deck that an
- * English-reading visitor can also follow.
+ * KANNADA LEADS. This is shown to officers of the Karnataka government, so
+ * every headline carries Kannada first and English beneath. Not a translated
+ * deck — a Kannada deck an English reader can also follow.
  *
- * THE ORDER IS DELIBERATE. A district office's first question about an
- * unfamiliar vendor is not "how does the QR work"; it is "who are you, are you
- * registered, and what have you delivered before". So the deck answers that
- * first, with a live product and registration numbers, and only then explains
- * the problem it is here to solve.
+ * THE ORDER ANSWERS THE QUESTIONS IN THE ORDER THEY ARE ASKED:
  *
- * Everything factual — prices, capacities, GST number, taglines — is read from
- * the database, so the slide on screen cannot contradict the system being
- * demonstrated beside it.
+ *   who are you  ->  are you registered  ->  what have you delivered  ->
+ *   what is wrong today  ->  why the obvious fixes do not work  ->
+ *   what you propose  ->  how it works  ->  what it costs  ->  what you earn
  *
- * A NOTE ON FONTS: PowerPoint renders Kannada with Nirmala UI, which ships with
- * Windows. The deck names it explicitly rather than relying on a fallback,
- * because a fallback that fails shows empty boxes in front of a Deputy
- * Commissioner.
+ * The money section is deliberately last and deliberately complete. A vendor
+ * who volunteers their own margin before being asked is a vendor who has
+ * nothing to hide, and the arithmetic is stated in full — including the part
+ * where GST is not profit.
+ *
+ * Every figure is read from the database, so a slide cannot contradict the
+ * system being demonstrated beside it.
+ *
+ * FONTS: PowerPoint renders Kannada with Nirmala UI, which ships with Windows.
+ * Named explicitly, because a silent fallback shows empty boxes in front of a
+ * Deputy Commissioner.
  */
 
 require('dotenv').config();
@@ -30,26 +32,22 @@ const path = require('path');
 const PptxGenJS = require('pptxgenjs');
 const { query, one } = require('../src/gatepass/db');
 const settings = require('../src/gatepass/settings');
+const bc = require('../src/gatepass/businessCase');
+const REQ = require('../src/gatepass/requirements');
 
 const OUT = process.argv[2] || path.join(process.cwd(), 'docs', 'Entry-ticketing-deck.pptx');
 const LOGOS = path.join(__dirname, '..', 'assets', 'logos');
 
 const C = {
-  ink: '111C1A',
-  forest: '0F4F48',
-  light: '19A396',
-  pale: 'D8E2DF',
-  paper: 'F7F8F6',
-  white: 'FFFFFF',
-  muted: '6B7975',
-  alarm: 'B91C1C',
-  good: '15803D',
-  gold: 'C08A2E',
+  ink: '111C1A', forest: '0F4F48', light: '19A396', pale: 'D8E2DF',
+  paper: 'F7F8F6', white: 'FFFFFF', muted: '6B7975', line: 'C2CCC8',
+  alarm: 'B91C1C', alarmSoft: 'FDECEC', good: '15803D', goodSoft: 'E7F6EC',
+  gold: 'B8860B', goldSoft: 'FBF3E0',
 };
 
-const KN_FONT = 'Nirmala UI';
-const EN_FONT = 'Calibri';
-const EN_LIGHT = 'Calibri Light';
+const KN = 'Nirmala UI';
+const EN = 'Calibri';
+const EL = 'Calibri Light';
 
 (async () => {
   const cfg = await settings.all();
@@ -59,8 +57,7 @@ const EN_LIGHT = 'Calibri Light';
        JOIN vehicle_categories vc ON vc.id = pp.category_id
       WHERE pp.place_id = $1 AND pp.is_active ORDER BY vc.sort_order`, [place.id])).rows;
   const caps = (await query(
-    `SELECT sc.capacity, vc.label, vc.code
-       FROM slot_capacity sc
+    `SELECT sc.capacity, vc.label, vc.code FROM slot_capacity sc
        JOIN vehicle_categories vc ON vc.id = sc.category_id
        JOIN place_slots s ON s.id = sc.slot_id
       WHERE sc.place_id = $1 ORDER BY vc.sort_order, s.sort_order`, [place.id])).rows;
@@ -71,22 +68,24 @@ const EN_LIGHT = 'Calibri Light';
     byCat[c.code].slots += 1;
   }
   const perDay = Object.values(byCat).reduce((n, c) => n + c.per_slot * c.slots, 0);
-  const dailyEntry = pricing.reduce((n, p) => {
-    const c = byCat[p.code];
-    return n + (c ? (p.entry_paise / 100) * c.per_slot * c.slots : 0);
-  }, 0);
+
+  const carEntry = pricing.find((p) => p.code === 'CAR')?.entry_paise || 10000;
+  const carFee = pricing.find((p) => p.code === 'CAR')?.platform_paise || 1000;
+
+  const margin = await bc.perTicket(carEntry, carFee);
+  const settle = await bc.compareSettlement(carEntry, carFee);
+  const yearly = await bc.annual({ entryPaise: carEntry, platformPaise: carFee,
+    vehiclesPerDay: perDay });
+  const inv = await bc.investment();
+  const models = await bc.revenueModels();
+  const amc = await bc.amc();
 
   const rs = (p) => (p % 100 === 0 ? String(p / 100) : (p / 100).toFixed(2));
-  const inr = (n) => Number(n).toLocaleString('en-IN');
+  const inr = bc.inr;
   const feePct = Number(cfg.platform_fee_percent || 10);
-  const amcRs = inr(Number(cfg.amc_per_gate_annual_paise || 12000000) / 100);
-  const carEntry = (pricing.find((p) => p.code === 'CAR')?.entry_paise || 10000) / 100;
-  const breakEven = Math.ceil((Number(cfg.amc_per_gate_annual_paise || 12000000) / 100)
-    / (carEntry * 300));
-
-  /** A value that has not been filled in yet, marked so it cannot be missed. */
-  const val = (key, fallback = '[ to be filled ]') => (cfg[key] && String(cfg[key]).trim())
-    ? cfg[key] : fallback;
+  const gstPct = Number(cfg.gst_percent_on_platform || 18);
+  const lakh = (paise) => `Rs. ${inr(Math.round(paise / 100000) / 10)} lakh`;
+  const val = (k, f = '[ to be filled ]') => (cfg[k] && String(cfg[k]).trim() ? cfg[k] : f);
 
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_16x9';
@@ -94,518 +93,647 @@ const EN_LIGHT = 'Calibri Light';
   pptx.company = cfg.legal_name || 'ServerPe App Solutions';
   pptx.title = 'ವಾಹನ ಪ್ರವೇಶ ಟಿಕೆಟ್ ವ್ಯವಸ್ಥೆ — Vehicle entry ticketing';
 
+  const emblem = path.join(LOGOS, 'karnataka-tourism-emblem-256.png');
   const deptLogo = path.join(LOGOS, 'karnataka-tourism-768.png');
   const ourLogo = path.join(LOGOS, 'serverpe-256.png');
   const has = (f) => fs.existsSync(f);
 
-  /* ─────────────────────────────────────────────────────────── helpers */
+  /* ═════════════════════════════════════════════════════════ helpers ══ */
 
-  /**
-   * A content slide.
-   *
-   * The Kannada headline is the headline; the English sits under it in a
-   * lighter weight. Both are always present — an officer may read either, and a
-   * visitor from outside the state should not be excluded from a slide about
-   * public infrastructure.
-   */
-  const slide = (eyebrowKn, eyebrowEn, headKn, headEn, { dark = false } = {}) => {
+  const slide = (eyeKn, eyeEn, headKn, headEn, { dark = false } = {}) => {
     const s = pptx.addSlide();
     s.background = { color: dark ? C.ink : C.paper };
 
-    if (eyebrowKn || eyebrowEn) {
+    if (eyeKn || eyeEn) {
       s.addText([
-        { text: eyebrowKn || '', options: { fontFace: KN_FONT } },
-        { text: eyebrowKn && eyebrowEn ? '   ·   ' : '', options: {} },
-        { text: (eyebrowEn || '').toUpperCase(), options: { charSpacing: 1.5 } },
-      ], {
-        x: 0.55, y: 0.36, w: 9, h: 0.28,
-        fontFace: EN_FONT, fontSize: 11, bold: true,
-        color: dark ? C.light : C.forest,
-      });
+        { text: eyeKn || '', options: { fontFace: KN } },
+        { text: eyeKn && eyeEn ? '   ·   ' : '', options: {} },
+        { text: (eyeEn || '').toUpperCase(), options: { charSpacing: 1.5 } },
+      ], { x: 0.5, y: 0.32, w: 9.1, h: 0.26,
+        fontFace: EN, fontSize: 10.5, bold: true, color: dark ? C.light : C.forest });
     }
-
     if (headKn) {
-      s.addText(headKn, {
-        x: 0.55, y: 0.66, w: 9, h: 0.62,
-        fontFace: KN_FONT, fontSize: 27, bold: true,
-        color: dark ? C.white : C.ink,
-      });
+      s.addText(headKn, { x: 0.5, y: 0.6, w: 9.1, h: 0.56,
+        fontFace: KN, fontSize: 25, bold: true, color: dark ? C.white : C.ink });
     }
     if (headEn) {
-      s.addText(headEn, {
-        x: 0.55, y: headKn ? 1.24 : 0.72, w: 9, h: 0.5,
-        fontFace: EN_LIGHT, fontSize: headKn ? 17 : 28, bold: !headKn,
-        color: dark ? C.pale : C.muted,
-      });
+      s.addText(headEn, { x: 0.5, y: headKn ? 1.14 : 0.66, w: 9.1, h: 0.44,
+        fontFace: EL, fontSize: headKn ? 16 : 26, bold: !headKn,
+        color: dark ? C.pale : C.muted });
     }
+    s.addShape(pptx.ShapeType.rect, { x: 0.5, y: headKn ? 1.64 : 1.22, w: 0.95, h: 0.04,
+      fill: { color: dark ? C.light : C.forest } });
 
-    s.addShape(pptx.ShapeType.rect, {
-      x: 0.55, y: headKn ? 1.78 : 1.34, w: 1.0, h: 0.045,
-      fill: { color: dark ? C.light : C.forest },
-    });
-
-    s.addText(`${cfg.legal_name || 'ServerPe App Solutions'}`, {
-      x: 0.55, y: 5.16, w: 6, h: 0.24,
-      fontFace: EN_FONT, fontSize: 8.5, color: dark ? '4A5854' : C.muted,
-    });
+    s.addText(cfg.legal_name || 'ServerPe App Solutions', {
+      x: 0.5, y: 5.18, w: 6, h: 0.22,
+      fontFace: EN, fontSize: 8, color: dark ? '4A5854' : C.muted });
     return s;
   };
 
-  /** Bilingual bullet list: Kannada line, English line beneath, per point. */
-  const bullets = (s, items, { y = 2.1, size = 14, dark = false } = {}) => {
+  const bullets = (s, items, { y = 1.95, size = 13, dark = false, w = 9 } = {}) => {
     const runs = [];
     for (const it of items) {
       const [k, e] = Array.isArray(it) ? it : [null, it];
       if (k) {
-        runs.push({ text: k, options: {
-          fontFace: KN_FONT, fontSize: size, bold: true,
-          color: dark ? C.white : C.ink,
-          bullet: { code: '25AA' }, breakLine: true } });
-        runs.push({ text: e, options: {
-          fontFace: EN_FONT, fontSize: size - 2.5,
-          color: dark ? C.pale : C.muted,
-          indentLevel: 1, breakLine: true, paraSpaceAfter: 10 } });
+        runs.push({ text: k, options: { fontFace: KN, fontSize: size, bold: true,
+          color: dark ? C.white : C.ink, bullet: { code: '25AA' }, breakLine: true } });
+        runs.push({ text: e, options: { fontFace: EN, fontSize: size - 2,
+          color: dark ? C.pale : C.muted, indentLevel: 1, breakLine: true,
+          paraSpaceAfter: 8 } });
       } else {
-        runs.push({ text: e, options: {
-          fontFace: EN_FONT, fontSize: size,
-          color: dark ? C.pale : C.ink,
-          bullet: { code: '25AA' }, breakLine: true, paraSpaceAfter: 8 } });
+        runs.push({ text: e, options: { fontFace: EN, fontSize: size,
+          color: dark ? C.pale : C.ink, bullet: { code: '25AA' },
+          breakLine: true, paraSpaceAfter: 7 } });
       }
     }
-    s.addText(runs, { x: 0.7, y, w: 8.7, h: 2.9, lineSpacingMultiple: 1.2 });
+    s.addText(runs, { x: 0.65, y, w, h: 3.1, lineSpacingMultiple: 1.15 });
   };
 
-  const cards = (s, items, { y = 2.2, h = 2.0 } = {}) => {
-    const gap = 0.22;
-    const w = (8.9 - gap * (items.length - 1)) / items.length;
+  const cards = (s, items, { y = 2.1, h = 2.0 } = {}) => {
+    const gap = 0.2;
+    const w = (9.0 - gap * (items.length - 1)) / items.length;
     items.forEach((it, i) => {
-      const x = 0.55 + i * (w + gap);
-      s.addShape(pptx.ShapeType.roundRect, {
-        x, y, w, h, rectRadius: 0.06,
-        fill: { color: C.white }, line: { color: 'C2CCC8', width: 0.5 },
-      });
-      let top = y + 0.18;
+      const x = 0.5 + i * (w + gap);
+      s.addShape(pptx.ShapeType.roundRect, { x, y, w, h, rectRadius: 0.05,
+        fill: { color: it.fill || C.white }, line: { color: C.line, width: 0.5 } });
+      let top = y + 0.16;
       if (it.big) {
-        s.addText(it.big, { x: x + 0.2, y: top, w: w - 0.4, h: 0.6,
-          fontFace: EN_FONT, fontSize: 26, bold: true, color: it.color || C.forest });
-        top += 0.64;
+        s.addText(it.big, { x: x + 0.18, y: top, w: w - 0.36, h: 0.55,
+          fontFace: EN, fontSize: 24, bold: true, color: it.color || C.forest });
+        top += 0.58;
       }
       if (it.kn) {
-        s.addText(it.kn, { x: x + 0.2, y: top, w: w - 0.4, h: 0.34,
-          fontFace: KN_FONT, fontSize: 13, bold: true, color: C.ink });
-        top += 0.32;
+        s.addText(it.kn, { x: x + 0.18, y: top, w: w - 0.36, h: 0.3,
+          fontFace: KN, fontSize: 12.5, bold: true, color: C.ink });
+        top += 0.3;
       }
-      s.addText(it.title, { x: x + 0.2, y: top, w: w - 0.4, h: 0.3,
-        fontFace: EN_FONT, fontSize: 11.5, bold: !it.kn, color: it.kn ? C.muted : C.ink });
-      s.addText(it.body, { x: x + 0.2, y: top + 0.3, w: w - 0.4, h: h - (top - y) - 0.4,
-        fontFace: EN_FONT, fontSize: 10.5, color: C.muted, lineSpacingMultiple: 1.1 });
+      if (it.title) {
+        s.addText(it.title, { x: x + 0.18, y: top, w: w - 0.36, h: 0.28,
+          fontFace: EN, fontSize: 11, bold: !it.kn, color: it.kn ? C.muted : C.ink });
+        top += 0.28;
+      }
+      s.addText(it.body, { x: x + 0.18, y: top, w: w - 0.36, h: h - (top - y) - 0.16,
+        fontFace: EN, fontSize: 10, color: C.muted, lineSpacingMultiple: 1.1 });
     });
   };
 
-  const table = (s, head, rows, { y = 2.2, colW, headKn = [] } = {}) =>
+  const table = (s, head, rows, { y = 2.1, colW, headKn = [], size = 11, rowH = 0.32 } = {}) =>
     s.addTable([
       head.map((h, i) => ({
-        text: (headKn[i] ? `${headKn[i]}\n` : '') + h.toUpperCase(),
+        text: (headKn[i] ? `${headKn[i]}\n` : '') + h,
         options: { bold: true, color: C.white, fill: { color: C.forest },
-                   fontSize: 10, fontFace: headKn[i] ? KN_FONT : EN_FONT },
+          fontSize: size - 1.5, fontFace: headKn[i] ? KN : EN, align: 'left' },
       })),
-      ...rows.map((r) => r.map((cell, i) => ({
-        text: String(cell),
-        options: { fontSize: 12, color: C.ink, fontFace: EN_FONT,
-                   align: i === 0 ? 'left' : 'right' },
-      }))),
-    ], {
-      x: 0.55, y, w: 8.9, colW,
-      border: { type: 'solid', color: 'C2CCC8', pt: 0.5 },
-      fill: { color: C.white }, rowH: 0.34, valign: 'middle', margin: 0.08,
+      ...rows.map((r) => r.map((cell, i) => {
+        const txt = typeof cell === 'object' ? cell.text : cell;
+        const o = typeof cell === 'object' ? cell : {};
+        return { text: String(txt), options: {
+          fontSize: size, fontFace: EN, color: o.color || C.ink,
+          bold: !!o.bold, fill: o.fill ? { color: o.fill } : undefined,
+          align: o.align || (i === 0 ? 'left' : 'right') } };
+      })),
+    ], { x: 0.5, y, w: 9.0, colW, border: { type: 'solid', color: C.line, pt: 0.5 },
+      fill: { color: C.white }, rowH, valign: 'middle', margin: 0.06 });
+
+  /**
+   * A left-to-right flow of boxes with arrows between them.
+   *
+   * Drawn from shapes rather than an image so it stays legible on a projector
+   * and can be edited in the room if an officer asks "what happens if…".
+   */
+  const flow = (s, steps, { y = 2.2, h = 1.0, color = C.forest } = {}) => {
+    const arrow = 0.34;
+    const w = (9.0 - arrow * (steps.length - 1)) / steps.length;
+    steps.forEach((st, i) => {
+      const x = 0.5 + i * (w + arrow);
+      s.addShape(pptx.ShapeType.roundRect, { x, y, w, h, rectRadius: 0.05,
+        fill: { color: st.fill || C.white }, line: { color: st.line || color, width: 1 } });
+      s.addText(st.kn || '', { x: x + 0.1, y: y + 0.1, w: w - 0.2, h: 0.28,
+        fontFace: KN, fontSize: 11, bold: true, color: C.ink, align: 'center' });
+      s.addText(st.en, { x: x + 0.1, y: y + (st.kn ? 0.4 : 0.22), w: w - 0.2, h: h - 0.5,
+        fontFace: EN, fontSize: 9.5, color: C.muted, align: 'center',
+        lineSpacingMultiple: 1.05 });
+      if (i < steps.length - 1) {
+        s.addText('➜', { x: x + w, y: y + h / 2 - 0.16, w: arrow, h: 0.32,
+          fontFace: EN, fontSize: 15, color, align: 'center' });
+      }
     });
+  };
 
-  /* ══════════════════════════════════════════════════ 1 · title ══════════ */
+  const note = (s, knText, enText, { y = 4.5 } = {}) => {
+    if (knText) s.addText(knText, { x: 0.5, y, w: 9.0, h: 0.3,
+      fontFace: KN, fontSize: 11.5, bold: true, color: C.forest });
+    if (enText) s.addText(enText, { x: 0.5, y: y + (knText ? 0.28 : 0), w: 9.0, h: 0.42,
+      fontFace: EN, fontSize: 10.5, color: C.muted });
+  };
 
+  /**
+   * The rate disclaimer, in small print at the foot of any slide quoting money.
+   *
+   * Every figure on those slides depends on rates a third party quoted and has
+   * not yet contracted. Saying so once per slide, in type small enough not to
+   * distract, is what separates an illustration from a promise — and it is the
+   * line that protects the proposal if Razorpay's terms move.
+   */
+  const rateNote = (s, { y = 5.16 } = {}) => {
+    s.addText('Illustrative calculation based on Razorpay commercial rates communicated for this '
+            + `proposal: ${settle.direct.gateway_percent}% payment gateway fee + `
+            + `${settle.direct.gst_percent}% GST on the gateway fee, and `
+            + `${settle.split.transfer_percent}% Route transfer fee + ${settle.split.gst_percent}% `
+            + 'GST on the transfer fee, applied on the full transaction value — the dearest of the '
+            + 'possible bases, so the figures shown can only improve once confirmed. Final charges '
+            + 'and settlement structure subject to the Razorpay agreement and applicable taxes.', {
+      x: 0.5, y, w: 9.0, h: 0.34, fontFace: EN, fontSize: 6.5, italic: true, color: '9AA6A2',
+      lineSpacingMultiple: 1.05 });
+  };
+
+  /* ═══════════════════════════════════════════════════ 1 · title ══════ */
   {
     const s = pptx.addSlide();
     s.background = { color: C.ink };
-    s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 0.13, h: 5.63, fill: { color: C.light } });
-
-    if (has(deptLogo)) s.addImage({ path: deptLogo, x: 0.75, y: 0.55, w: 2.6, h: 1.18 });
+    s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 0.12, h: 5.63, fill: { color: C.light } });
+    if (has(deptLogo)) s.addImage({ path: deptLogo, x: 0.72, y: 0.5, w: 2.5, h: 1.13 });
 
     s.addText('ಕರ್ನಾಟಕ ಪ್ರವಾಸೋದ್ಯಮ ಇಲಾಖೆ  ·  ಚಿಕ್ಕಮಗಳೂರು', {
-      x: 0.75, y: 1.95, w: 8.4, h: 0.3,
-      fontFace: KN_FONT, fontSize: 13, bold: true, color: C.light,
-    });
+      x: 0.72, y: 1.88, w: 8.5, h: 0.3, fontFace: KN, fontSize: 12.5, bold: true, color: C.light });
     s.addText('ವಾಹನ ಪ್ರವೇಶ ಟಿಕೆಟ್ ವ್ಯವಸ್ಥೆ', {
-      x: 0.75, y: 2.3, w: 8.4, h: 0.7,
-      fontFace: KN_FONT, fontSize: 34, bold: true, color: C.white,
-    });
+      x: 0.72, y: 2.22, w: 8.5, h: 0.66, fontFace: KN, fontSize: 33, bold: true, color: C.white });
     s.addText(`Vehicle entry ticketing  ·  ${place.name}`, {
-      x: 0.75, y: 3.02, w: 8.4, h: 0.4,
-      fontFace: EN_LIGHT, fontSize: 19, color: C.pale,
-    });
+      x: 0.72, y: 2.94, w: 8.5, h: 0.4, fontFace: EL, fontSize: 18, color: C.pale });
     s.addText('ತಿದ್ದಲಾಗದ, ನಕಲಿಸಲಾಗದ ಡಿಜಿಟಲ್ ಸಹಿಯ ಟಿಕೆಟ್\n'
             + 'A ticket the checkpost verifies, instead of one it merely reads.', {
-      x: 0.75, y: 3.55, w: 7.6, h: 0.8,
-      fontFace: KN_FONT, fontSize: 13, color: '9EB2AE', lineSpacingMultiple: 1.3,
-    });
+      x: 0.72, y: 3.48, w: 7.6, h: 0.8, fontFace: KN, fontSize: 12.5,
+      color: '9EB2AE', lineSpacingMultiple: 1.3 });
 
-    if (has(ourLogo)) s.addImage({ path: ourLogo, x: 0.75, y: 4.62, w: 0.42, h: 0.42 });
-    s.addText(`${cfg.legal_name || 'ServerPe App Solutions'}   ·   `
-            + `${cfg.vendor_tagline || 'Smart Clicks, Smart Taps.'}   ·   `
+    if (has(ourLogo)) s.addImage({ path: ourLogo, x: 0.72, y: 4.6, w: 0.4, h: 0.4 });
+    s.addText(`${cfg.legal_name}   ·   ${cfg.vendor_tagline}   ·   `
             + new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }), {
-      x: 1.28, y: 4.7, w: 8, h: 0.3, fontFace: EN_FONT, fontSize: 10.5, color: C.muted,
-    });
+      x: 1.22, y: 4.68, w: 8, h: 0.28, fontFace: EN, fontSize: 10, color: C.muted });
   }
 
-  /* ══════════════════════════════════ 2 · who is proposing this ══════════ */
-
+  /* ═══════════════════════════════════════ 2 · who is presenting ══════ */
   {
-    const s = slide('ನಮ್ಮ ಬಗ್ಗೆ', 'About us', 'ಸರ್ವರ್‌ಪೇ ಆ್ಯಪ್ ಸೊಲ್ಯೂಷನ್ಸ್',
-      `${cfg.legal_name || 'ServerPe App Solutions'} — a registered proprietorship building WhatsApp-first public software.`);
+    const s = slide('ಪರಿಚಯ', 'Introduction', val('proprietor_name'),
+      `${val('founder_title', 'Founder and Proprietor')}, ${cfg.legal_name}`);
+
+    s.addText(val('founder_bio',
+      '[ Two or three sentences on your background and experience — years in software, '
+      + 'the kind of systems you have built, and why this problem interests you. ]'), {
+      x: 0.5, y: 2.0, w: 6.0, h: 1.5, fontFace: EN, fontSize: 13.5,
+      color: cfg.founder_bio ? C.ink : C.alarm, lineSpacingMultiple: 1.3 });
 
     cards(s, [
-      { kn: 'ಏಕ ವ್ಯಕ್ತಿ ಸಂಸ್ಥೆ', title: cfg.legal_form || 'Sole Proprietorship',
-        body: `${val('proprietor_name')}, personally answerable. No layers, no account manager — `
-            + 'the person who builds it is the person you call.' },
-      { kn: 'ನೋಂದಣಿ', title: 'Registered',
-        body: `GST ${val('gstin')}\nUdyam (MSME) ${val('udyam_number')}` },
-      { kn: 'ನೇರ ಸಂಪರ್ಕ', title: 'Direct contact',
-        body: `${cfg.support_mobile || ''}\n${cfg.contact_email || ''}\n${cfg.website || ''}` },
-    ], { y: 2.15, h: 2.1 });
-
-    s.addText('ಇಲಾಖೆಗೆ ಒಬ್ಬರೇ ಜವಾಬ್ದಾರರು — ನೇರ, ಸರಳ, ಪಾರದರ್ಶಕ.', {
-      x: 0.55, y: 4.42, w: 8.9, h: 0.3,
-      fontFace: KN_FONT, fontSize: 12, bold: true, color: C.forest,
-    });
-    s.addText('One accountable person for the department to deal with, not a chain of offices.', {
-      x: 0.55, y: 4.68, w: 8.9, h: 0.3, fontFace: EN_FONT, fontSize: 11, color: C.muted,
-    });
+      { kn: 'ಅನುಭವ', title: 'Experience',
+        body: val('founder_years', '[ years ]') + (cfg.founder_years ? ' years in software' : '') },
+      { kn: 'ನಿರ್ಮಿಸಿದ್ದು', title: 'Built and running',
+        body: `${cfg.first_product_name || 'QuizPe'}, live since ${val('first_product_since')}. `
+            + 'This system, built and working.' },
+      { kn: 'ನೇರ ಜವಾಬ್ದಾರಿ', title: 'Directly answerable',
+        body: 'The person who writes the software is the person the department calls.' },
+    ], { y: 3.6, h: 1.3 });
   }
 
-  /* ══════════════════════════ 3 · why a proprietorship, deliberately ═════ */
-
+  /* ═════════════════════════════════ 3 · the firm and its papers ══════ */
   {
-    const s = slide('ಸಂಸ್ಥೆಯ ರಚನೆ', 'How we are set up',
-      'ಏಕ ವ್ಯಕ್ತಿ ಸಂಸ್ಥೆ — ಉದ್ದೇಶಪೂರ್ವಕ ಆಯ್ಕೆ',
-      'A proprietorship by choice, not by default.');
+    const s = slide('ಸಂಸ್ಥೆ', 'The firm', cfg.legal_name,
+      'Registered, filing, and answerable to the department directly.');
+
+    table(s, ['Registration', 'Number'], [
+      ['Constitution', { text: cfg.legal_form || 'Sole Proprietorship', align: 'left' }],
+      ['Proprietor', { text: val('proprietor_name'), align: 'left' }],
+      ['GSTIN', { text: val('gstin'), align: 'left', bold: true }],
+      ['Udyam (MSME)', { text: val('udyam_number'), align: 'left', bold: true }],
+      ['Operating since', { text: longDate(val('business_since')), align: 'left' }],
+      ['Place of business', { text: val('business_address'), align: 'left' }],
+    ], { y: 2.0, colW: [2.6, 6.4], size: 11, rowH: 0.36,
+      headKn: ['ನೋಂದಣಿ', 'ಸಂಖ್ಯೆ'] });
+
+    note(s, 'ಎಲ್ಲಾ ದಾಖಲೆಗಳು ಲಭ್ಯ — ಜಿಎಸ್‌ಟಿ, ಉದ್ಯಮ್, ಪ್ಯಾನ್.',
+      'Certificates available on request. GST returns filed regularly; the department can be '
+      + 'invoiced in the ordinary way.', { y: 4.5 });
+  }
+
+  /* ══════════════════════ 4 · proprietorship against a company ════════ */
+  {
+    const s = slide('ಏಕೆ ಏಕ ವ್ಯಕ್ತಿ ಸಂಸ್ಥೆ', 'Why a proprietorship',
+      'ಒಬ್ಬರೇ ಜವಾಬ್ದಾರರು — ಉದ್ದೇಶಪೂರ್ವಕ ಆಯ್ಕೆ',
+      'A deliberate choice, not a limitation.');
+
+    table(s, ['', 'Sole proprietorship (us)', 'Private limited company'], [
+      ['Who answers you', { text: 'The proprietor, by name', align: 'left', bold: true },
+        { text: 'An account manager, then a queue', align: 'left' }],
+      ['A change you ask for', { text: 'Same week', align: 'left', bold: true },
+        { text: 'A sprint, a release cycle, a committee', align: 'left' }],
+      ['Overheads you pay for', { text: 'Home office; almost none', align: 'left', bold: true },
+        { text: 'Offices, sales, layers of staff', align: 'left' }],
+      ['Cost to the department', { text: `AMC Rs. ${inr(amc.proposed)}/gate`, align: 'left', bold: true },
+        { text: 'Typically several lakh, plus licences', align: 'left' }],
+      ['Liability', { text: 'Unlimited — personally at stake', align: 'left', color: C.alarm },
+        { text: 'Limited to the company', align: 'left' }],
+      ['If the person is unavailable', { text: 'A real risk, and named as one', align: 'left', color: C.alarm },
+        { text: 'Covered by a team', align: 'left' }],
+    ], { y: 1.95, colW: [2.3, 3.5, 3.2], size: 10.5, rowH: 0.35,
+      headKn: ['', 'ಏಕ ವ್ಯಕ್ತಿ ಸಂಸ್ಥೆ', 'ಖಾಸಗಿ ಕಂಪನಿ'] });
+
+    note(s, 'ಅನಾನುಕೂಲಗಳನ್ನೂ ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳಲಾಗಿದೆ.',
+      'The last two rows are the honest disadvantages. They are stated here rather than left for '
+      + 'the department to discover — and the answer to both is an escrowed copy of the source and '
+      + 'a documented handover, which is offered as part of the agreement.', { y: 4.42 });
+  }
+
+  /* ═════════════════════════════════ 5 · the products, as a picture ═══ */
+  {
+    const s = slide('ನಮ್ಮ ಉತ್ಪನ್ನಗಳು', 'What we have built',
+      'ಒಂದೇ ಅಡಿಪಾಯ, ಎರಡು ಉತ್ಪನ್ನಗಳು',
+      'One foundation, two products — the second shaped by what the first taught us.');
+
+    /* The shared platform underneath */
+    s.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 3.62, w: 9.0, h: 0.82,
+      rectRadius: 0.05, fill: { color: C.forest } });
+    s.addText('ಸಾಮಾನ್ಯ ಅಡಿಪಾಯ  ·  SHARED PLATFORM', {
+      x: 0.6, y: 3.7, w: 8.8, h: 0.26, fontFace: KN, fontSize: 11, bold: true, color: C.light });
+    s.addText('WhatsApp Business API   ·   Razorpay payments   ·   GST invoicing   ·   '
+            + 'PostgreSQL   ·   Reporting   ·   Admin panel', {
+      x: 0.6, y: 3.98, w: 8.8, h: 0.34, fontFace: EN, fontSize: 11, color: C.white });
+
+    const box = (x, w, kn, title, lines, tone) => {
+      s.addShape(pptx.ShapeType.roundRect, { x, y: 1.95, w, h: 1.5, rectRadius: 0.05,
+        fill: { color: C.white }, line: { color: tone, width: 1.5 } });
+      s.addText(kn, { x: x + 0.15, y: 2.06, w: w - 0.3, h: 0.28,
+        fontFace: KN, fontSize: 13, bold: true, color: C.ink });
+      s.addText(title, { x: x + 0.15, y: 2.34, w: w - 0.3, h: 0.28,
+        fontFace: EN, fontSize: 15, bold: true, color: tone });
+      s.addText(lines, { x: x + 0.15, y: 2.64, w: w - 0.3, h: 0.72,
+        fontFace: EN, fontSize: 10.5, color: C.muted, lineSpacingMultiple: 1.1 });
+      // the leg down to the platform
+      s.addText('▼', { x: x + w / 2 - 0.15, y: 3.4, w: 0.3, h: 0.22,
+        fontFace: EN, fontSize: 11, color: tone, align: 'center' });
+    };
+
+    box(0.5, 4.4, 'ಕ್ವಿಜ್‌ಪೇ', `${cfg.first_product_name || 'QuizPe'} — live across India`,
+      `Daily learning quizzes for school children, entirely on WhatsApp.\n`
+      + `Live since ${val('first_product_since')}. Real parents, real payments, every day.`,
+      C.good);
+
+    box(5.1, 4.4, 'ಪ್ರವೇಶ ಟಿಕೆಟ್', `${cfg.product_name || 'Entry Ticketing'} — built`,
+      'Signed QR entry tickets for ticketed tourist sites.\n'
+      + 'Built on what QuizPe proved, and on feedback from this exact problem.',
+      C.gold);
+
+    note(s, null, 'The second product exists because the first proved that a WhatsApp-only '
+      + 'service, with payments and invoices, works at scale in India.', { y: 4.62 });
+  }
+
+  /* ═════════════════════════════ 6 · the problem at the gate today ════ */
+  {
+    const s = slide('ಇಂದಿನ ಸಮಸ್ಯೆ', 'The problem today',
+      'ಮುಳ್ಳಯ್ಯನಗಿರಿ ಟಿಕೆಟ್ ಬುಕಿಂಗ್‌ನಲ್ಲಿ ಏನಾಗುತ್ತಿದೆ',
+      'What is happening with entry tickets today.', { dark: true });
 
     bullets(s, [
-      ['ಒಬ್ಬರೇ ಜವಾಬ್ದಾರರು.',
-       'One named person carries the responsibility. A department raising an issue reaches the '
-       + 'proprietor directly, not a support queue.'],
-      ['ವೇಗದ ನಿರ್ಧಾರ.',
-       'A change the department asks for on Monday can be live on Tuesday — no board, no '
-       + 'internal approvals, no release committee.'],
-      ['ಕಡಿಮೆ ವೆಚ್ಚ, ಕಡಿಮೆ ಶುಲ್ಕ.',
-       'No offices to fund and no staff overhead, which is precisely why the department can be '
-       + 'charged so little for this.'],
-      ['ಪೂರ್ಣ ನೋಂದಾಯಿತ.',
-       'GST-registered, Udyam-registered, filing regularly, and able to invoice the department '
-       + 'in the ordinary way.'],
-    ], { y: 2.05, size: 13.5 });
+      ['ಒಂದು ಟಿಕೆಟ್ ಖರೀದಿಸಿ, ತಿದ್ದಿ, ಹಲವು ಪ್ರತಿ ಮುದ್ರಿಸಲಾಗುತ್ತದೆ.',
+       'One ticket is bought, the file is edited — vehicle number, date, ticket number — and '
+       + 'printed again as many times as wanted.'],
+      ['ಗೇಟ್‌ನಲ್ಲಿ ಎಲ್ಲವೂ ಒಂದೇ ರೀತಿ ಕಾಣುತ್ತದೆ.',
+       'At the barrier every copy looks exactly as genuine as the original.'],
+      ['ಎಷ್ಟು ನಷ್ಟ ಎಂದು ಅಳೆಯಲು ಸಾಧ್ಯವಿಲ್ಲ.',
+       'Nothing records an altered ticket passing, so the size of the loss cannot be measured — '
+       + 'which also means it cannot be argued about.'],
+      ['ಒಂದೇ ಟಿಕೆಟ್ ಹಲವರಿಗೆ ಫಾರ್ವರ್ಡ್ ಆಗುತ್ತದೆ.',
+       'A screenshot forwarded on WhatsApp works as well as the original at a gate that only '
+       + 'looks at it.'],
+    ], { y: 2.0, size: 13, dark: true });
   }
 
-  /* ══════════════════════════════ 4 · QuizPe, the delivery record ════════ */
-
+  /* ═══════════════════════ 7 · what the staff are put through ═════════ */
   {
-    const s = slide('ನಮ್ಮ ಮೊದಲ ಉತ್ಪನ್ನ', 'Our first product',
-      `${cfg.first_product_name || 'QuizPe'} — ಭಾರತದಾದ್ಯಂತ ಬಳಕೆಯಲ್ಲಿದೆ`,
-      `${cfg.first_product_name || 'QuizPe'} — live, in use across India today.`,
-      { dark: true });
-
-    s.addText(cfg.first_product_line
-      || 'A daily learning quiz for school children, delivered entirely on WhatsApp.', {
-      x: 0.55, y: 2.05, w: 6.2, h: 0.6,
-      fontFace: EN_LIGHT, fontSize: 16, color: C.white, lineSpacingMultiple: 1.2,
-    });
-
-    bullets(s, [
-      ['ವಾಟ್ಸ್ಆ್ಯಪ್‌ನಲ್ಲೇ — ಯಾವುದೇ ಆ್ಯಪ್ ಬೇಡ.',
-       'Parents and children use it entirely inside WhatsApp. Nothing to install, no account to create.'],
-      ['ಪಾವತಿ, ಬಿಲ್, ವರದಿ — ಎಲ್ಲವೂ ಸ್ವಯಂಚಾಲಿತ.',
-       'Payments, GST invoices and progress reports are already running in production, at scale, '
-       + 'with real money moving through them every day.'],
-      ['ಅದೇ ತಂತ್ರಜ್ಞಾನ ಈ ವ್ಯವಸ್ಥೆಗೂ.',
-       'The entry-ticketing system proposed here is built on the same proven foundations — this '
-       + 'is not a first attempt.'],
-    ], { y: 2.75, size: 13, dark: true });
-  }
-
-  /* ═════════════════════════════ 5 · this, the second product ════════════ */
-
-  {
-    const s = slide('ನಮ್ಮ ಎರಡನೇ ಉತ್ಪನ್ನ', 'Our second product',
-      'ಪ್ರವಾಸಿ ತಾಣಗಳಿಗೆ ಪ್ರವೇಶ ಟಿಕೆಟ್ ವ್ಯವಸ್ಥೆ',
-      `${cfg.product_name || 'ServerPe Entry Ticketing'} — for any ticketed tourist site.`);
+    const s = slide('ಚೆಕ್‌ಪೋಸ್ಟ್ ಸಿಬ್ಬಂದಿ', 'The checkpost staff',
+      'ಸಿಬ್ಬಂದಿಗೆ ಅಸಾಧ್ಯವಾದ ಕೆಲಸ ಕೊಡಲಾಗಿದೆ',
+      'The staff are being asked to do something a person cannot do.');
 
     cards(s, [
-      { big: '1', kn: 'ಕ್ವಿಜ್‌ಪೇ', title: cfg.first_product_name || 'QuizPe',
-        body: 'Live across India. Schools, parents, daily use, real payments.' },
-      { big: '2', kn: 'ಪ್ರವೇಶ ಟಿಕೆಟ್', title: cfg.product_name || 'Entry Ticketing',
-        body: `Built and working. ${place.name} is the first proposed site; the system is designed `
-            + 'for any entry point.', color: C.gold },
-    ], { y: 2.2, h: 1.9 });
+      { kn: 'ಕಣ್ಣಿನಿಂದ ಪರಿಶೀಲನೆ', title: 'Detect forgery by eye',
+        body: 'On a document they have never seen before, at speed, with a queue of cars behind.',
+        fill: C.alarmSoft },
+      { kn: 'ವಾದ ಮತ್ತು ಒತ್ತಡ', title: 'Arguments at the barrier',
+        body: 'Refusing a ticket means an argument, in front of a queue, with no evidence to '
+            + 'point at. Most people wave it through — and would.', fill: C.alarmSoft },
+      { kn: 'ಯಾವುದೇ ದಾಖಲೆ ಇಲ್ಲ', title: 'No record either way',
+        body: 'Nothing shows what was checked, by whom, or what was refused. The staff member '
+            + 'has no way to show they did their job.', fill: C.alarmSoft },
+    ], { y: 2.05, h: 1.85 });
 
-    s.addText('ಎರಡೂ ಒಂದೇ ಅಡಿಪಾಯದ ಮೇಲೆ — ವಾಟ್ಸ್ಆ್ಯಪ್, ಪಾವತಿ, ಜಿಎಸ್‌ಟಿ, ವರದಿಗಳು.', {
-      x: 0.55, y: 4.3, w: 8.9, h: 0.3,
-      fontFace: KN_FONT, fontSize: 12, bold: true, color: C.forest,
-    });
-    s.addText('Both sit on the same foundations: WhatsApp delivery, payments, GST invoicing and reporting.', {
-      x: 0.55, y: 4.56, w: 8.9, h: 0.3, fontFace: EN_FONT, fontSize: 11, color: C.muted,
-    });
+    note(s, 'ಇದು ಸಿಬ್ಬಂದಿಯ ತಪ್ಪಲ್ಲ — ವ್ಯವಸ್ಥೆಯ ತಪ್ಪು.',
+      'This is not a failure of the staff. It is a failure of the ticket, and the staff are the '
+      + 'ones left holding it.', { y: 4.18 });
   }
 
-  /* ══════════════════════════════════════════ 6 · the problem ════════════ */
-
+  /* ═════════════════════ 8 · why web booking alone does not fix it ════ */
   {
-    const s = slide('ಸಮಸ್ಯೆ', 'The problem',
-      'ಒಂದು ಟಿಕೆಟ್ — ಹತ್ತು ಪ್ರತಿಗಳು',
-      'One ticket becomes ten.', { dark: true });
+    const s = slide('ವೆಬ್ ಬುಕಿಂಗ್', 'Web-based booking',
+      'ಆನ್‌ಲೈನ್ ಬುಕಿಂಗ್ ಮಾತ್ರದಿಂದ ಸಮಸ್ಯೆ ಪರಿಹಾರವಾಗದು',
+      'Booking online does not fix a ticket that is still only read.');
 
-    s.addText('ಪ್ರವಾಸಿಗರು ಒಂದು ಟಿಕೆಟ್ ಖರೀದಿಸಿ, ಅದನ್ನು ಎಡಿಟ್ ಮಾಡಿ, ವಾಹನ ಸಂಖ್ಯೆ ಮತ್ತು ದಿನಾಂಕ ಬದಲಾಯಿಸಿ, '
-            + 'ಹಲವು ಪ್ರತಿಗಳನ್ನು ಮುದ್ರಿಸುತ್ತಾರೆ.', {
-      x: 0.55, y: 2.1, w: 8.2, h: 0.8,
-      fontFace: KN_FONT, fontSize: 16, color: C.white, lineSpacingMultiple: 1.35,
-    });
-    s.addText('A visitor buys one printed ticket, opens the file in an editor, changes the vehicle '
-            + 'number and the date, and prints it again.\n\n'
-            + 'At the barrier, every copy looks exactly as genuine as the original.', {
-      x: 0.55, y: 3.05, w: 8.2, h: 1.2,
-      fontFace: EN_LIGHT, fontSize: 14.5, color: C.pale, lineSpacingMultiple: 1.3,
-    });
+    bullets(s, [
+      ['ಟಿಕೆಟ್ ಇನ್ನೂ ಒಂದು ಫೈಲ್.',
+       'A PDF or a printed page is a file. Anything that can be opened can be edited.'],
+      ['ವಾಹನ ಸಂಖ್ಯೆ ಟಿಕೆಟ್‌ಗೆ ಬಂಧಿಸಲ್ಪಟ್ಟಿಲ್ಲ.',
+       'The vehicle number is printed on the ticket, not bound to it. Nothing stops the same '
+       + 'ticket being used by another vehicle.'],
+      ['ಒಂದೇ ಬಾರಿ ಬಳಕೆ ಎಂದು ಖಚಿತಪಡಿಸಲಾಗದು.',
+       'Nothing marks a ticket as used, so one booking can enter five times.'],
+      ['ಗೇಟ್‌ನಲ್ಲಿ ಪರಿಶೀಲಿಸಲು ನೆಟ್‌ವರ್ಕ್ ಬೇಕು.',
+       'Any check against the website needs a network connection the ghat road does not reliably have.'],
+      ['ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಫಾರ್ವರ್ಡ್ ಮಾಡಬಹುದು.',
+       'A screenshot is as good as the original, and travels for free.'],
+    ], { y: 1.95, size: 12.5 });
   }
 
-  /* ═════════════════════════════════════ 7 · why it is not caught ════════ */
-
+  /* ══════════════ 9 · the bank-QR question, answered head on ══════════ */
   {
-    const s = slide('ಕಾರಣ', 'Why it is not caught',
-      'ಟಿಕೆಟ್ ಓದಲಾಗುತ್ತದೆ — ಪರಿಶೀಲಿಸಲಾಗುವುದಿಲ್ಲ',
-      'The ticket is read, not verified.');
+    const s = slide('ಒಂದು ಪ್ರಶ್ನೆ', 'A fair question',
+      'ಬ್ಯಾಂಕ್ ಟಿಕೆಟ್‌ನಲ್ಲಿ QR ಕೋಡ್ ಹಾಕಿದರೆ ಸಾಕಲ್ಲವೇ?',
+      'What if the bank simply prints a QR code at the bottom of the ticket?');
 
-    s.addText('ಮುದ್ರಿತ ಟಿಕೆಟ್‌ನಲ್ಲಿ ಗೇಟ್ ಪರಿಶೀಲಿಸಬಹುದಾದ ಯಾವುದೇ ಅಂಶ ಇಲ್ಲ.', {
-      x: 0.55, y: 2.15, w: 8.9, h: 0.45,
-      fontFace: KN_FONT, fontSize: 18, bold: true, color: C.ink,
-    });
-    s.addText('There is nothing on a printed ticket that the gate can check against anything.\n\n'
-            + 'A staff member is being asked to detect a forgery by eye, at speed, in a queue. '
-            + 'That is not a task a person can do — and every ticket that passes leaves no trace, '
-            + 'so nobody can measure the loss.', {
-      x: 0.55, y: 2.75, w: 8.6, h: 1.6,
-      fontFace: EN_FONT, fontSize: 14, color: C.muted, lineSpacingMultiple: 1.35,
-    });
+    s.addText('ಪಾವತಿ QR ಪಾವತಿಯನ್ನು ಸಾಬೀತುಪಡಿಸುತ್ತದೆ — ಪ್ರವೇಶದ ಹಕ್ಕನ್ನಲ್ಲ.', {
+      x: 0.5, y: 1.9, w: 9.0, h: 0.34, fontFace: KN, fontSize: 15, bold: true, color: C.ink });
+    s.addText('A payment QR proves that money moved. It does not prove that THIS vehicle may '
+            + 'enter on THIS day.', {
+      x: 0.5, y: 2.2, w: 9.0, h: 0.34, fontFace: EN, fontSize: 12.5, color: C.muted });
+
+    table(s, ['A payment QR on the ticket', 'A signed entry ticket'], [
+      [{ text: 'Says a payment reference exists', align: 'left' },
+       { text: 'Says this vehicle, this date, this slot', align: 'left', bold: true }],
+      [{ text: 'Static — copies as easily as the rest of the page', align: 'left' },
+       { text: 'Sealed by a signature; one edited character fails', align: 'left', bold: true }],
+      [{ text: 'Needs a network call to the bank to mean anything', align: 'left' },
+       { text: 'Verified on the phone with no signal at all', align: 'left', bold: true }],
+      [{ text: 'A payment reference stays valid forever', align: 'left' },
+       { text: 'Consumed on first scan; a second attempt is reported', align: 'left', bold: true }],
+      [{ text: 'Carries no plate, so it cannot be matched to a vehicle', align: 'left' },
+       { text: 'The plate is inside the signature', align: 'left', bold: true }],
+    ], { y: 2.62, colW: [4.5, 4.5], size: 10.5, rowH: 0.36,
+      headKn: ['ಪಾವತಿ QR', 'ಸಹಿ ಮಾಡಿದ ಟಿಕೆಟ್'] });
+
+    note(s, 'ಎರಡೂ ಜೊತೆಯಾಗಿ ಇರಬಹುದು.',
+      'These are not alternatives. If the department wants a bank payment QR on the ticket as '
+      + 'well, it sits alongside the signed one — the signature is what the gate checks, the '
+      + 'payment reference is what the accounts check.', { y: 4.66 });
   }
 
-  /* ═══════════════════════════════════════════ 8 · the proposal ══════════ */
-
+  /* ═══════════════════════════ 10 · what WhatsApp booking gives ═══════ */
   {
     const s = slide('ಪರಿಹಾರ', 'The proposal',
-      'ತಿದ್ದಲಾಗದ ಟಿಕೆಟ್',
-      'A ticket that cannot be edited.', { dark: true });
-
-    s.addText('ವಾಹನ ಸಂಖ್ಯೆ, ದಿನಾಂಕ, ಸಮಯ ಮತ್ತು ವಾಹನದ ಪ್ರಕಾರ — ಎಲ್ಲವೂ QR ಕೋಡ್‌ನ ಡಿಜಿಟಲ್ ಸಹಿಯ ಒಳಗೆ.', {
-      x: 0.55, y: 2.15, w: 8.5, h: 0.8,
-      fontFace: KN_FONT, fontSize: 17, color: C.white, lineSpacingMultiple: 1.3,
-    });
-    s.addText('The vehicle number, date, time slot and vehicle type are sealed inside a digital '
-            + 'signature in the QR code.', {
-      x: 0.55, y: 3.0, w: 8.5, h: 0.6,
-      fontFace: EN_LIGHT, fontSize: 15, color: C.pale, lineSpacingMultiple: 1.25,
-    });
-    s.addText('ಒಂದು ಅಕ್ಷರ ಬದಲಾದರೂ ಗೇಟ್ ತಿರಸ್ಕರಿಸುತ್ತದೆ.   ·   Change one character and the gate rejects it.', {
-      x: 0.55, y: 3.85, w: 8.9, h: 0.4,
-      fontFace: KN_FONT, fontSize: 14, bold: true, color: C.light,
-    });
-  }
-
-  /* ═══════════════════════════════════════════ 9 · how it works ══════════ */
-
-  {
-    const s = slide('ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ', 'How it works',
-      'ಎರಡು ಕೀಲಿಗಳು — ಒಂದು ಮಾತ್ರ ಹೊರಗೆ ಹೋಗುತ್ತದೆ',
-      'Two keys, and only one of them travels.');
-
-    cards(s, [
-      { kn: 'ಸರ್ವರ್ ಸಹಿ ಮಾಡುತ್ತದೆ', title: 'The server signs',
-        body: 'A private key, held only on the server, seals the ticket details into the QR at '
-            + 'the moment payment succeeds.' },
-      { kn: 'ಫೋನ್ ಪರಿಶೀಲಿಸುತ್ತದೆ', title: 'The phone verifies',
-        body: 'Each checkpost phone holds only the public key. It can check a signature — and '
-            + 'cannot create one.' },
-      { kn: 'ಫೋನ್ ಕಳೆದರೂ ಅಪಾಯವಿಲ್ಲ', title: 'A lost phone is harmless',
-        body: 'Even taken apart, a gate phone could not manufacture a single valid ticket.' },
-    ], { y: 2.15, h: 2.0 });
-
-    s.addText('ಎಲ್ಲಾ ಫೋನ್‌ಗಳಲ್ಲಿ ಒಂದೇ ಪಾಸ್‌ವರ್ಡ್ ಇಡುವ ವಿಧಾನವನ್ನು ಉದ್ದೇಶಪೂರ್ವಕವಾಗಿ ತಿರಸ್ಕರಿಸಲಾಗಿದೆ.', {
-      x: 0.55, y: 4.35, w: 8.9, h: 0.3, fontFace: KN_FONT, fontSize: 11.5, color: C.muted,
-    });
-    s.addText('A shared password on every phone was rejected: a secret kept in a device at a hill '
-            + 'station is a secret that eventually leaves it.', {
-      x: 0.55, y: 4.62, w: 8.9, h: 0.3,
-      fontFace: EN_FONT, fontSize: 10.5, italic: true, color: C.muted,
-    });
-  }
-
-  /* ═══════════════════════════════════════════ 10 · offline ══════════════ */
-
-  {
-    const s = slide('ಘಾಟಿ ರಸ್ತೆಯಲ್ಲಿ', 'On the ghat road',
-      'ನೆಟ್‌ವರ್ಕ್ ಇಲ್ಲದಿದ್ದರೂ ಕೆಲಸ ಮಾಡುತ್ತದೆ',
-      'No signal is not a problem.');
-
-    cards(s, [
-      { big: 'Offline', kn: 'ಟಿಕೆಟ್ ನಿಜವೇ?', title: 'Is this ticket genuine?',
-        body: 'Signature, vehicle number, date and slot are all checked on the phone itself. '
-            + 'A forgery is caught with no network at all.' },
-      { big: 'Online', kn: 'ಈಗಾಗಲೇ ಬಳಸಿದೆಯೇ?', title: 'Has it already come through?',
-        body: 'The only fact that must be shared between gates. Offline scans queue on the phone '
-            + 'and reconcile automatically when signal returns.', color: C.muted },
-    ], { y: 2.15, h: 2.15 });
-  }
-
-  /* ═══════════════════════════════════════════ 11 · the verdicts ═════════ */
-
-  {
-    const s = slide('ಗೇಟ್‌ನಲ್ಲಿ', 'At the barrier',
-      'ಫೋನ್ ಸ್ಪಷ್ಟ ಸೂಚನೆ ನೀಡುತ್ತದೆ',
-      'The phone gives an instruction, not a guess.');
-
-    table(s, ['What the staff member sees', 'What it means'], [
-      ['ALLOW', 'Genuine, right vehicle, right day'],
-      ['ALREADY USED', 'This code has come through before — a copy'],
-      ['FAKE TICKET', 'The signature does not verify'],
-      ['WRONG DAY', 'Genuine ticket, issued for another date'],
-      ['WRONG TIME', 'Genuine ticket for later today'],
-    ], { y: 2.25, colW: [3.2, 5.7],
-      headKn: ['ಸಿಬ್ಬಂದಿಗೆ ಕಾಣುವುದು', 'ಅರ್ಥ'] });
-
-    s.addText('ತಡವಾಗಿ ಬಂದರೆ ಪ್ರವೇಶ ಇದೆ; ಮೊದಲೇ ಬಂದರೆ ಇಲ್ಲ.   ·   Late arrivals are allowed, early ones are not.', {
-      x: 0.55, y: 4.65, w: 8.9, h: 0.3, fontFace: KN_FONT, fontSize: 11.5, color: C.muted });
-  }
-
-  /* ═══════════════════════════════════════════ 12 · the visitor ══════════ */
-
-  {
-    const s = slide('ಪ್ರವಾಸಿಗರಿಗೆ', 'The visitor',
-      'ಐದು ಹಂತ — ಆ್ಯಪ್ ಇಲ್ಲ, ಖಾತೆ ಇಲ್ಲ',
-      'Five steps, no app, no account.');
+      'ವಾಟ್ಸ್ಆ್ಯಪ್ ಆಧಾರಿತ ಬುಕಿಂಗ್ — ಏಕೆ',
+      'Why a WhatsApp bot, and not another website.', { dark: true });
 
     bullets(s, [
-      ['ವಾಟ್ಸ್ಆ್ಯಪ್‌ನಲ್ಲಿ ಸಂದೇಶ ಕಳುಹಿಸಿ.', 'Sends a WhatsApp message to the published number.'],
-      ['ವಾಹನ ಸಂಖ್ಯೆ ಟೈಪ್ ಮಾಡಿ.',
-       'The vehicle type is read from the government record, so the correct fee is charged '
-       + 'automatically.'],
-      ['ದಿನ ಮತ್ತು ಸಮಯ ಆಯ್ಕೆ ಮಾಡಿ.', 'Sees how many places are left in each slot.'],
-      ['ಪಾವತಿಸಿ — ಟಿಕೆಟ್ ಅದೇ ಚಾಟ್‌ನಲ್ಲಿ ಬರುತ್ತದೆ.',
-       'The QR ticket and receipt arrive in the same chat within seconds.'],
-      ['ಗೇಟ್‌ನಲ್ಲಿ QR ತೋರಿಸಿ.', 'Nothing else.'],
-    ], { y: 2.0, size: 13 });
+      ['ಆ್ಯಪ್ ಇಲ್ಲ, ಖಾತೆ ಇಲ್ಲ, ಪಾಸ್‌ವರ್ಡ್ ಇಲ್ಲ.',
+       'Nothing to install and nothing to remember. WhatsApp is already on the phone of '
+       + 'everyone who visits.'],
+      ['ಟಿಕೆಟ್ ಚಾಟ್‌ನಲ್ಲೇ ಉಳಿಯುತ್ತದೆ.',
+       'The ticket lives in the chat. It cannot be lost in a downloads folder, and it can be '
+       + 'fetched again with one tap.'],
+      ['ಮೊಬೈಲ್ ಸಂಖ್ಯೆ ಈಗಾಗಲೇ ದೃಢೀಕೃತ.',
+       'WhatsApp has already verified the number, so there is no OTP, no signup and no forgotten '
+       + 'password.'],
+      ['ಕನ್ನಡ ಮತ್ತು ಇಂಗ್ಲಿಷ್ ಎರಡರಲ್ಲೂ.',
+       'Every message is in Kannada with English beneath it.'],
+      ['ರದ್ದತಿ, ಮರುಪಾವತಿ, ದಿನಾಂಕ ಬದಲಾವಣೆ — ಎಲ್ಲವೂ ಅದೇ ಚಾಟ್‌ನಲ್ಲಿ.',
+       'Closures, postponements, refunds and support all happen in the same conversation, so the '
+       + 'department does not field the phone calls.'],
+    ], { y: 1.95, size: 12.5, dark: true });
   }
 
-  /* ═══════════════════════════════════════════ 13 · accountability ═══════ */
-
+  /* ══════════════════════ 10b · against what is in place today ═══════ */
   {
-    const s = slide('ಚೆಕ್‌ಪೋಸ್ಟ್', 'The checkpost',
-      'ಪ್ರತಿ ಸ್ಕ್ಯಾನ್‌ಗೂ ಹೆಸರು ಇರುತ್ತದೆ',
-      'Every scan has a name on it.');
+    const s = slide('ಹೋಲಿಕೆ', 'Side by side',
+      'ಇಂದಿನ ವ್ಯವಸ್ಥೆ ಮತ್ತು ಪ್ರಸ್ತಾವಿತ ವ್ಯವಸ್ಥೆ',
+      'What changes, and what deliberately does not.');
+
+    table(s, ['', 'Booking on a web page today', 'This proposal'], [
+      [{ text: 'Entry fee to the department', align: 'left' },
+       { text: 'Full amount, nothing deducted', align: 'left' },
+       { text: 'Full amount, nothing deducted — unchanged', align: 'left', color: C.muted }],
+
+      [{ text: 'Can the ticket be edited', align: 'left' },
+       { text: 'Yes — it is a file', align: 'left', color: C.alarm },
+       { text: 'No — sealed by a digital signature', align: 'left', bold: true, fill: C.goodSoft }],
+
+      [{ text: 'Is it tied to the vehicle', align: 'left' },
+       { text: 'Printed on it, not bound to it', align: 'left', color: C.alarm },
+       { text: 'Plate is inside the signature', align: 'left', bold: true, fill: C.goodSoft }],
+
+      [{ text: 'Can one ticket enter twice', align: 'left' },
+       { text: 'Yes — nothing marks it used', align: 'left', color: C.alarm },
+       { text: 'Consumed on first scan', align: 'left', bold: true, fill: C.goodSoft }],
+
+      [{ text: 'Checking at the gate', align: 'left' },
+       { text: 'Read by eye', align: 'left', color: C.alarm },
+       { text: 'Verified by the phone, offline', align: 'left', bold: true, fill: C.goodSoft }],
+
+      [{ text: 'Record of what was refused', align: 'left' },
+       { text: 'None', align: 'left', color: C.alarm },
+       { text: 'Every scan, with the staff member', align: 'left', bold: true, fill: C.goodSoft }],
+    ], { y: 1.95, colW: [2.4, 3.2, 3.4], size: 10, rowH: 0.42,
+      headKn: ['', 'ಇಂದಿನ ವ್ಯವಸ್ಥೆ', 'ಪ್ರಸ್ತಾವಿತ ವ್ಯವಸ್ಥೆ'] });
+
+    note(s, 'ಹಣದ ವಿಷಯದಲ್ಲಿ ಬದಲಾವಣೆ ಇಲ್ಲ — ಬದಲಾವಣೆ ಗೇಟ್‌ನಲ್ಲಿ.',
+      'The first row is deliberately unchanged. The department gives up nothing on the money side '
+      + 'by switching; every difference is at the barrier, which is where the loss is happening.',
+      { y: 4.66 });
+  }
+
+  /* ══════════════════ 10c · why the visitor pays anything at all ═════ */
+  {
+    const s = slide('ಪ್ರವಾಸಿಗರ ಶುಲ್ಕ', 'The visitor\'s fee',
+      `ಪ್ರವಾಸಿಗರು ರೂ. ${rs(carFee)} ಏಕೆ ಪಾವತಿಸುತ್ತಾರೆ`,
+      `Why the visitor pays Rs. ${rs(carFee)} — and what it replaces.`);
+
+    /* The contrast that reframes the whole question. Money lost to forged
+       tickets today is not going to anyone legitimate; it is simply gone, and
+       nothing records that it went. */
+    s.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 1.9, w: 4.35, h: 1.22,
+      rectRadius: 0.05, fill: { color: C.alarmSoft }, line: { color: C.alarm, width: 1 } });
+    s.addText('ಇಂದು', { x: 0.68, y: 1.98, w: 4.0, h: 0.24,
+      fontFace: KN, fontSize: 11, bold: true, color: C.alarm });
+    s.addText('Today', { x: 0.68, y: 2.2, w: 4.0, h: 0.24,
+      fontFace: EN, fontSize: 9, charSpacing: 1.5, color: C.alarm });
+    s.addText('Thousands of rupees a day leave through forged and copied tickets — to nobody '
+            + 'legitimate, recorded nowhere, taxed by no one.', {
+      x: 0.68, y: 2.44, w: 4.0, h: 0.6, fontFace: EN, fontSize: 11, color: C.ink,
+      lineSpacingMultiple: 1.15 });
+
+    s.addShape(pptx.ShapeType.roundRect, { x: 5.15, y: 1.9, w: 4.35, h: 1.22,
+      rectRadius: 0.05, fill: { color: C.goodSoft }, line: { color: C.good, width: 1 } });
+    s.addText('ಪ್ರಸ್ತಾವನೆ', { x: 5.33, y: 1.98, w: 4.0, h: 0.24,
+      fontFace: KN, fontSize: 11, bold: true, color: C.good });
+    s.addText('Proposed', { x: 5.33, y: 2.2, w: 4.0, h: 0.24,
+      fontFace: EN, fontSize: 9, charSpacing: 1.5, color: C.good });
+    s.addText(`Rs. ${rs(carFee)} on a legitimate ticket — declared openly, shown as its own line, `
+            + 'GST paid on it, receipted.', {
+      x: 5.33, y: 2.44, w: 4.0, h: 0.6, fontFace: EN, fontSize: 11, color: C.ink,
+      lineSpacingMultiple: 1.15 });
+
+    /* What the visitor actually gets. The anti-fraud argument is the
+       department's; a citizen asked to pay needs their own reason. */
+    s.addText('ಈ ಶುಲ್ಕದಿಂದ ಪ್ರವಾಸಿಗರಿಗೆ ಸಿಗುವುದು  ·  WHAT THE VISITOR GETS FOR IT', {
+      x: 0.5, y: 3.28, w: 9.0, h: 0.26, fontFace: KN, fontSize: 11, bold: true, color: C.forest });
+
+    s.addText([
+      { text: 'ಖಚಿತ ಪ್ರವೇಶ — ಸ್ಥಳ ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ. ', options: { fontFace: KN, bold: true } },
+      { text: 'Guaranteed entry: nobody drives three hours up and is turned away.\n',
+        options: { fontFace: EN } },
+      { text: 'ಗೇಟ್‌ನಲ್ಲಿ ಸರತಿ ಇಲ್ಲ. ', options: { fontFace: KN, bold: true } },
+      { text: 'No queue at the barrier — scan and go.\n', options: { fontFace: EN } },
+      { text: 'ಉಚಿತ ದಿನಾಂಕ ಬದಲಾವಣೆ. ', options: { fontFace: KN, bold: true } },
+      { text: 'Plans change; the ticket moves, at no cost.\n', options: { fontFace: EN } },
+      { text: 'ತಾಣ ಮುಚ್ಚಿದರೆ ಪೂರ್ಣ ಮರುಪಾವತಿ. ', options: { fontFace: KN, bold: true } },
+      { text: 'Full refund if the hill closes — no forms.\n', options: { fontFace: EN } },
+      { text: 'ಆ್ಯಪ್ ಇಲ್ಲ, ಟಿಕೆಟ್ ಕಳೆದುಹೋಗದು, ಕನ್ನಡದಲ್ಲಿ ಸಹಾಯ. ', options: { fontFace: KN, bold: true } },
+      { text: 'No app to install, the ticket cannot be lost, and support is in the same chat.',
+        options: { fontFace: EN } },
+    ], { x: 0.62, y: 3.56, w: 8.8, h: 1.1, fontSize: 10.5, color: C.ink,
+      lineSpacingMultiple: 1.22 });
+
+    note(s, null, `Rs. ${rs(carFee)} is less than a cup of tea at the summit, and a fraction of `
+      + 'the fuel wasted driving back down after being refused. It is charged only to those who '
+      + 'choose to book ahead, is never folded into the entry fee, and costs the department '
+      + 'nothing.', { y: 4.72 });
+  }
+
+  /* ══════════════════ 10d · why the fee is legitimate ════════════════ */
+  {
+    const s = slide('ಕಾನೂನುಬದ್ಧತೆ', 'Legitimacy',
+      'ಈ ಶುಲ್ಕ ಏಕೆ ಸಮರ್ಥನೀಯ',
+      'A separately disclosed convenience fee is ordinary practice, not an innovation.');
+
+    /* Named without quoting amounts. The point is that the PRACTICE is
+       established and accepted, and a figure quoted wrongly for one of these
+       would be the only thing anyone remembers from the slide. */
+    table(s, ['Who charges one', 'What for'], [
+      [{ text: 'IRCTC', align: 'left' },
+       { text: 'A convenience fee on every online rail ticket, over and above the fare',
+         align: 'left' }],
+      [{ text: 'Tirumala Tirupati Devasthanams', align: 'left' },
+       { text: 'A service charge on online darshan and accommodation booking', align: 'left' }],
+      [{ text: 'KSRTC and state transport', align: 'left' },
+       { text: 'An online reservation charge above the ticket fare', align: 'left' }],
+      [{ text: 'BookMyShow and similar', align: 'left' },
+       { text: 'A convenience fee on each ticket booked', align: 'left' }],
+      [{ text: 'This proposal', align: 'left', bold: true, fill: C.goodSoft },
+       { text: `Rs. ${rs(carFee)} on a car ticket — same principle, shown as its own line`,
+         align: 'left', bold: true, fill: C.goodSoft }],
+    ], { y: 1.95, colW: [3.1, 5.9], size: 10.5, rowH: 0.36,
+      headKn: ['ಯಾರು ವಿಧಿಸುತ್ತಾರೆ', 'ಯಾವುದಕ್ಕಾಗಿ'] });
 
     cards(s, [
-      { kn: 'ಸ್ವಂತ ಪಿನ್', title: 'Own PIN per person',
-        body: 'Issued by the administrator, never chosen. Every scan is attributed by name.' },
-      { kn: 'ಒಂದು ಗೇಟ್ — ಒಂದು ಫೋನ್', title: 'One phone per gate',
-        body: 'A second phone cannot scan until it deliberately takes over, and the handover is '
-            + 'recorded.' },
-      { kn: 'ಒಬ್ಬರಿಗೆ ಒಂದೇ ಗೇಟ್', title: 'One gate per person',
-        body: 'Signing in at one checkpost ends that person\'s session everywhere else. A PIN '
-            + 'cannot be lent.' },
-    ], { y: 2.15, h: 2.0 });
+      { kn: 'ಪ್ರತ್ಯೇಕವಾಗಿ ತೋರಿಸಲಾಗಿದೆ', title: 'Never hidden',
+        body: 'Shown as its own line on the payment page, the ticket and the invoice. It is never '
+            + 'folded into the entry fee, and the entry fee is never marked up.' },
+      { kn: 'ಜಿಎಸ್‌ಟಿ ಪಾವತಿಸಲಾಗಿದೆ', title: 'Taxed properly',
+        body: `GST at ${gstPct}% is paid on this fee and on nothing else. The entry fee is a pure-`
+            + 'agent collection under Rule 33 and is not taxed as our revenue.' },
+      { kn: 'ಆಯ್ಕೆಯಾಗಿಯೇ ಉಳಿಯುತ್ತದೆ', title: 'Stays a choice',
+        body: 'If the department keeps a counter at the gate, anyone may still pay the entry fee '
+            + 'in cash and queue. The fee then buys convenience by choice — not a levy on access '
+            + 'to a public place.', fill: C.goodSoft },
+    ], { y: 3.5, h: 1.5 });
+
+    note(s, null, 'The third point is the one worth agreeing in writing with the department. It is '
+      + 'what makes this a service the public may choose, rather than a charge on entry.',
+      { y: 5.06 });
   }
 
-  /* ═══════════════════════════════════════════ 14 · capacity ═════════════ */
-
+  /* ═══════════════════════════════ 11 · customer flow ═════════════════ */
   {
-    const s = slide('ಜನದಟ್ಟಣೆ ನಿಯಂತ್ರಣ', 'Crowd control',
+    const s = slide('ಹರಿವು', 'Architecture', 'ಪ್ರವಾಸಿಗರ ಹರಿವು', 'The visitor, end to end.');
+
+    flow(s, [
+      { kn: 'ವಾಟ್ಸ್ಆ್ಯಪ್', en: 'Sends "hi" to the published number' },
+      { kn: 'ವಾಹನ ಸಂಖ್ಯೆ', en: 'Types the plate; type read from the RC record' },
+      { kn: 'ದಿನ + ಸಮಯ', en: 'Picks a date and slot, sees places left' },
+      { kn: 'ಪಾವತಿ', en: 'Pays on a hosted page; slot held meanwhile' },
+      { kn: 'ಟಿಕೆಟ್', en: 'Signed QR and receipt arrive in the chat' },
+    ], { y: 2.05, h: 1.15 });
+
+    s.addText('ಸರ್ಕಾರಿ ದಾಖಲೆ (ULIP / ವಾಹನ) — ವಾಹನದ ಪ್ರಕಾರ ಪರಿಶೀಲನೆಗೆ ಮಾತ್ರ', {
+      x: 0.5, y: 3.45, w: 9.0, h: 0.3, fontFace: KN, fontSize: 11, color: C.muted });
+    s.addText('The registration lookup is used only to decide the vehicle type, so the right fee '
+            + 'is charged without asking the visitor to classify their own vehicle. Owner name, '
+            + 'address, chassis and engine number are never stored.', {
+      x: 0.5, y: 3.72, w: 9.0, h: 0.6, fontFace: EN, fontSize: 10.5, color: C.muted,
+      lineSpacingMultiple: 1.15 });
+
+    note(s, null, 'Every step is a tap except the registration number, which only the visitor knows.',
+      { y: 4.5 });
+  }
+
+  /* ═══════════════════════════════ 12 · gate flow ═════════════════════ */
+  {
+    const s = slide('ಹರಿವು', 'Architecture', 'ಚೆಕ್‌ಪೋಸ್ಟ್ ಹರಿವು', 'The gate, end to end.');
+
+    flow(s, [
+      { kn: 'ಪಿನ್ ಪ್ರವೇಶ', en: 'Staff signs in with their own PIN at shift start' },
+      { kn: 'ಸ್ಕ್ಯಾನ್', en: 'Phone reads the QR from the visitor\'s screen' },
+      { kn: 'ಫೋನ್‌ನಲ್ಲೇ ಪರಿಶೀಲನೆ', en: 'Signature, plate, date and slot checked offline' },
+      { kn: 'ಸರ್ವರ್ ತಪಾಸಣೆ', en: 'Server asked only "already used?"' },
+      { kn: 'ತೀರ್ಪು', en: 'ALLOW or one of seven refusals, recorded' },
+    ], { y: 2.05, h: 1.15, color: C.gold });
+
+    cards(s, [
+      { kn: 'ನೆಟ್‌ವರ್ಕ್ ಇಲ್ಲದಿದ್ದರೆ', title: 'With no signal',
+        body: 'The forgery check still runs. The scan queues on the phone and reconciles when '
+            + 'signal returns — including any duplicate it could not see at the time.' },
+      { kn: 'ಪ್ರತಿ ಸ್ಕ್ಯಾನ್ ದಾಖಲು', title: 'Every scan recorded',
+        body: 'With the staff member, the checkpost, the device and the time. Refusals as '
+            + 'carefully as admissions.' },
+    ], { y: 3.45, h: 1.5 });
+  }
+
+  /* ═══════════════════════════════ 13 · money flow ════════════════════ */
+  {
+    const s = slide('ಹರಿವು', 'Architecture', 'ಹಣದ ಹರಿವು', 'Where the money goes.');
+
+    flow(s, [
+      { kn: 'ಪ್ರವಾಸಿ', en: `Pays Rs. ${rs(carEntry + carFee)} on the checkout page` },
+      { kn: 'ರೇಜರ್‌ಪೇ', en: 'Collects, deducts its charge, settles to our account' },
+      { kn: 'ಇಲಾಖೆಗೆ', en: `Rs. ${rs(carEntry)} entry fee, held as pure agent` },
+      { kn: 'ನಮ್ಮ ಶುಲ್ಕ', en: `Rs. ${rs(carFee)} service and convenience fee, GST inside it` },
+    ], { y: 2.05, h: 1.15, color: C.good });
+
+    s.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 3.42, w: 9.0, h: 1.0,
+      rectRadius: 0.05, fill: { color: C.goodSoft }, line: { color: C.good, width: 0.75 } });
+    s.addText('ಪ್ರವೇಶ ಶುಲ್ಕ ನಮ್ಮ ಆದಾಯವಲ್ಲ — ಸಿಜಿಎಸ್‌ಟಿ ನಿಯಮ 33ರ ಪ್ರಕಾರ ಶುದ್ಧ ಏಜೆಂಟ್ ಆಗಿ ಸಂಗ್ರಹ.', {
+      x: 0.68, y: 3.54, w: 8.6, h: 0.3, fontFace: KN, fontSize: 12, bold: true, color: C.forest });
+    s.addText('The entry fee is excluded from our taxable value as a pure agent under Rule 33 of '
+            + 'the CGST Rules, 2017. We pay GST on our service and convenience fee alone. Three separate lines on '
+            + 'every receipt, every report and every settlement.', {
+      x: 0.68, y: 3.84, w: 8.6, h: 0.5, fontFace: EN, fontSize: 10.5, color: C.ink,
+      lineSpacingMultiple: 1.15 });
+
+    note(s, null, `Settlement to the department: ${cfg.settlement_terms || 'weekly'}.`, { y: 4.58 });
+  }
+
+  /* ═══════════════════════════════ 14 · capacity ══════════════════════ */
+  {
+    const s = slide('ಜನದಟ್ಟಣೆ', 'Crowd control',
       'ದಿನಕ್ಕೆ ಎರಡು ಅವಧಿ, ಪ್ರತಿ ಪ್ರಕಾರಕ್ಕೂ ಮಿತಿ',
       'Two slots a day, with a limit for each vehicle type.');
 
     table(s, ['Vehicle type', 'Per slot', 'Slots', 'Per day'],
       Object.values(byCat).map((c) => [c.label, c.per_slot, c.slots, c.per_slot * c.slots])
-        .concat([['Total vehicles per day', '', '', perDay]]),
-      { y: 2.25, colW: [3.8, 1.7, 1.7, 1.7],
+        .concat([[{ text: 'Total vehicles per day', bold: true, align: 'left' }, '', '',
+                  { text: String(perDay), bold: true }]]),
+      { y: 2.15, colW: [3.9, 1.7, 1.7, 1.7],
         headKn: ['ವಾಹನ ಪ್ರಕಾರ', 'ಪ್ರತಿ ಅವಧಿ', 'ಅವಧಿಗಳು', 'ದಿನಕ್ಕೆ'] });
 
-    s.addText('ಒಂದು ವಾಹನ ದಿನಕ್ಕೆ ಒಮ್ಮೆ ಮಾತ್ರ. ಎಲ್ಲಾ ಮಿತಿಗಳನ್ನು ಇಲಾಖೆ ಬದಲಾಯಿಸಬಹುದು.', {
-      x: 0.55, y: 4.55, w: 8.9, h: 0.3, fontFace: KN_FONT, fontSize: 11.5, color: C.muted });
-    s.addText('One vehicle enters once per day. Every limit is configurable by the department, '
-            + 'without a software change.', {
-      x: 0.55, y: 4.82, w: 8.9, h: 0.3, fontFace: EN_FONT, fontSize: 10.5, color: C.muted });
+    note(s, 'ಒಂದು ವಾಹನ ದಿನಕ್ಕೆ ಒಮ್ಮೆ ಮಾತ್ರ. ಎಲ್ಲಾ ಮಿತಿಗಳನ್ನು ಇಲಾಖೆ ಬದಲಾಯಿಸಬಹುದು.',
+      'One vehicle enters once per day. Every limit is configurable by the department, without a '
+      + 'software change.', { y: 4.5 });
   }
 
-  /* ═══════════════════════════════════════════ 15 · the money ════════════ */
-
-  {
-    const s = slide('ಹಣಕಾಸು', 'The money',
-      'ಪ್ರವೇಶ ಶುಲ್ಕ ಪೂರ್ತಿ ಇಲಾಖೆಗೆ',
-      'The department collects the entry fee in full.');
-
-    table(s, ['Vehicle type', 'Entry fee', 'Booking fee', 'Visitor pays'],
-      pricing.map((p) => [
-        p.label, `Rs. ${rs(p.entry_paise)}`, `Rs. ${rs(p.platform_paise)}`,
-        `Rs. ${rs(p.entry_paise + p.platform_paise)}`,
-      ]),
-      { y: 2.2, colW: [3.5, 1.8, 1.8, 1.8],
-        headKn: ['ವಾಹನ ಪ್ರಕಾರ', 'ಪ್ರವೇಶ ಶುಲ್ಕ', 'ಬುಕಿಂಗ್ ಶುಲ್ಕ', 'ಒಟ್ಟು'] });
-
-    s.addText('ಪ್ರವೇಶ ಶುಲ್ಕವನ್ನು ಇಲಾಖೆಯ ಪರವಾಗಿ ಸಂಗ್ರಹಿಸಲಾಗುತ್ತದೆ — ಅದು ನಮ್ಮ ಆದಾಯವಲ್ಲ.', {
-      x: 0.55, y: 4.15, w: 8.9, h: 0.3, fontFace: KN_FONT, fontSize: 12, bold: true, color: C.forest });
-    s.addText(`The entry fee is collected as a pure agent under Rule 33 of the CGST Rules and is `
-            + `not ServerPe revenue. The booking fee is ${feePct}% of the entry fee and is paid by `
-            + 'the visitor.', {
-      x: 0.55, y: 4.45, w: 8.9, h: 0.5, fontFace: EN_FONT, fontSize: 11, color: C.muted });
-  }
-
-  /* ═══════════════════════════════════════════ 16 · commercials ══════════ */
-
-  {
-    const s = slide('ವಾಣಿಜ್ಯ ಷರತ್ತುಗಳು', 'Commercial terms',
-      'ಇಲಾಖೆಗೆ ಒಂದೇ ಶುಲ್ಕ',
-      'One charge to the department, and nothing else.');
-
-    table(s, ['Item', 'Charge', 'Paid by'], [
-      ['Set-up and installation', 'Nil', '—'],
-      ['Software licence', 'Nil', '—'],
-      ['Per-ticket booking fee', `${feePct}% of entry fee`, 'Visitor'],
-      ['Annual maintenance, per gate', `Rs. ${amcRs}`, 'Department'],
-      ['Payment gateway and messaging', 'Absorbed by us', '—'],
-    ], { y: 2.2, colW: [4.3, 2.6, 2.0],
-      headKn: ['ವಿವರ', 'ಶುಲ್ಕ', 'ಪಾವತಿ'] });
-
-    s.addText(`ವಾರ್ಷಿಕ ನಿರ್ವಹಣಾ ಶುಲ್ಕ ದಿನಕ್ಕೆ ಸುಮಾರು ${breakEven} ನಕಲಿ ಟಿಕೆಟ್ ತಡೆದರೆ ವಸೂಲಾಗುತ್ತದೆ.`, {
-      x: 0.55, y: 4.3, w: 8.9, h: 0.3,
-      fontFace: KN_FONT, fontSize: 12.5, bold: true, color: C.forest });
-    s.addText(`The maintenance charge is recovered by stopping about ${breakEven} altered car `
-            + `entries a day. Term: ${cfg.contract_term || '1 year, renewable'}.`, {
-      x: 0.55, y: 4.6, w: 8.9, h: 0.4, fontFace: EN_FONT, fontSize: 11, color: C.muted });
-  }
-
-  /* ═══════════════════════════════════════════ 17 · closures ═════════════ */
-
-  {
-    const s = slide('ರದ್ದತಿ', 'When the hill must close',
-      'ಯಾರೂ ಮುಚ್ಚಿದ ಗೇಟ್‌ಗೆ ಪ್ರಯಾಣಿಸಬಾರದು',
-      'Nobody drives three hours to a shut barrier.');
-
-    bullets(s, [
-      ['ಅಧಿಕಾರಿ ದಿನಾಂಕ ರದ್ದುಪಡಿಸುತ್ತಾರೆ, ಕಾರಣ ಬರೆಯುತ್ತಾರೆ.',
-       'An officer closes the date — or one slot of it — and writes the reason in plain words.'],
-      ['ಮೊದಲು ಎಷ್ಟು ಟಿಕೆಟ್ ಪರಿಣಾಮ ಎಂದು ತೋರಿಸುತ್ತದೆ.',
-       'The panel states exactly what will happen before anything is done.'],
-      ['ಎಲ್ಲರಿಗೂ ಸಂದೇಶ, ಬೇರೆ ದಿನಕ್ಕೆ ಉಚಿತ ಬದಲಾವಣೆ.',
-       'Every affected visitor is messaged and offered another day at no extra cost.'],
-      ['ಬೇಡವೆಂದರೆ ಪೂರ್ಣ ಮರುಪಾವತಿ.',
-       `A full refund within ${cfg.refund_working_days || '5-7'} working days for anyone who cannot come.`],
-    ], { y: 2.05, size: 13 });
-  }
-
-  /* ═══════════════════════════════════════════ 18 · oversight ════════════ */
-
+  /* ═════════════════════════════ 15 · oversight ═══════════════════════ */
   {
     const s = slide('ಮೇಲ್ವಿಚಾರಣೆ', 'Oversight',
       'ಇಲಾಖೆಗೆ ಎಲ್ಲವೂ ನೇರವಾಗಿ ಕಾಣುತ್ತದೆ',
@@ -613,38 +741,434 @@ const EN_LIGHT = 'Calibri Light';
 
     cards(s, [
       { kn: 'ಈ ಕ್ಷಣದ ಸ್ಥಿತಿ', title: 'Live position',
-        body: 'Vehicles entered, amount collected, how full each slot is, and every attempt the '
-            + 'gate refused today.' },
+        body: 'Vehicles entered, amount collected, how full each slot is, every refusal today.' },
       { kn: 'ದೈನಂದಿನ · ಸಾಪ್ತಾಹಿಕ · ಮಾಸಿಕ', title: 'Full reports',
-        body: 'Daily, weekly and monthly reports with every ticket and every scan, downloadable '
-            + 'as PDF or spreadsheet at any moment.' },
-      { kn: 'ಲೆಕ್ಕಪರಿಶೋಧನೆ', title: 'Full audit trail',
-        body: 'Every action by every officer, with time and account. Every scan with the staff '
-            + 'member who made it.' },
-    ], { y: 2.15, h: 2.05 });
+        body: 'Every ticket and every scan, as PDF or spreadsheet, downloadable at any moment.' },
+      { kn: 'ಲೆಕ್ಕಪರಿಶೋಧನೆ', title: 'Audit trail',
+        body: 'Every action by every officer, with time and account.' },
+    ], { y: 2.1, h: 2.0 });
   }
 
-  /* ═══════════════════════════════════════════ 19 · privacy ══════════════ */
+  /* ══════════════════════════════════════════════════════════════════════
+     THE MONEY SECTION
+     ══════════════════════════════════════════════════════════════════════ */
 
   {
-    const s = slide('ಮಾಹಿತಿ ಸುರಕ್ಷತೆ', 'Data protection',
-      'ಅಗತ್ಯವಿರುವಷ್ಟೇ ಮಾಹಿತಿ ಸಂಗ್ರಹ',
-      'The system holds the least it can.');
-
-    table(s, ['Stored', 'Never stored'], [
-      ['Mobile number', 'Owner name'],
-      ['Vehicle registration number', 'Owner address'],
-      ['Vehicle type, make and model', 'Chassis number'],
-      ['Ticket, payment and scan records', 'Engine number'],
-    ], { y: 2.25, colW: [4.45, 4.45], headKn: ['ಸಂಗ್ರಹಿಸಲಾಗುತ್ತದೆ', 'ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ'] });
-
-    s.antiAlias = true;
-    s.addText('ಪ್ರವಾಸಿಗರ ಒಪ್ಪಿಗೆ ಪಡೆದ ನಂತರವೇ ಪರಿಶೀಲನೆ. ನಾವು ಎಂದಿಗೂ ಕೇಳದೆ ಸಂದೇಶ ಕಳುಹಿಸುವುದಿಲ್ಲ.', {
-      x: 0.55, y: 4.5, w: 8.9, h: 0.4, fontFace: KN_FONT, fontSize: 11.5, color: C.muted });
+    const s = pptx.addSlide();
+    s.background = { color: C.forest };
+    s.addText('ಹೂಡಿಕೆ, ವೆಚ್ಚ ಮತ್ತು ಆದಾಯ', {
+      x: 0.7, y: 2.15, w: 8.6, h: 0.7, fontFace: KN, fontSize: 32, bold: true, color: C.white });
+    s.addText('Investment, expenditure and revenue', {
+      x: 0.7, y: 2.88, w: 8.6, h: 0.44, fontFace: EL, fontSize: 20, color: C.pale });
+    s.addText('Stated in full, before being asked.', {
+      x: 0.7, y: 3.45, w: 8.6, h: 0.36, fontFace: EN, fontSize: 13, italic: true, color: C.light });
   }
 
-  /* ═══════════════════════════════════════════ 20 · the ask ══════════════ */
+  /* ═════════════════════════ 17 · what has been put in ════════════════ */
+  {
+    const s = slide('ಹೂಡಿಕೆ', 'Investment',
+      'ಈ ವ್ಯವಸ್ಥೆ ನಿರ್ಮಿಸಲು ತಗುಲಿದ ವೆಚ್ಚ',
+      'What it took to build and what it takes to keep running.');
 
+    const money = (min, max) => (min === max
+      ? (min === 0 ? '—' : `Rs. ${inr(min)}`)
+      : `Rs. ${inr(min)} – ${inr(max)}`);
+    const KIND = { one_time: 'One-time', annual: 'Every year', monthly: 'Monthly' };
+    const STATUS = { done: 'Done', in_place: 'In place', planned: 'Planned', needed: 'Needed' };
+
+    /* Six columns, because "what it costs" and "what has been put in" are
+       different questions and the second is the one that shows commitment. A
+       laptop already owned is a real expense with no fresh investment behind
+       it; indemnity cover is a real expense with nothing invested yet. */
+    table(s, ['Item', 'Description', 'Expense range', 'Invested', 'Type', 'Status'],
+      inv.rows.slice(0, 11).map((r) => [
+        { text: (r.item_kn ? `${r.item_kn}\n` : '') + r.item, align: 'left' },
+        { text: r.description.length > 52 ? r.description.slice(0, 50) + '…' : r.description,
+          align: 'left' },
+        money(r.expense_min, r.expense_max),
+        { text: money(r.invested_min, r.invested_max),
+          color: r.invested_max ? C.ink : C.muted },
+        { text: KIND[r.kind] || r.kind, align: 'left' },
+        { text: STATUS[r.status] || r.status, align: 'left',
+          color: r.status === 'needed' ? C.alarm : r.status === 'planned' ? C.gold : C.good },
+      ]),
+      { y: 1.9, colW: [1.6, 2.75, 1.5, 1.35, 0.95, 0.85], size: 8.5, rowH: 0.25,
+        headKn: ['ವಿವರ', 'ವಿವರಣೆ', 'ವೆಚ್ಚ', 'ಹೂಡಿಕೆ', 'ಪ್ರಕಾರ', 'ಸ್ಥಿತಿ'] });
+
+    note(s, `ವೆಚ್ಚ: ಒಂದು ಬಾರಿ Rs. ${inr(inv.one_time.min)}–${inr(inv.one_time.max)}, `
+      + `ವಾರ್ಷಿಕ Rs. ${inr(inv.annual.min)}–${inr(inv.annual.max)}.  `
+      + `ಹೂಡಿಕೆ: ವಾರ್ಷಿಕ Rs. ${inr(inv.invested_annual.min)}–${inr(inv.invested_annual.max)}.`,
+      'Expense is what these things cost. Invested is what has actually been committed to this '
+      + 'project — lower, because the laptop was already owned and the server, tooling and office '
+      + 'are shared with the first product. The remaining items are on the next slide.',
+      { y: 4.5 });
+  }
+
+  /* ═══════════════════════ 18 · what is still needed ══════════════════ */
+  {
+    const s = slide('ಇನ್ನೂ ಬಾಕಿ', 'Still to be put in place',
+      'ಸರ್ಕಾರಿ ಒಪ್ಪಂದಕ್ಕೂ ಮೊದಲು ಮಾಡಬೇಕಾದದ್ದು',
+      'What we would put in place before signing with a department.');
+
+    const money = (min, max) => (min === max ? `Rs. ${inr(max)}` : `Rs. ${inr(min)} – ${inr(max)}`);
+    table(s, ['Item', 'Why it matters', 'Expense', 'Type'],
+      inv.needed.map((r) => [
+        { text: (r.item_kn ? `${r.item_kn}\n` : '') + r.item, align: 'left' },
+        { text: r.note || r.description, align: 'left' },
+        money(r.expense_min, r.expense_max),
+        { text: r.kind === 'annual' ? 'Every year' : 'One-time', align: 'left' },
+      ]),
+      { y: 2.0, colW: [2.2, 4.3, 1.55, 0.95], size: 10, rowH: 0.42,
+        headKn: ['ವಿವರ', 'ಏಕೆ ಬೇಕು', 'ವೆಚ್ಚ', 'ಪ್ರಕಾರ'] });
+
+    note(s, 'ಇವು ಇಲಾಖೆಯ ವೆಚ್ಚವಲ್ಲ — ನಮ್ಮದೇ.',
+      'These are our costs, not the department\'s. They are listed because a vendor who has not '
+      + 'thought about backups or indemnity before a government contract is a vendor worth '
+      + 'questioning.', { y: 4.35 });
+  }
+
+  /* ══════════════════════ 19 · what one ticket earns ══════════════════ */
+  {
+    const s = slide('ಒಂದು ಟಿಕೆಟ್', 'What one ticket earns',
+      `Rs. ${rs(carEntry)} ಟಿಕೆಟ್‌ನ ಸಂಪೂರ್ಣ ಲೆಕ್ಕ`,
+      `The full arithmetic on a Rs. ${rs(carEntry)} car ticket.`);
+
+    /* Both settlement models in one table. Quoting one figure here and a
+       different one on the settlement slide is exactly the inconsistency that
+       makes an officer stop trusting the arithmetic. */
+    const A = settle.direct;
+    const B = settle.split;
+
+    table(s, ['Line', 'Collect & transfer', 'Route split', 'Whose'], [
+      [{ text: 'Collected from the visitor', align: 'left' },
+       { text: `Rs. ${rs(A.collected)}`, bold: true },
+       { text: `Rs. ${rs(B.collected)}`, bold: true }, { text: '', align: 'left' }],
+      [{ text: 'Entry fee to the department', align: 'left' },
+       { text: `Rs. ${rs(A.entry_paise)}` }, { text: `Rs. ${rs(B.entry_paise)}` },
+       { text: 'Department', align: 'left', color: C.forest }],
+      [{ text: 'Our gross service and convenience fee', align: 'left' },
+       { text: `Rs. ${rs(A.platform_paise)}` }, { text: `Rs. ${rs(B.platform_paise)}` },
+       { text: 'Ours', align: 'left' }],
+      [{ text: `Less gateway ${A.gateway_percent}% + GST = ${A.gateway_effective}% of Rs. ${rs(A.collected)}`,
+        align: 'left' },
+       { text: `− Rs. ${rs(A.gateway_paise)}`, color: C.alarm },
+       { text: `− Rs. ${rs(B.gateway_paise)}`, color: C.alarm },
+       { text: 'Razorpay', align: 'left' }],
+      [{ text: `Less Route transfer ${B.transfer_percent}% + GST (charged on the transaction)`,
+        align: 'left' },
+       { text: '—' },
+       { text: `− Rs. ${rs(B.transfer_paise)}`, color: C.alarm },
+       { text: 'Razorpay', align: 'left' }],
+      [{ text: 'Cash retained', align: 'left', bold: true },
+       { text: `Rs. ${rs(A.cash_retained_paise)}`, bold: true },
+       { text: `Rs. ${rs(B.cash_retained_paise)}`, bold: true },
+       { text: '', align: 'left' }],
+      [{ text: 'Less GST on our fee, net of input credit', align: 'left' },
+       { text: `− Rs. ${rs(A.gst_payable_paise)}`, color: C.alarm },
+       { text: `− Rs. ${rs(B.gst_payable_paise)}`, color: C.alarm },
+       { text: 'Government', align: 'left' }],
+      [{ text: 'What the business actually keeps', align: 'left', bold: true, fill: C.goodSoft },
+       { text: `Rs. ${rs(A.net_profit_paise)}`, bold: true, fill: C.goodSoft, color: C.good },
+       { text: `Rs. ${rs(B.net_profit_paise)}`, bold: true, fill: C.goodSoft, color: C.good },
+       { text: '', align: 'left', fill: C.goodSoft }],
+    ], { y: 1.9, colW: [4.0, 1.75, 1.75, 1.5], size: 10, rowH: 0.3,
+      headKn: ['ವಿವರ', 'ವರ್ಗಾವಣೆ', 'ನೇರ ವಿಭಜನೆ', 'ಯಾರಿಗೆ'] });
+
+    note(s, 'ಜಿಎಸ್‌ಟಿ ಲಾಭವಲ್ಲ — ಅದು ಸರ್ಕಾರಕ್ಕೆ ಪಾವತಿಸಬೇಕಾದದ್ದು.',
+      `It is tempting to call Rs. ${rs(A.cash_retained_paise)} the profit. It is not — the GST `
+      + 'inside our own fee is collected, not earned, and is remitted. The last line is the honest '
+      + `figure. Splitting at the gateway costs us Rs. ${rs(settle.cost_of_split_paise)} a ticket `
+      + 'more, and we are proposing it anyway.', { y: 4.4 });
+
+    rateNote(s);
+  }
+
+  /* ═══════════════════════ 20 · what a year looks like ════════════════ */
+  {
+    const s = slide('ವಾರ್ಷಿಕ', 'A year at this site',
+      'ಎಷ್ಟು ಭರ್ತಿಯಾದರೆ ಎಷ್ಟು',
+      `At ${inr(perDay)} vehicles a day capacity, over 300 operating days.`);
+
+    table(s, ['If the site runs at', 'Tickets a year', 'To the department', 'Our net'],
+      yearly.scenarios.map((x) => [
+        { text: `${x.occupancy}% of capacity`, align: 'left',
+          bold: x.occupancy === 50 },
+        inr(x.tickets),
+        { text: lakh(x.department_paise), color: C.forest, bold: true },
+        { text: lakh(x.net_profit_paise), bold: x.occupancy === 50 },
+      ]),
+      { y: 2.05, colW: [2.6, 2.1, 2.3, 2.0], size: 11.5, rowH: 0.4,
+        headKn: ['ಭರ್ತಿ ಪ್ರಮಾಣ', 'ವಾರ್ಷಿಕ ಟಿಕೆಟ್', 'ಇಲಾಖೆಗೆ', 'ನಮ್ಮ ನಿವ್ವಳ'] });
+
+    note(s, 'ಪೂರ್ಣ ಸಾಮರ್ಥ್ಯವನ್ನು ಊಹಿಸಿಲ್ಲ — ಯಾವ ಬೆಟ್ಟವೂ ಪ್ರತಿದಿನ ತುಂಬುವುದಿಲ್ಲ.',
+      'Deliberately shown as a range. No hill runs full every day, and a projection that assumes '
+      + 'it does invites the one question you do not want. Even at a quarter full, the department '
+      + `collects ${lakh(yearly.scenarios[0].department_paise)} a year — all of it recorded `
+      + 'against a vehicle, a date and a slot.', { y: 4.05 });
+
+    rateNote(s);
+  }
+
+  /* ══════════════════════════ 21 · revenue proposals ══════════════════ */
+  {
+    const s = slide('ಆದಾಯ ಪ್ರಸ್ತಾಪಗಳು', 'Revenue proposals',
+      'ಇಲಾಖೆ ಆಯ್ಕೆ ಮಾಡಬಹುದಾದ ಮಾದರಿಗಳು',
+      'What we propose, and what else is possible.');
+
+    const primary = models.filter((m) => m.is_primary);
+    const rest = models.filter((m) => !m.is_primary);
+
+    table(s, ['Proposal', 'Department pays', 'Visitor pays'],
+      primary.map((m) => [
+        { text: (m.title_kn ? `${m.title_kn}\n` : '') + m.title, align: 'left', bold: true },
+        { text: m.department_pays, align: 'left' },
+        { text: m.visitor_pays, align: 'left' },
+      ]),
+      { y: 1.95, colW: [3.2, 3.0, 2.8], size: 11, rowH: 0.4,
+        headKn: ['ಪ್ರಸ್ತಾಪ', 'ಇಲಾಖೆ ಪಾವತಿ', 'ಪ್ರವಾಸಿ ಪಾವತಿ'] });
+
+    s.addText('ಮುಂದಿನ ಸಾಧ್ಯತೆಗಳು  ·  FURTHER POSSIBILITIES', {
+      x: 0.5, y: 3.02, w: 9.0, h: 0.28, fontFace: KN, fontSize: 11, bold: true, color: C.forest });
+
+    cards(s, rest.slice(0, 4).map((m) => ({
+      kn: m.title_kn || undefined,
+      title: m.title,
+      body: m.summary.length > 130 ? m.summary.slice(0, 128) + '…' : m.summary,
+    })), { y: 3.34, h: 1.5 });
+  }
+
+  /* ═════════════════════════════ 22 · AMC ranges ══════════════════════ */
+  {
+    const s = slide('ವಾರ್ಷಿಕ ನಿರ್ವಹಣಾ ಶುಲ್ಕ', 'Annual maintenance charge',
+      'ಎಲ್ಲಾ ಪ್ರಸ್ತಾಪಗಳಿಗೂ ಸಾಮಾನ್ಯ',
+      'Common to every proposal above.');
+
+    table(s, ['What', 'Charge per year', 'What it covers'],
+      amc.tiers.map((t) => [
+        { text: t.label, align: 'left' },
+        { text: `Rs. ${inr(t.amount)}`, bold: true },
+        { text: t.note, align: 'left' },
+      ]),
+      { y: 1.95, colW: [2.9, 2.0, 4.1], size: 10.5, rowH: 0.42,
+        headKn: ['ಏನು', 'ವಾರ್ಷಿಕ ಶುಲ್ಕ', 'ಏನು ಒಳಗೊಂಡಿದೆ'] });
+
+    s.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 3.42, w: 9.0, h: 1.05,
+      rectRadius: 0.05, fill: { color: C.paper }, line: { color: C.line, width: 0.75 } });
+    s.addText('ಶುಲ್ಕ ಹೇಗೆ ನಿಗದಿಯಾಗಿದೆ  ·  HOW THE CHARGE IS SET', {
+      x: 0.68, y: 3.52, w: 8.6, h: 0.26, fontFace: KN, fontSize: 11, bold: true, color: C.forest });
+    s.addText(`Our own running cost is Rs. ${inr(inv.annual.min)} – ${inr(inv.annual.max)} a year. `
+            + `The proposed Rs. ${inr(amc.proposed)} per gate covers the support commitment during `
+            + 'gate hours, updates and training — it does not by itself cover the platform, which '
+            + 'the visitor service and convenience fee funds. Range offered: '
+            + `Rs. ${inr(amc.min)} – ${inr(amc.max)} depending on gates and hours.`, {
+      x: 0.68, y: 3.8, w: 8.6, h: 0.6, fontFace: EN, fontSize: 10.5, color: C.ink,
+      lineSpacingMultiple: 1.15 });
+
+    note(s, null, `Term: ${cfg.contract_term}. Data belongs to the department and is exportable at `
+      + 'any time; no exit charge.', { y: 4.62 });
+  }
+
+  /* ═══════════════ 23 · how the department's money reaches it ═════════ */
+  {
+    const s = slide('ಇತ್ಯರ್ಥ', 'Settlement',
+      'ಇಲಾಖೆಯ ಹಣ ಇಲಾಖೆಗೆ ಹೇಗೆ ತಲುಪುತ್ತದೆ',
+      'How the department\'s money reaches the department.');
+
+    /* NOT presented as a differentiator. The existing web vendor already remits
+       the full entry fee with nothing deducted, and claiming this as an
+       advantage in front of an officer who knows that would cost more
+       credibility than the point is worth.
+
+       So it is framed as continuity instead: nothing about the department's
+       money changes, which removes the perceived risk of switching. The
+       argument for switching is made at the gate, not here. */
+    s.addText('ಇಲಾಖೆಯ ಹಣದ ವಿಷಯದಲ್ಲಿ ಏನೂ ಬದಲಾಗುವುದಿಲ್ಲ.', {
+      x: 0.5, y: 1.86, w: 9.0, h: 0.3, fontFace: KN, fontSize: 15, bold: true, color: C.forest });
+    s.addText('Nothing about the department\'s money changes. The full entry fee reaches the '
+            + 'Tourism Department, with nothing deducted — exactly as it does today.', {
+      x: 0.5, y: 2.16, w: 9.0, h: 0.34, fontFace: EL, fontSize: 14, bold: true, color: C.ink });
+
+    table(s, ['', 'Option 1 — collect and transfer', 'Option 2 — split at the gateway'], [
+      [{ text: 'How it works', align: 'left' },
+       { text: `Razorpay settles the whole Rs. ${rs(settle.direct.collected)} to our account. `
+             + `We transfer the department's share ${(cfg.settlement_terms || 'weekly').toLowerCase()}.`,
+         align: 'left' },
+       { text: `Razorpay Route splits each payment as it is made. Rs. ${rs(settle.split.entry_paise)} `
+             + 'goes straight to the department; only our fee reaches us.',
+         align: 'left', fill: C.goodSoft }],
+
+      [{ text: 'Whose account holds it', align: 'left' },
+       { text: 'Ours, until the transfer', align: 'left' },
+       { text: 'Never ours at all', align: 'left', bold: true, fill: C.goodSoft }],
+
+      [{ text: 'Razorpay charges', align: 'left' },
+       { text: `${settle.direct.gateway_percent}% + GST`, align: 'left' },
+       { text: `${settle.split.gateway_percent}% + GST, plus `
+             + `${settle.split.transfer_percent}% + GST to route the split`,
+         align: 'left', fill: C.goodSoft }],
+
+      [{ text: 'Costs us, per ticket', align: 'left' },
+       { text: `Rs. ${rs(settle.direct.charges_paise)}`, align: 'left' },
+       { text: `Rs. ${rs(settle.split.charges_paise)}  `
+             + `(Rs. ${rs(settle.cost_of_split_paise)} more)`, align: 'left', fill: C.goodSoft }],
+
+      [{ text: 'Reconciliation', align: 'left' },
+       { text: 'A weekly statement to agree', align: 'left' },
+       { text: 'Nothing to agree — already split', align: 'left', bold: true, fill: C.goodSoft }],
+    ], { y: 2.58, colW: [1.9, 3.5, 3.6], size: 10, rowH: 0.42,
+      headKn: ['', 'ಆಯ್ಕೆ 1 — ವರ್ಗಾವಣೆ', 'ಆಯ್ಕೆ 2 — ನೇರ ವಿಭಜನೆ'] });
+
+    s.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 4.42, w: 9.0, h: 0.72,
+      rectRadius: 0.04, fill: { color: C.goodSoft }, line: { color: C.good, width: 0.75 } });
+    s.addText(`ಒಟ್ಟು ${feePct}% ಸೇವಾ ಶುಲ್ಕ ಸಂಗ್ರಹಿಸಲಾಗುತ್ತದೆ; ಅದರಿಂದಲೇ ಗೇಟ್‌ವೇ ಮತ್ತು ವರ್ಗಾವಣೆ ಶುಲ್ಕ ಕಳೆಯಲಾಗುತ್ತದೆ.`, {
+      x: 0.66, y: 4.5, w: 8.7, h: 0.26, fontFace: KN, fontSize: 11.5, bold: true, color: C.forest });
+    s.addText(`A gross service and convenience fee of ${feePct}% of the entry fee is collected `
+            + 'from the visitor, from which the applicable payment gateway and Route transfer '
+            + 'charges are met. The department receives the entry fee in full under either option. '
+            + 'We recommend option 2 and absorb the additional '
+            + `Rs. ${rs(settle.cost_of_split_paise)} per ticket ourselves. This matches the `
+            + 'department\'s present arrangement — it is stated so that switching carries no '
+            + 'financial change at all, not as a point of difference.', {
+      x: 0.66, y: 4.76, w: 8.7, h: 0.4, fontFace: EN, fontSize: 10, color: C.ink,
+      lineSpacingMultiple: 1.1 });
+
+    rateNote(s);
+  }
+
+  /* ══════════════ 23b · the one thing still being confirmed ══════════ */
+  {
+    const s = slide('ದೃಢೀಕರಣ ಬಾಕಿ', 'Being confirmed',
+      'ಇನ್ನೂ ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಬೇಕಾದ ಒಂದು ವಿಷಯ',
+      'One matter we are still confirming — stated here, not left to be discovered.');
+
+    s.addText('ಗೇಟ್‌ವೇ ಶುಲ್ಕ ಯಾವ ಖಾತೆಯಿಂದ ಕಳೆಯಲಾಗುತ್ತದೆ ಎಂಬುದನ್ನು ಲಿಖಿತವಾಗಿ ಖಚಿತಪಡಿಸಿಕೊಳ್ಳುತ್ತಿದ್ದೇವೆ.', {
+      x: 0.5, y: 1.95, w: 9.0, h: 0.32, fontFace: KN, fontSize: 13.5, bold: true, color: C.ink });
+    s.addText('Whether the gateway and Route transfer charges are deducted from the primary '
+            + 'account or apportioned against the linked account is a configuration set with the '
+            + 'payment gateway. We are confirming it in writing before any agreement is signed.', {
+      x: 0.5, y: 2.32, w: 9.0, h: 0.62, fontFace: EN, fontSize: 12.5, color: C.muted,
+      lineSpacingMultiple: 1.25 });
+
+    cards(s, [
+      { kn: 'ಬದಲಾಗದ್ದು', title: 'What does not change',
+        body: 'The department receives the entry fee in full, to the rupee, under either '
+            + `configuration. The ${feePct}% service fee is ours, and the charges come out of it.`,
+        fill: C.goodSoft },
+      { kn: 'ಗೇಟ್‌ವೇ ಒಪ್ಪದಿದ್ದರೆ', title: 'If the gateway will not allow it',
+        body: 'We will say so before signing rather than after, and propose the alternative '
+            + 'arrangement instead.', fill: C.goodSoft },
+    ], { y: 3.1, h: 1.4 });
+
+    note(s, null, 'A vendor who lists what they have not yet confirmed is a vendor whose other '
+      + 'statements can be relied on.', { y: 4.64 });
+  }
+
+  /* ═══════════════════ 24 · what happens if I am not there ═══════════ */
+  {
+    const s = slide('ನಿರಂತರತೆ', 'Continuity',
+      'ಒಬ್ಬರೇ ನಡೆಸುವ ಸಂಸ್ಥೆಯ ನಿಜವಾದ ಅಪಾಯ',
+      'The real risk of a one-person vendor, and what answers it.');
+
+    s.addText('ಈ ಪ್ರಶ್ನೆಯನ್ನು ಕೇಳುವ ಮೊದಲೇ ನಾವೇ ಎತ್ತುತ್ತಿದ್ದೇವೆ.', {
+      x: 0.5, y: 1.9, w: 9.0, h: 0.3, fontFace: KN, fontSize: 12.5, bold: true, color: C.alarm });
+    s.addText('Raised here rather than left for the department to worry about privately.', {
+      x: 0.5, y: 2.18, w: 9.0, h: 0.3, fontFace: EN, fontSize: 11.5, color: C.muted });
+
+    table(s, ['The risk', 'What answers it'], [
+      [{ text: 'The proprietor is unavailable for a period', align: 'left' },
+       { text: 'A documented handover pack and an escrowed copy of the source code, held with the '
+             + 'department or a nominee.', align: 'left' }],
+      [{ text: 'The engagement ends', align: 'left' },
+       { text: 'Full data export at any time, in open formats. No exit charge, no lock-in, no '
+             + 'proprietary file nobody else can read.', align: 'left' }],
+      [{ text: 'The system stops working at the gate', align: 'left' },
+       { text: 'The old paper process still works. The gate is never left with nothing — and the '
+             + 'signature check works with no network, which is the commonest failure.',
+         align: 'left' }],
+      [{ text: 'Support is needed outside gate hours', align: 'left' },
+       { text: cfg.sla_response || 'Within 2 hours during gate hours, same day otherwise.',
+         align: 'left' }],
+    ], { y: 2.6, colW: [3.2, 5.8], size: 10.5, rowH: 0.5,
+      headKn: ['ಅಪಾಯ', 'ಪರಿಹಾರ'] });
+  }
+
+  /* ═══════════════════════════ 25 · rollout ═══════════════════════════ */
+  {
+    const s = slide('ಜಾರಿ ಯೋಜನೆ', 'Rollout', 'ಅನುಮೋದನೆಯಿಂದ ಪೂರ್ಣ ಕಾರ್ಯಾಚರಣೆಗೆ',
+      'From approval to a working gate.');
+
+    flow(s, [
+      { kn: 'ವಾರ 1', en: 'Prices and capacities confirmed; staff and officers named' },
+      { kn: 'ವಾರ 1', en: 'PINs issued, gate phones registered, staff trained on site' },
+      { kn: 'ವಾರ 2', en: 'Soft launch — one slot, both systems side by side' },
+      { kn: 'ವಾರ 3', en: 'Full operation; paper kept as fallback' },
+      { kn: 'ತಿಂಗಳು 3', en: 'Review against agreed measures' },
+    ], { y: 2.1, h: 1.25 });
+
+    s.addText('ಮೂರು ತಿಂಗಳ ನಂತರ ಇಲಾಖೆ ಪರಿಶೀಲಿಸಬಹುದಾದ ಅಳತೆಗಳು  ·  WHAT TO JUDGE IT ON', {
+      x: 0.5, y: 3.6, w: 9.0, h: 0.28, fontFace: KN, fontSize: 11, bold: true, color: C.forest });
+    s.addText('Tickets sold against the previous season   ·   altered or duplicated tickets '
+            + 'refused at the gate   ·   average time a vehicle spends at the barrier   ·   '
+            + 'collections reconciled to the last rupee   ·   complaints received', {
+      x: 0.5, y: 3.9, w: 9.0, h: 0.6, fontFace: EN, fontSize: 11, color: C.ink,
+      lineSpacingMultiple: 1.2 });
+
+    note(s, null, 'If it fails on those measures, the department stops it and owes nothing '
+      + 'beyond the maintenance charge for the period used.', { y: 4.6 });
+  }
+
+  /* ══════════════════ 25b · what we need from the department ═════════ */
+  {
+    const s = pptx.addSlide();
+    s.background = { color: C.forest };
+    s.addText('ಇಲಾಖೆಯಿಂದ ಬೇಕಾದ ನಿರ್ಧಾರಗಳು ಮತ್ತು ಮಾಹಿತಿ', {
+      x: 0.7, y: 2.1, w: 8.6, h: 0.7, fontFace: KN, fontSize: 29, bold: true, color: C.white });
+    s.addText('Decisions, permissions and information we need', {
+      x: 0.7, y: 2.85, w: 8.6, h: 0.44, fontFace: EL, fontSize: 19, color: C.pale });
+    s.addText(`${REQ.REQUIREMENTS.length} items, grouped by who answers them. `
+            + 'A blank against each is more useful than agreement in principle.', {
+      x: 0.7, y: 3.42, w: 8.6, h: 0.4, fontFace: EN, fontSize: 12.5, italic: true, color: C.light });
+  }
+
+  /* One slide per group, each a checklist with a column left blank for the
+     answer. A sheet with empty boxes gets filled in; a discussion does not. */
+  for (const [key, g] of Object.entries(REQ.GROUPS)) {
+    const rows = REQ.byGroup(key);
+    const s = slide(g.kn, g.en, g.kn, g.en);
+
+    table(s, ['', 'What we need', 'Why', 'By when', 'Answer'],
+      rows.map((r, i) => [
+        { text: String(i + 1), align: 'center' },
+        { text: `${r.kn}\n${r.item}`, align: 'left', bold: true },
+        { text: r.why.length > 145 ? r.why.slice(0, 143) + '…' : r.why, align: 'left' },
+        { text: r.needed, align: 'left' },
+        { text: '', align: 'left' },
+      ]),
+      { y: 1.95, colW: [0.35, 2.55, 3.85, 1.05, 1.2], size: 8.5,
+        rowH: rows.length > 5 ? 0.44 : 0.52,
+        headKn: ['', 'ಏನು ಬೇಕು', 'ಏಕೆ', 'ಯಾವಾಗ', 'ಉತ್ತರ'] });
+  }
+
+  /* The three with real lead time — the ones a meeting should actually
+     settle, rather than leaving in a document nobody returns to. */
+  {
+    const s = slide('ಮೊದಲು ನಿರ್ಧರಿಸಬೇಕಾದವು', 'Decide these first',
+      'ಇಂದೇ ನಿರ್ಧರಿಸಬೇಕಾದ ಮೂರು ವಿಷಯಗಳು',
+      'Three things worth settling in this meeting, because everything else waits on them.');
+
+    cards(s, REQ.urgent().slice(0, 3).map((r) => ({
+      kn: r.kn, title: r.item,
+      body: r.why.length > 165 ? r.why.slice(0, 163) + '…' : r.why,
+      fill: C.goldSoft,
+    })), { y: 2.1, h: 2.3 });
+
+    note(s, 'ವಾಟ್ಸ್ಆ್ಯಪ್ ಸಂಖ್ಯೆಯ ನಿರ್ಧಾರ ಅತಿ ಮುಖ್ಯ — ನೋಂದಣಿಗೆ ಸಮಯ ಬೇಕು.',
+      'The WhatsApp number is the long pole. Ours works today; a departmental number takes a few '
+      + 'days to register with Meta and cannot be hurried, so deciding it late delays the launch '
+      + 'and nothing else does.', { y: 4.56 });
+  }
+
+  /* ═════════════════════════════ 26 · the ask ═════════════════════════ */
   {
     const s = slide('ಇಲಾಖೆಯಿಂದ ಬೇಕಾದದ್ದು', 'What we need',
       'ನಾಲ್ಕು ವಿಷಯಗಳು — ಸ್ಥಾಪಿಸಲು ಏನೂ ಇಲ್ಲ',
@@ -657,13 +1181,12 @@ const EN_LIGHT = 'Calibri Light';
        'Two ordinary Android phones at the gate — no special scanner hardware.'],
       ['ಸಿಬ್ಬಂದಿ ಮತ್ತು ಅಧಿಕಾರಿಗಳ ಹೆಸರುಗಳು.',
        'Staff to be issued PINs, and officers to be given panel access.'],
-      ['ಸಂಗ್ರಹಿಸಿದ ಶುಲ್ಕ ಇಲಾಖೆಗೆ ಪಾವತಿಸುವ ವಿಧಾನ.',
+      ['ಸಂಗ್ರಹಿಸಿದ ಶುಲ್ಕ ಇಲಾಖೆಗೆ ಪಾವತಿಸುವ ವಿಧಾನ ಮತ್ತು ಅವಧಿ.',
        'A decision on how and how often the collected entry fee is settled.'],
-    ], { y: 2.05, size: 13 });
+    ], { y: 2.0, size: 13 });
   }
 
-  /* ═══════════════════════════════════════════ 21 · the demo ═════════════ */
-
+  /* ═════════════════════════════ 24 · the demo ════════════════════════ */
   {
     const s = slide('ಈಗ', 'Now', 'ನೇರ ಪ್ರಾತ್ಯಕ್ಷಿಕೆ', 'A live demonstration, on this table.',
       { dark: true });
@@ -679,60 +1202,64 @@ const EN_LIGHT = 'Calibri Light';
        'Verifying a ticket with the phone\'s network switched off.'],
       ['ಇಲಾಖೆಯ ಪ್ಯಾನೆಲ್‌ನಲ್ಲಿ ಇವೆಲ್ಲವೂ ತಕ್ಷಣ ಕಾಣುವುದು.',
        'Watching all of it appear in the department\'s panel as it happens.'],
-    ], { y: 2.1, size: 12.5, dark: true });
-
-    if (dailyEntry) {
-      s.addText(`ಪೂರ್ಣ ಸಾಮರ್ಥ್ಯದಲ್ಲಿ ದಿನಕ್ಕೆ ಸುಮಾರು ರೂ. ${inr(dailyEntry)} ಪ್ರವೇಶ ಶುಲ್ಕ — `
-              + 'ಪ್ರತಿ ರೂಪಾಯಿಯೂ ದಾಖಲಾಗುತ್ತದೆ.', {
-        x: 0.55, y: 4.75, w: 8.9, h: 0.35,
-        fontFace: KN_FONT, fontSize: 12.5, bold: true, color: C.light });
-    }
+    ], { y: 2.0, size: 12.5, dark: true });
   }
 
-  /* ═══════════════════════════════════════════ 22 · contact ══════════════ */
-
+  /* ═════════════════════════════ 25 · contact ═════════════════════════ */
   {
     const s = pptx.addSlide();
     s.background = { color: C.paper };
-    if (has(ourLogo)) s.addImage({ path: ourLogo, x: 0.55, y: 0.5, w: 0.9, h: 0.9 });
+    if (has(ourLogo)) s.addImage({ path: ourLogo, x: 0.5, y: 0.45, w: 0.85, h: 0.85 });
 
-    s.addText(cfg.legal_name || 'ServerPe App Solutions', {
-      x: 0.55, y: 1.6, w: 8.9, h: 0.5,
-      fontFace: EN_FONT, fontSize: 26, bold: true, color: C.ink });
-    s.addText(cfg.vendor_tagline || 'Smart Clicks, Smart Taps.', {
-      x: 0.55, y: 2.08, w: 8.9, h: 0.35,
-      fontFace: EN_LIGHT, fontSize: 15, italic: true, color: C.forest });
+    s.addText(cfg.legal_name, { x: 0.5, y: 1.45, w: 9.0, h: 0.5,
+      fontFace: EN, fontSize: 25, bold: true, color: C.ink });
+    s.addText(cfg.vendor_tagline, { x: 0.5, y: 1.92, w: 9.0, h: 0.34,
+      fontFace: EL, fontSize: 14, italic: true, color: C.forest });
 
     const facts = [
-      ['ಸಂಸ್ಥೆಯ ರಚನೆ', 'Constitution', cfg.legal_form || 'Sole Proprietorship'],
+      ['ಸಂಸ್ಥೆಯ ರಚನೆ', 'Constitution', cfg.legal_form],
       ['ಮಾಲೀಕರು', 'Proprietor', val('proprietor_name')],
       ['ಜಿಎಸ್‌ಟಿ', 'GSTIN', val('gstin')],
       ['ಉದ್ಯಮ್ (MSME)', 'Udyam', val('udyam_number')],
+      ['ಕಾರ್ಯಾರಂಭ', 'Operating since', longDate(val('business_since'))],
       ['ವಿಳಾಸ', 'Address', val('business_address')],
-      ['ಸಂಪರ್ಕ', 'Contact', `${cfg.support_mobile || ''}  ·  ${cfg.contact_email || ''}`],
+      ['ಸಂಪರ್ಕ', 'Contact', `${cfg.support_mobile || ''}   ·   ${cfg.contact_email || ''}`],
+      ['ಜಾಲತಾಣ', 'Website', cfg.website || ''],
     ];
 
     facts.forEach(([k, ke, v], i) => {
-      const y = 2.7 + i * 0.42;
-      s.addText(`${k} · ${ke}`, { x: 0.55, y, w: 2.6, h: 0.32,
-        fontFace: KN_FONT, fontSize: 10.5, bold: true, color: C.muted });
-      s.addText(String(v), { x: 3.25, y, w: 6.2, h: 0.32,
-        fontFace: EN_FONT, fontSize: 12, color: C.ink });
+      const y = 2.45 + i * 0.36;
+      s.addText(`${k} · ${ke}`, { x: 0.5, y, w: 2.7, h: 0.3,
+        fontFace: KN, fontSize: 10, bold: true, color: C.muted });
+      s.addText(String(v), { x: 3.3, y, w: 6.2, h: 0.3,
+        fontFace: EN, fontSize: 11.5, color: C.ink });
     });
   }
 
   await pptx.writeFile({ fileName: OUT });
 
-  const missing = ['gstin', 'udyam_number', 'business_address', 'proprietor_name']
+  const missing = ['founder_bio', 'founder_years']
     .filter((k) => !cfg[k] || !String(cfg[k]).trim());
 
-  console.log(`\n  Written: ${OUT}  (22 slides)`);
+  // Counted, not asserted — a hardcoded number goes stale the first time a
+  // slide is added, and then quietly misreports for months.
+  console.log(`\n  Written: ${OUT}  (${pptx.slides.length} slides)`);
   if (missing.length) {
-    console.log('\n  STILL TO FILL — these show as "[ to be filled ]" on the contact slide:');
+    console.log('\n  STILL TO FILL — shown in red on slide 2:');
     for (const m of missing) console.log(`    ${m}`);
-    console.log('\n  Set them in the admin panel under Pricing & settings, then run this again.\n');
-  } else {
-    console.log('');
   }
+  console.log('');
   process.exit(0);
 })().catch((e) => { console.error('\n', e, '\n'); process.exit(1); });
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+
+/** "2025-08-01" -> "1 August 2025"; "2026-06" -> "June 2026". */
+function longDate(d) {
+  const s = String(d || '');
+  const parts = s.split('-').map(Number);
+  if (parts.length === 3) return `${parts[2]} ${MONTHS[parts[1] - 1]} ${parts[0]}`;
+  if (parts.length === 2) return `${MONTHS[parts[1] - 1]} ${parts[0]}`;
+  return s;
+}

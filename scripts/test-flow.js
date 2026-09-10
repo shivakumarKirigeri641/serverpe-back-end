@@ -164,7 +164,7 @@ const state = async () =>
   check(st.state === 'awaiting_payment', `slot chosen -> ${st.state}`);
 
   out = await lastOut();
-  check(/Total: ₹110/.test(out.body || ''), 'price shown: ₹100 entry + ₹10 booking');
+  check(/₹113/.test(out.body || ''), 'price shown: ₹100 entry + ₹13 service fee = ₹113');
   check(/\/pay\//.test(out.body || ''), 'payment link sent');
 
   const ticket = await db.one(

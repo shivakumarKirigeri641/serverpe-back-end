@@ -371,7 +371,7 @@ async function onSlotChosen(ctx, slotCode) {
     `${kn('travel_date')}: ${pretty(t.travel_date)}\n` +
     `${kn('entry_time')}: ${slot.label}\n\n` +
     `${kn('entry_fee')} / Entry fee: ₹${pricing.rs(b.entry_paise)}\n` +
-    `${kn('booking_fee')} / Booking fee: ₹${pricing.rs(b.platform_paise)} (${kn('gst_included')})\n` +
+    `${kn('booking_fee')} / Service fee: ₹${pricing.rs(b.platform_paise)} (${kn('gst_included')})\n` +
     `*${kn('total_paid')} / Total: ₹${pricing.rs(b.total_paise)}*\n\n` +
     `${kn('pay_here')} 👇\n${link}\n\n` +
     `_${kn('held_for_minutes', { n: minutes })}_`);

@@ -39,7 +39,7 @@ const KN = {
 
   /* ── Money ────────────────────────────────────────────────────────── */
   entry_fee: 'ಪ್ರವೇಶ ಶುಲ್ಕ',
-  booking_fee: 'ಬುಕಿಂಗ್ ಶುಲ್ಕ',
+  booking_fee: 'ಸೇವಾ ಮತ್ತು ಅನುಕೂಲ ಶುಲ್ಕ',
   gst_included: 'ಜಿಎಸ್‌ಟಿ ಸೇರಿದೆ',
   total_paid: 'ಒಟ್ಟು ಪಾವತಿ',
   refund: 'ಮರುಪಾವತಿ',
@@ -96,6 +96,49 @@ const KN = {
   thank_you: 'ಧನ್ಯವಾದಗಳು',
   support_ask: 'ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಒಂದೇ ಸಂದೇಶದಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ.',
   feedback_ask: 'ನಿಮ್ಮ ಭೇಟಿ ಹೇಗಿತ್ತು? ಒಂದೇ ಸಂದೇಶದಲ್ಲಿ ತಿಳಿಸಿ.',
+
+  /* ── The proposal document and the presentation ───────────────────── */
+  doc_title: 'ಮುಳ್ಳಯ್ಯನಗಿರಿ ವಾಹನ ಪ್ರವೇಶ ಟಿಕೆಟ್ ವ್ಯವಸ್ಥೆ',
+  doc_subtitle: 'ಮುದ್ರಿತ ಟಿಕೆಟ್‌ನ ಬದಲಿಗೆ ಡಿಜಿಟಲ್ ಸಹಿಯ QR ಟಿಕೆಟ್ — ಗೇಟ್‌ನಲ್ಲಿ ಓದುವ ಬದಲು ಪರಿಶೀಲಿಸಲಾಗುತ್ತದೆ.',
+  submitted_to: 'ಜಿಲ್ಲಾಧಿಕಾರಿಗಳ ಕಚೇರಿ, ಚಿಕ್ಕಮಗಳೂರು — ಸಲ್ಲಿಕೆ',
+  in_summary: 'ಸಾರಾಂಶ',
+  acceptance: 'ಒಪ್ಪಿಗೆ',
+  for_department: 'ಇಲಾಖೆಯ ಪರವಾಗಿ',
+  for_vendor: 'ಸೇವಾ ಸಂಸ್ಥೆಯ ಪರವಾಗಿ',
+  name_designation_date: 'ಹೆಸರು, ಹುದ್ದೆ ಮತ್ತು ದಿನಾಂಕ',
+
+  /* Section headings, in the order they appear in the proposal. */
+  sec_today: 'ಇಂದು ಏನಾಗುತ್ತಿದೆ',
+  sec_proposal: 'ಪ್ರಸ್ತಾವನೆ ಏನು',
+  sec_verification: 'ಪರಿಶೀಲನೆ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ',
+  sec_visitor: 'ಪ್ರವಾಸಿಗರು ಏನು ಮಾಡಬೇಕು',
+  sec_staff: 'ಚೆಕ್‌ಪೋಸ್ಟ್ ಸಿಬ್ಬಂದಿ ಏನು ಮಾಡಬೇಕು',
+  sec_capacity: 'ಸಾಮರ್ಥ್ಯ ಮತ್ತು ಜನದಟ್ಟಣೆ',
+  sec_money_split: 'ಹಣ ಹೇಗೆ ಹಂಚಿಕೆಯಾಗುತ್ತದೆ',
+  sec_commercial: 'ವಾಣಿಜ್ಯ ಷರತ್ತುಗಳು',
+  sec_value: 'ಶುಲ್ಕ ಯಾವುದರ ಎದುರು ನಿಗದಿಯಾಗಿದೆ',
+  sec_settlement: 'ಸಂಗ್ರಹಿಸಿದ ಶುಲ್ಕ ಇಲಾಖೆಗೆ ಹೇಗೆ ತಲುಪುತ್ತದೆ',
+  sec_earnings: 'ವೇದಿಕೆ ಎಷ್ಟು ಗಳಿಸುತ್ತದೆ',
+  sec_investment: 'ವೇದಿಕೆಯಲ್ಲಿ ಮಾಡಿದ ಹೂಡಿಕೆ',
+  sec_closure: 'ತಾಣ ಮುಚ್ಚಬೇಕಾದಾಗ',
+  sec_oversight: 'ಇಲಾಖೆಗೆ ಏನು ಕಾಣುತ್ತದೆ',
+  sec_privacy: 'ಮಾಹಿತಿ ಸುರಕ್ಷತೆ',
+  sec_required: 'ಇಲಾಖೆಯಿಂದ ಏನು ಬೇಕು',
+  sec_status: 'ಪ್ರಸ್ತುತ ಸ್ಥಿತಿ',
+  sec_beyond: 'ಈ ತಾಣದ ಆಚೆಗೆ',
+
+  /* Table column headings used in both documents. */
+  col_item: 'ವಿವರ',
+  col_amount: 'ಮೊತ್ತ',
+  col_status: 'ಸ್ಥಿತಿ',
+  col_type: 'ಪ್ರಕಾರ',
+  col_charge: 'ಶುಲ್ಕ',
+  col_paid_by: 'ಪಾವತಿ ಮಾಡುವವರು',
+  col_vehicle_type: 'ವಾಹನ ಪ್ರಕಾರ',
+  col_visitor_pays: 'ಪ್ರವಾಸಿ ಪಾವತಿ',
+  col_meaning: 'ಅರ್ಥ',
+  col_stored: 'ಸಂಗ್ರಹಿಸಲಾಗುತ್ತದೆ',
+  col_not_stored: 'ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ',
 
   /* ── Ticket small print ───────────────────────────────────────────── */
   note_valid_only: 'ಈ ಟಿಕೆಟ್ ಮೇಲೆ ನಮೂದಿಸಿದ ವಾಹನ, ದಿನಾಂಕ ಮತ್ತು ಸಮಯಕ್ಕೆ ಮಾತ್ರ ಮಾನ್ಯ.',

@@ -202,7 +202,7 @@ button:disabled{opacity:.6}
     <div class="row"><span>Time</span><b>${esc(ticket.slot_label)}</b></div>
     <div class="rule"></div>
     <div class="row"><span>Entry fee</span><b>Rs. ${rs(ticket.entry_paise)}</b></div>
-    <div class="row"><span>Booking fee (incl. GST)</span><b>Rs. ${rs(ticket.platform_paise)}</b></div>
+    <div class="row"><span>Service fee (incl. GST)</span><b>Rs. ${rs(ticket.platform_paise)}</b></div>
     <div class="rule"></div>
     <div class="total"><span>Total</span><span>Rs. ${rs(ticket.total_paise)}</span></div>
     <button id="pay">Pay Rs. ${rs(ticket.total_paise)}</button>

@@ -8,7 +8,7 @@
  *   * A PDF, for anyone who wants to print it or keep it. It carries the same
  *     QR, so both routes verify identically.
  *   * The amounts, split as the invoice must show them — entry fee collected
- *     for the department, our booking fee, and GST on the booking fee alone.
+ *     for the department, our service fee, and GST on the service fee alone.
  *
  * Sending is idempotent. The three payment paths all end here, and a visitor
  * must not receive three QR codes for one ticket.
@@ -132,13 +132,13 @@ async function ticketPdf(t) {
   };
 
   money(`Entry fee (collected for ${cfg.collecting_for || 'Karnataka Tourism Department'})`, t.entry_paise);
-  money('Booking fee (incl. GST)', t.platform_paise);
+  money('Service fee (incl. GST)', t.platform_paise);
   doc.moveTo(M, y + 2).lineTo(W - M, y + 2).lineWidth(0.5).strokeColor(RULE).stroke();
   y += 12;
   money('Total paid', t.total_paise, true);
 
   doc.fillColor(MUTED).font('Helvetica').fontSize(7.5)
-     .text(`GST of Rs. ${pricing.rs(t.gst_paise)} is included in the booking fee. `
+     .text(`GST of Rs. ${pricing.rs(t.gst_paise)} is included in the service fee. `
          + 'The entry fee is collected on behalf of the department as a pure agent '
          + 'and is not part of the taxable value.', M, y + 6, { width: W - M * 2 });
 

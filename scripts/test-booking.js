@@ -41,7 +41,7 @@ const say = (ok, msg) => console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${msg}`);
 
   const price = await pricing.priceFor(place.id, category.id);
   const b = await pricing.breakdown(price);
-  check(b.total_paise === 11000, `total Rs.${pricing.rs(b.total_paise)} = entry ${pricing.rs(b.entry_paise)} + platform ${pricing.rs(b.platform_paise)}`);
+  check(b.total_paise === 11300, `total Rs.${pricing.rs(b.total_paise)} = entry ${pricing.rs(b.entry_paise)} + platform ${pricing.rs(b.platform_paise)}`);
   check(b.platform_base_paise + b.gst_paise === b.platform_paise,
     `GST splits the platform fee exactly: ${b.platform_base_paise} + ${b.gst_paise} = ${b.platform_paise}`);
 
